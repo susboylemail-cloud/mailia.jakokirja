@@ -13,7 +13,6 @@ let isAuthenticated = false;
 
 // Circuit names mapping
 const circuitNames = {
-    'KP2': 'KP2 Mansikkala',
     'KP3': 'KP3 Puntala-Immola',
     'KP4': 'KP4 Imatrankoski',
     'KP7': 'KP7 Vuoksenniska',
@@ -21,7 +20,6 @@ const circuitNames = {
     'KP10': 'KP10 Ritikankylä',
     'KP11': 'KP11 Tainionkoski',
     'KP12': 'KP12 Imatrankoski',
-    'KP13': 'KP13 Imatrankoski',
     'KP15': 'KP15 Tainionkoski',
     'KP16': 'KP16 Tainionkoski',
     'KP16B': 'KP16B Tainionkoski',
@@ -35,20 +33,30 @@ const circuitNames = {
     'KP27': 'KP27 Vuoksenniska',
     'KP28': 'KP28 Vuoksenniska',
     'KP31': 'KP31 Imatrankoski',
+    'KP32A': 'KP32A Imatrankoski',
+    'KP32B': 'KP32B Imatrankoski',
     'KP33': 'KP33 Rajapatsas',
+    'KP34': 'KP34 Imatrankoski',
+    'KP36': 'KP36 Mansikkala',
     'KP37': 'KP37 Teppanala',
     'KP38': 'KP38 Mansikkala',
+    'KP39': 'KP39 Mansikkala',
     'KP40': 'KP40 Imatrankoski',
     'KP41': 'KP41 Vuoksenniska',
     'KP42': 'KP42 Mansikkala',
     'KP43B': 'KP43B Imatrankoski',
+    'KP46': 'KP46 Korvenkanta',
+    'KP47': 'KP47 Korvenkanta',
+    'KP48': 'KP48 Korvenkanta',
     'KP49': 'KP49 Korvenkanta',
-    'KPR1': 'KPR1 Reservi',
+    'KP51': 'KP51 Mansikkala',
+    'KP53': 'KP53 Teppanala',
+    'KP54': 'KP54 Mansikkala',
+    'KP55A': 'KP55A Vuoksenniska',
+    'KP55B': 'KP55B Vuoksenniska',
     'KPR2': 'KPR2 Reservi',
     'KPR3': 'KPR3 Reservi',
-    'KPR4': 'KPR4 Reservi',
-    'KPR5': 'KPR5 Reservi',
-    'KPR6': 'KPR6 Reservi'
+    'KPR4': 'KPR4 Reservi'
 };
 
 // Initialize the app
@@ -166,54 +174,111 @@ function initializeTabs() {
 // Data Loading and Parsing
 async function loadData() {
     try {
-        const response = await fetch('combined.data.csv');
-        const text = await response.text();
-        allData = parseCSV(text);
-    } catch (error) {
-        console.error('Error loading data:', error);
-        alert('Virhe tietojen lataamisessa. Varmista, että combined.data.csv tiedosto on saatavilla.');
-    }
-}
-
-function parseCSV(text) {
-    const lines = text.split('\n');
-    const circuits = {};
-    let currentCircuitId = null;
-
-    for (const line of lines) {
-        if (line.startsWith('###')) {
-            // Extract circuit ID from header like "### Corrected File: kp49 (2).txt"
-            const match = line.match(/###\s+Corrected File:\s+(kp\w+)/i);
-            if (match) {
-                currentCircuitId = match[1].toUpperCase().replace(/\s+\(\d+\)/, '');
-                if (!circuits[currentCircuitId]) {
-                    circuits[currentCircuitId] = [];
-                }
-            }
-        } else if (line.trim() && currentCircuitId) {
-            // Parse subscriber line
-            const subscriber = parseSubscriberLine(line);
-            if (subscriber) {
-                circuits[currentCircuitId].push(subscriber);
+        // List of all circuit CSV files
+        const circuitFiles = [
+            'K28 DATA.csv', 'KP R2 DATA.csv', 'KP R3 DATA.csv', 'KP R4 DATA.csv',
+            'KP3 DATA.csv', 'KP4 DATA.csv', 'KP7 DATA.csv', 'KP9 DATA.csv',
+            'KP10 DATA.csv', 'KP11 DATA.csv', 'KP12 DATA.csv', 'KP15 DATA.csv',
+            'KP16 DATA.csv', 'KP16B DATA.csv', 'KP18 DATA.csv', 'KP19 DATA.csv',
+            'KP21B DATA.csv', 'KP22 DATA.csv', 'KP24 DATA.csv', 'KP25 DATA.csv',
+            'KP26 DATA.csv', 'KP27 DATA.csv', 'KP31 DATA.csv', 'KP32A DATA.csv',
+            'KP32B DATA.csv', 'KP33 DATA.csv', 'KP34 DATA.csv', 'KP36 DATA.csv',
+            'KP37 DATA.csv', 'KP38 DATA.csv', 'KP39 DATA.csv', 'KP40 DATA.csv',
+            'KP41 DATA.csv', 'KP42 DATA.csv', 'KP43B DATA.csv', 'KP46 DATA.csv',
+            'KP47 DATA.csv', 'KP48 DATA.csv', 'KP49 DATA.csv', 'KP51 DATA.csv',
+            'KP53 DATA.csv', 'KP54 DATA.csv', 'KP55A DATA.csv', 'KP55B DATA.csv'
+        ];
+        
+        allData = {};
+        
+        // Load each circuit's CSV file
+        for (const filename of circuitFiles) {
+            try {
+                const response = await fetch(filename);
+                if (!response.ok) continue;
+                const text = await response.text();
+                const circuitId = extractCircuitId(filename);
+                allData[circuitId] = parseCircuitCSV(text);
+            } catch (err) {
+                console.warn(`Could not load ${filename}:`, err);
             }
         }
+        
+        console.log(`Loaded ${Object.keys(allData).length} circuits`);
+    } catch (error) {
+        console.error('Error loading data:', error);
+        alert('Virhe tietojen lataamisessa. Varmista, että CSV-tiedostot ovat saatavilla.');
     }
-
-    return circuits;
 }
 
-function parseSubscriberLine(line) {
-    // Remove quotes and parse the line
-    const cleanLine = line.replace(/^"|"$/g, '');
-    
-    // Match pattern: - **Address:** ADDRESS, **Products:** PRODUCTS, **Name:** NAME
-    const pattern = /\*\*Address:\*\*\s*([^,]+),\s*\*\*Products:\*\*\s*([^,]+),\s*\*\*Name:\*\*\s*(.+)/;
-    const match = cleanLine.match(pattern);
-    
+function extractCircuitId(filename) {
+    // Extract circuit ID from filename like "KP3 DATA.csv" -> "KP3"
+    // Handle special cases like "KP R2 DATA.csv" -> "KPR2", "K28 DATA.csv" -> "KP28"
+    const match = filename.match(/^(K|KP)\s*(R\s*)?(\d+[AB]?)\s*DATA\.csv$/i);
     if (match) {
-        const address = match[1].trim();
-        const products = match[2].trim().split(',').map(p => p.trim());
-        const name = match[3].trim();
+        const prefix = match[1] === 'K' ? 'KP' : 'KP';
+        const r = match[2] ? 'R' : '';
+        const number = match[3];
+        return prefix + r + number;
+    }
+    return filename.replace(' DATA.csv', '').replace(/\s+/g, '').toUpperCase();
+}
+
+function parseCircuitCSV(text) {
+    const lines = text.trim().split('\n');
+    const subscribers = [];
+    
+    // Skip header line
+    for (let i = 1; i < lines.length; i++) {
+        const subscriber = parseCSVLine(lines[i]);
+        if (subscriber) {
+            subscribers.push(subscriber);
+        }
+    }
+    
+    return subscribers;
+}
+
+function parseCSVLine(line) {
+    // Parse CSV line with proper quote handling
+    const fields = [];
+    let currentField = '';
+    let insideQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+            if (insideQuotes && nextChar === '"') {
+                // Escaped quote
+                currentField += '"';
+                i++;
+            } else {
+                // Toggle quote state
+                insideQuotes = !insideQuotes;
+            }
+        } else if (char === ',' && !insideQuotes) {
+            // Field separator
+            fields.push(currentField);
+            currentField = '';
+        } else {
+            currentField += char;
+        }
+    }
+    fields.push(currentField);
+    
+    // Expected format: "Sivu","Katu","Osoite","Nimi","Merkinnät"
+    if (fields.length >= 5) {
+        const address = fields[2].trim();
+        const name = fields[3].trim();
+        const productsStr = fields[4].trim();
+        
+        // Skip if no address
+        if (!address) return null;
+        
+        // Parse products - handle multiline and comma-separated
+        const products = productsStr.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
         
         return {
             address,

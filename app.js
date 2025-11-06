@@ -20,6 +20,7 @@ const circuitNames = {
     'KP10': 'KP10',
     'KP11': 'KP11',
     'KP12': 'KP12',
+    'KP13': 'KP13',
     'KP15': 'KP15',
     'KP16': 'KP16',
     'KP16B': 'KP16B',
@@ -45,6 +46,7 @@ const circuitNames = {
     'KP41': 'KP41',
     'KP42': 'KP42',
     'KP43B': 'KP43B',
+    'KP44': 'KP44',
     'KP46': 'KP46',
     'KP47': 'KP47',
     'KP48': 'KP48',
@@ -54,9 +56,12 @@ const circuitNames = {
     'KP54': 'KP54',
     'KP55A': 'KP55A',
     'KP55B': 'KP55B',
+    'KPR1': 'KPR1',
     'KPR2': 'KPR2',
     'KPR3': 'KPR3',
-    'KPR4': 'KPR4'
+    'KPR4': 'KPR4',
+    'KPR5': 'KPR5',
+    'KPR6': 'KPR6'
 };
 
 // Initialize the app
@@ -180,15 +185,16 @@ async function loadData() {
         const circuitFiles = [
             'K28 DATA.csv', 'KP R2 DATA.csv', 'KP R3 DATA.csv', 'KP R4 DATA.csv',
             'KP3 DATA.csv', 'KP4 DATA.csv', 'KP7 DATA.csv', 'KP9 DATA.csv',
-            'KP10 DATA.csv', 'KP11 DATA.csv', 'KP12 DATA.csv', 'KP15 DATA.csv',
+            'KP10 DATA.csv', 'KP11 DATA.csv', 'KP12 DATA.csv', 'kp13.csv', 'KP15 DATA.csv',
             'KP16 DATA.csv', 'KP16B DATA.csv', 'KP18 DATA.csv', 'KP19 DATA.csv',
             'KP21B DATA.csv', 'KP22 DATA.csv', 'KP24 DATA.csv', 'KP25 DATA.csv',
             'KP26 DATA.csv', 'KP27 DATA.csv', 'KP31 DATA.csv', 'KP32A DATA.csv',
             'KP32B DATA.csv', 'KP33 DATA.csv', 'KP34 DATA.csv', 'KP36 DATA.csv',
             'KP37 DATA.csv', 'KP38 DATA.csv', 'KP39 DATA.csv', 'KP40 DATA.csv',
-            'KP41 DATA.csv', 'KP42 DATA.csv', 'KP43B DATA.csv', 'KP46 DATA.csv',
+            'KP41 DATA.csv', 'KP42 DATA.csv', 'KP43B DATA.csv', 'kp44.csv', 'KP46 DATA.csv',
             'KP47 DATA.csv', 'KP48 DATA.csv', 'KP49 DATA.csv', 'KP51 DATA.csv',
-            'KP53 DATA.csv', 'KP54 DATA.csv', 'KP55A DATA.csv', 'KP55B DATA.csv'
+            'KP53 DATA.csv', 'KP54 DATA.csv', 'KP55A DATA.csv', 'KP55B DATA.csv',
+            'kp r1.csv', 'kpr5.csv', 'kpr6.csv'
         ];
         
         allData = {};
@@ -200,7 +206,7 @@ async function loadData() {
                 if (!response.ok) continue;
                 const text = await response.text();
                 const circuitId = extractCircuitId(filename);
-                allData[circuitId] = parseCircuitCSV(text);
+                allData[circuitId] = parseCircuitCSV(text, filename);
             } catch (err) {
                 console.warn(`Could not load ${filename}:`, err);
             }
@@ -214,8 +220,28 @@ async function loadData() {
 }
 
 function extractCircuitId(filename) {
-    // Extract circuit ID from filename like "KP3 DATA.csv" -> "KP3"
-    // Handle special cases like "KP R2 DATA.csv" -> "KPR2", "K28 DATA.csv" -> "KP28"
+    // Extract circuit ID from filename
+    // Handle special cases:
+    // "KP3 DATA.csv" -> "KP3"
+    // "KP R2 DATA.csv" -> "KPR2"
+    // "K28 DATA.csv" -> "KP28"
+    // "kp13.csv" -> "KP13"
+    // "kp r1.csv" -> "KPR1"
+    // "kpr5.csv" -> "KPR5"
+    
+    const lower = filename.toLowerCase();
+    
+    // New format: kp13.csv, kp44.csv, kpr5.csv, kpr6.csv, kp r1.csv
+    if (lower.match(/^kp\s*r?\s*\d+[ab]?\.csv$/i)) {
+        const match = lower.match(/^kp\s*(r)?\s*(\d+[ab]?)\.csv$/i);
+        if (match) {
+            const r = match[1] ? 'R' : '';
+            const number = match[2].toUpperCase();
+            return 'KP' + r + number;
+        }
+    }
+    
+    // Old format: "KP3 DATA.csv", "KP R2 DATA.csv", "K28 DATA.csv"
     const match = filename.match(/^(K|KP)\s*(R\s*)?(\d+[AB]?)\s*DATA\.csv$/i);
     if (match) {
         const prefix = match[1] === 'K' ? 'KP' : 'KP';
@@ -223,16 +249,21 @@ function extractCircuitId(filename) {
         const number = match[3];
         return prefix + r + number;
     }
-    return filename.replace(' DATA.csv', '').replace(/\s+/g, '').toUpperCase();
+    
+    return filename.replace(' DATA.csv', '').replace('.csv', '').replace(/\s+/g, '').toUpperCase();
 }
 
-function parseCircuitCSV(text) {
+function parseCircuitCSV(text, filename) {
     const lines = text.trim().split('\n');
     const subscribers = [];
     
+    // Detect CSV format by checking the header
+    const header = lines[0].toLowerCase();
+    const isNewFormat = header.includes('katu') && header.includes('osoitenumero');
+    
     // Skip header line
     for (let i = 1; i < lines.length; i++) {
-        const subscriber = parseCSVLine(lines[i]);
+        const subscriber = isNewFormat ? parseNewFormatCSVLine(lines[i]) : parseOldFormatCSVLine(lines[i]);
         if (subscriber) {
             // Add original order index to maintain CSV order
             subscriber.orderIndex = i;
@@ -243,7 +274,7 @@ function parseCircuitCSV(text) {
     return subscribers;
 }
 
-function parseCSVLine(line) {
+function parseOldFormatCSVLine(line) {
     // Parse CSV line with proper quote handling
     const fields = [];
     let currentField = '';
@@ -287,6 +318,41 @@ function parseCSVLine(line) {
         return {
             address,
             products,
+            name,
+            buildingAddress: extractBuildingAddress(address)
+        };
+    }
+    
+    return null;
+}
+
+function parseNewFormatCSVLine(line) {
+    // Parse new format: Katu,Osoitenumero,Porras/Huom,Asunto,Tilaaja,Tilaukset
+    const fields = line.split(',').map(f => f.trim());
+    
+    if (fields.length >= 6) {
+        const street = fields[0].trim();
+        const number = fields[1].trim();
+        const stairwell = fields[2].trim();
+        const apartment = fields[3].trim();
+        const name = fields[4].trim();
+        const productsStr = fields[5].trim();
+        
+        // Skip if no street or number
+        if (!street || !number) return null;
+        
+        // Build address
+        let address = `${street} ${number}`;
+        if (stairwell) address += ` ${stairwell}`;
+        if (apartment) address += ` ${apartment}`;
+        
+        // Parse products - extract product codes from brackets
+        const productMatches = productsStr.matchAll(/([A-Z]+\d*)/g);
+        const products = Array.from(productMatches, m => m[1]);
+        
+        return {
+            address,
+            products: products.length > 0 ? products : [productsStr.trim()],
             name,
             buildingAddress: extractBuildingAddress(address)
         };

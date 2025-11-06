@@ -317,6 +317,11 @@ main {
     color: #333;
 }
 
+.product-badge.product-STF {
+    background: #ff7f50;
+    color: white;
+}
+
 .product-badge .count {
     margin-left: 0.5rem;
     background: rgba(255, 255, 255, 0.3);
@@ -482,6 +487,11 @@ body.dark-mode .subscriber-name {
 .product-tag.product-HS {
     background: #c8e6c9;
     color: #333;
+}
+
+.product-tag.product-STF {
+    background: #ff7f50;
+    color: white;
 }
 
 .nav-link {

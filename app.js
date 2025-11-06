@@ -13,50 +13,50 @@ let isAuthenticated = false;
 
 // Circuit names mapping
 const circuitNames = {
-    'KP3': 'KP3 Puntala-Immola',
-    'KP4': 'KP4 Imatrankoski',
-    'KP7': 'KP7 Vuoksenniska',
-    'KP9': 'KP9 Rajapatsas',
-    'KP10': 'KP10 Ritikankylä',
-    'KP11': 'KP11 Tainionkoski',
-    'KP12': 'KP12 Imatrankoski',
-    'KP15': 'KP15 Tainionkoski',
-    'KP16': 'KP16 Tainionkoski',
-    'KP16B': 'KP16B Tainionkoski',
-    'KP18': 'KP18 Karelankuja',
-    'KP19': 'KP19 Teppanala',
-    'KP21B': 'KP21B Mansikkala',
-    'KP22': 'KP22 Mansikkala',
-    'KP24': 'KP24 Karhumäki-Korvenkanta',
-    'KP25': 'KP25 Karhumäki',
-    'KP26': 'KP26 Kaukopää',
-    'KP27': 'KP27 Vuoksenniska',
-    'KP28': 'KP28 Vuoksenniska',
-    'KP31': 'KP31 Imatrankoski',
-    'KP32A': 'KP32A Imatrankoski',
-    'KP32B': 'KP32B Imatrankoski',
-    'KP33': 'KP33 Rajapatsas',
-    'KP34': 'KP34 Imatrankoski',
-    'KP36': 'KP36 Mansikkala',
-    'KP37': 'KP37 Teppanala',
-    'KP38': 'KP38 Mansikkala',
-    'KP39': 'KP39 Mansikkala',
-    'KP40': 'KP40 Imatrankoski',
-    'KP41': 'KP41 Vuoksenniska',
-    'KP42': 'KP42 Mansikkala',
-    'KP43B': 'KP43B Imatrankoski',
-    'KP46': 'KP46 Korvenkanta',
-    'KP47': 'KP47 Korvenkanta',
-    'KP48': 'KP48 Korvenkanta',
-    'KP49': 'KP49 Korvenkanta',
-    'KP51': 'KP51 Mansikkala',
-    'KP53': 'KP53 Teppanala',
-    'KP54': 'KP54 Mansikkala',
-    'KP55A': 'KP55A Vuoksenniska',
-    'KP55B': 'KP55B Vuoksenniska',
-    'KPR2': 'KPR2 Reservi',
-    'KPR3': 'KPR3 Reservi',
-    'KPR4': 'KPR4 Reservi'
+    'KP3': 'KP3',
+    'KP4': 'KP4',
+    'KP7': 'KP7',
+    'KP9': 'KP9',
+    'KP10': 'KP10',
+    'KP11': 'KP11',
+    'KP12': 'KP12',
+    'KP15': 'KP15',
+    'KP16': 'KP16',
+    'KP16B': 'KP16B',
+    'KP18': 'KP18',
+    'KP19': 'KP19',
+    'KP21B': 'KP21B',
+    'KP22': 'KP22',
+    'KP24': 'KP24',
+    'KP25': 'KP25',
+    'KP26': 'KP26',
+    'KP27': 'KP27',
+    'KP28': 'KP28',
+    'KP31': 'KP31',
+    'KP32A': 'KP32A',
+    'KP32B': 'KP32B',
+    'KP33': 'KP33',
+    'KP34': 'KP34',
+    'KP36': 'KP36',
+    'KP37': 'KP37',
+    'KP38': 'KP38',
+    'KP39': 'KP39',
+    'KP40': 'KP40',
+    'KP41': 'KP41',
+    'KP42': 'KP42',
+    'KP43B': 'KP43B',
+    'KP46': 'KP46',
+    'KP47': 'KP47',
+    'KP48': 'KP48',
+    'KP49': 'KP49',
+    'KP51': 'KP51',
+    'KP53': 'KP53',
+    'KP54': 'KP54',
+    'KP55A': 'KP55A',
+    'KP55B': 'KP55B',
+    'KPR2': 'KPR2',
+    'KPR3': 'KPR3',
+    'KPR4': 'KPR4'
 };
 
 // Initialize the app
@@ -404,7 +404,8 @@ function renderCoverSheet(circuitId, subscribers) {
     productCounts.innerHTML = '';
     Object.entries(products).sort().forEach(([product, count]) => {
         const badge = document.createElement('div');
-        badge.className = `product-badge product-${product}`;
+        const colorClass = getProductColorClass(product);
+        badge.className = `product-badge product-${colorClass}`;
         badge.innerHTML = `${product} <span class="count">${count}</span>`;
         productCounts.appendChild(badge);
     });
@@ -413,6 +414,17 @@ function renderCoverSheet(circuitId, subscribers) {
 function normalizeProduct(product) {
     // Normalize products: UV2→UV, HS2→HS, ES4→ES, STF2→STF, etc.
     return product.replace(/\d+$/, '').trim();
+}
+
+function getProductColorClass(product) {
+    // Map alternative products to base colors
+    // ESLS→ES, HSTS→HS, MALA→HS
+    const colorMap = {
+        'ESLS': 'ES',
+        'HSTS': 'HS',
+        'MALA': 'HS'
+    };
+    return colorMap[product] || product;
 }
 
 // Subscriber List
@@ -486,7 +498,8 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     products.className = 'subscriber-products';
     subscriber.products.forEach(product => {
         const tag = document.createElement('span');
-        tag.className = `product-tag product-${product.trim()}`;
+        const colorClass = getProductColorClass(product.trim());
+        tag.className = `product-tag product-${colorClass}`;
         tag.textContent = product;
         products.appendChild(tag);
     });

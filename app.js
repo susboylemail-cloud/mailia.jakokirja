@@ -402,7 +402,7 @@ function renderCoverSheet(circuitId, subscribers) {
     productCounts.innerHTML = '';
     Object.entries(products).sort().forEach(([product, count]) => {
         const badge = document.createElement('div');
-        badge.className = 'product-badge';
+        badge.className = `product-badge product-${product}`;
         badge.innerHTML = `${product} <span class="count">${count}</span>`;
         productCounts.appendChild(badge);
     });
@@ -489,7 +489,7 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     products.className = 'subscriber-products';
     subscriber.products.forEach(product => {
         const tag = document.createElement('span');
-        tag.className = 'product-tag';
+        tag.className = `product-tag product-${product.trim()}`;
         tag.textContent = product;
         products.appendChild(tag);
     });

@@ -297,8 +297,24 @@ main {
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 20px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 1rem;
+}
+
+/* Product-specific colors for badges */
+.product-badge.product-ES {
+    background: #17a2b8;
+    color: white;
+}
+
+.product-badge.product-UV {
+    background: #fff9c4;
+    color: #333;
+}
+
+.product-badge.product-HS {
+    background: #c8e6c9;
+    color: #333;
 }
 
 .product-badge .count {
@@ -306,6 +322,11 @@ main {
     background: rgba(255, 255, 255, 0.3);
     padding: 0.2rem 0.6rem;
     border-radius: 12px;
+}
+
+body.dark-mode .product-badge.product-UV .count,
+body.dark-mode .product-badge.product-HS .count {
+    background: rgba(0, 0, 0, 0.2);
 }
 
 /* Route Buttons */
@@ -443,7 +464,23 @@ body.dark-mode .subscriber-name {
     padding: 0.3rem 0.7rem;
     border-radius: 12px;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 700;
+}
+
+/* Product-specific colors for tags */
+.product-tag.product-ES {
+    background: #17a2b8;
+    color: white;
+}
+
+.product-tag.product-UV {
+    background: #fff9c4;
+    color: #333;
+}
+
+.product-tag.product-HS {
+    background: #c8e6c9;
+    color: #333;
 }
 
 .nav-link {

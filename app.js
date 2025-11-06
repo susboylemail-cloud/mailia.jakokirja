@@ -439,10 +439,12 @@ function loadCircuit(circuitId) {
     renderSubscriberList(circuitId, subscribers);
     updateRouteButtons(circuitId);
     
-    // Restore STF filter state
+    // Restore filter states
     const hideStf = localStorage.getItem('hideStf') === 'true';
+    const hideDelivered = localStorage.getItem('hideDelivered') === 'true';
     document.getElementById('hideStfFilter').checked = hideStf;
-    applyStfFilter();
+    document.getElementById('hideDeliveredFilter').checked = hideDelivered;
+    applyFilters();
 }
 
 // Cover Sheet
@@ -548,6 +550,7 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     checkbox.checked = getCheckboxState(circuitId, subscriber.address);
     checkbox.addEventListener('change', (e) => {
         saveCheckboxState(circuitId, subscriber.address, e.target.checked);
+        applyFilters(); // Re-apply filters to hide/show delivered addresses
     });
     card.appendChild(checkbox);
     
@@ -608,11 +611,18 @@ function getNextAddress(buildings, currentBuildingIndex, currentSubIndex) {
     return null;
 }
 
-// STF Filter
+// Filters and Event Listeners
 function initializeEventListeners() {
+    // STF Filter
     document.getElementById('hideStfFilter').addEventListener('change', (e) => {
         localStorage.setItem('hideStf', e.target.checked);
-        applyStfFilter();
+        applyFilters();
+    });
+    
+    // Hide Delivered Filter
+    document.getElementById('hideDeliveredFilter').addEventListener('change', (e) => {
+        localStorage.setItem('hideDelivered', e.target.checked);
+        applyFilters();
     });
     
     document.getElementById('startRouteBtn').addEventListener('click', () => {
@@ -624,15 +634,28 @@ function initializeEventListeners() {
     });
 }
 
-function applyStfFilter() {
+function applyFilters() {
     const hideStf = document.getElementById('hideStfFilter').checked;
+    const hideDelivered = document.getElementById('hideDeliveredFilter').checked;
     const cards = document.querySelectorAll('.subscriber-card');
     
     cards.forEach(card => {
         const products = card.dataset.products.toUpperCase();
         const hasStf = products.includes('STF');
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        const isDelivered = checkbox && checkbox.checked;
+        
+        let shouldHide = false;
         
         if (hideStf && hasStf) {
+            shouldHide = true;
+        }
+        
+        if (hideDelivered && isDelivered) {
+            shouldHide = true;
+        }
+        
+        if (shouldHide) {
             card.style.display = 'none';
         } else {
             card.style.display = '';

@@ -1,8 +1,15 @@
 // Mailia Delivery Tracking Application
 
+// Authentication credentials
+const CREDENTIALS = {
+    username: 'imatravj',
+    password: 'mailiavj1!'
+};
+
 // Global state
 let allData = [];
 let currentCircuit = null;
+let isAuthenticated = false;
 
 // Circuit names mapping
 const circuitNames = {
@@ -46,7 +53,61 @@ const circuitNames = {
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', async () => {
+    // Check if already authenticated
+    checkAuthentication();
+    
+    // Setup login form
+    initializeLogin();
+    
+    // Initialize dark mode (works on login screen too)
     initializeDarkMode();
+});
+
+// Authentication
+function checkAuthentication() {
+    const sessionAuth = sessionStorage.getItem('mailiaAuth');
+    if (sessionAuth === 'authenticated') {
+        isAuthenticated = true;
+        showMainApp();
+    }
+}
+
+function initializeLogin() {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+}
+
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('loginError');
+    
+    if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+        // Successful login
+        sessionStorage.setItem('mailiaAuth', 'authenticated');
+        isAuthenticated = true;
+        errorDiv.style.display = 'none';
+        showMainApp();
+    } else {
+        // Failed login
+        errorDiv.textContent = 'Virheellinen käyttäjätunnus tai salasana';
+        errorDiv.style.display = 'block';
+        document.getElementById('password').value = '';
+    }
+}
+
+async function showMainApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    
+    // Initialize dark mode toggle now that main app is visible
+    initializeDarkMode();
+    
+    // Initialize the main application
     initializeTabs();
     await loadData();
     populateCircuitSelector();
@@ -54,21 +115,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeEventListeners();
     checkMidnightReset();
     scheduleMidnightReset();
-});
+}
 
 // Dark Mode
 function initializeDarkMode() {
     const darkMode = localStorage.getItem('darkMode') === 'true';
     if (darkMode) {
         document.body.classList.add('dark-mode');
-        updateDarkModeIcon(true);
     }
 
-    document.getElementById('darkModeToggle').addEventListener('click', () => {
-        const isDark = document.body.classList.toggle('dark-mode');
-        localStorage.setItem('darkMode', isDark);
-        updateDarkModeIcon(isDark);
-    });
+    // Only setup toggle if user is authenticated
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle && isAuthenticated) {
+        updateDarkModeIcon(darkMode);
+        darkModeToggle.addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            updateDarkModeIcon(isDark);
+        });
+    }
 }
 
 function updateDarkModeIcon(isDark) {

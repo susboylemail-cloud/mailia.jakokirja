@@ -29,11 +29,12 @@ body.dark-mode {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
     line-height: 1.6;
     transition: background-color 0.3s, color 0.3s;
+    font-size: 110%; /* 10% increase in base font size */
 }
 
 /* Login Screen */
@@ -380,6 +381,9 @@ body.dark-mode .route-time {
     padding: 1rem;
     border-radius: 8px;
     margin-bottom: 1rem;
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
 }
 
 .filter-container label {
@@ -447,14 +451,14 @@ body.dark-mode .building-header {
 }
 
 .subscriber-name {
-    font-size: 0.9rem;
+    font-size: 1.125rem; /* 25% increase from 0.9rem */
     font-weight: 600;
-    color: #666;
+    color: #000000; /* Black in light mode */
     margin-bottom: 0.5rem;
 }
 
 body.dark-mode .subscriber-name {
-    color: #999;
+    color: #ffffff; /* White in dark mode */
 }
 
 .subscriber-products {

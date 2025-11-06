@@ -106,7 +106,7 @@ async function loadData() {
         allData = parseCSV(text);
     } catch (error) {
         console.error('Error loading data:', error);
-        alert('Virhe tietojen lataamisessa. Varmista että combined.data.csv tiedosto on saatavilla.');
+        alert('Virhe tietojen lataamisessa. Varmista, että combined.data.csv tiedosto on saatavilla.');
     }
 }
 
@@ -664,7 +664,17 @@ function scheduleMidnightReset() {
         performMidnightReset();
         localStorage.setItem('lastResetDate', new Date().toDateString());
         
-        // Reload the page to reflect the reset
-        window.location.reload();
+        // Refresh the display if user is on a delivery tab
+        if (currentCircuit) {
+            loadCircuit(currentCircuit);
+        }
+        
+        // Refresh tracker if visible
+        if (document.getElementById('trackerTab').classList.contains('active')) {
+            renderCircuitTracker();
+        }
+        
+        // Schedule next midnight reset
+        scheduleMidnightReset();
     }, timeUntilMidnight);
 }

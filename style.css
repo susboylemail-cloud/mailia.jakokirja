@@ -443,6 +443,7 @@ body.dark-mode .building-header {
 
 .subscriber-name {
     font-size: 0.9rem;
+    font-weight: 600;
     color: #666;
     margin-bottom: 0.5rem;
 }

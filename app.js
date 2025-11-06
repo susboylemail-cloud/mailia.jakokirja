@@ -477,11 +477,6 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const info = document.createElement('div');
     info.className = 'subscriber-info';
     
-    const address = document.createElement('div');
-    address.className = 'subscriber-address';
-    address.textContent = subscriber.address;
-    info.appendChild(address);
-    
     const name = document.createElement('div');
     name.className = 'subscriber-name';
     name.textContent = subscriber.name;

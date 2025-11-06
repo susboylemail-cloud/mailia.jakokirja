@@ -145,8 +145,10 @@ function initializeDarkMode() {
 }
 
 function updateDarkModeIcon(isDark) {
-    const icon = document.querySelector('.dark-mode-toggle .icon');
-    icon.textContent = isDark ? '☀️' : '🌙';
+    const icon = document.querySelector('#darkModeToggle .icon');
+    if (icon) {
+        icon.textContent = isDark ? '☀️' : '🌙';
+    }
 }
 
 // Tab Navigation

@@ -232,6 +232,8 @@ function parseCircuitCSV(text) {
     for (let i = 1; i < lines.length; i++) {
         const subscriber = parseCSVLine(lines[i]);
         if (subscriber) {
+            // Add original order index to maintain CSV order
+            subscriber.orderIndex = i;
             subscribers.push(subscriber);
         }
     }
@@ -416,32 +418,38 @@ function renderSubscriberList(circuitId, subscribers) {
     const listContainer = document.getElementById('subscriberList');
     listContainer.innerHTML = '';
     
-    // Group by building address
-    const buildings = {};
+    // Group by building address while preserving order
+    const buildings = [];
+    const buildingMap = {};
+    
     subscribers.forEach(sub => {
         const building = sub.buildingAddress;
-        if (!buildings[building]) {
-            buildings[building] = [];
+        if (!buildingMap[building]) {
+            buildingMap[building] = {
+                name: building,
+                subscribers: [],
+                firstIndex: sub.orderIndex
+            };
+            buildings.push(buildingMap[building]);
         }
-        buildings[building].push(sub);
+        buildingMap[building].subscribers.push(sub);
     });
     
-    // Render each building group
-    const buildingKeys = Object.keys(buildings).sort();
-    buildingKeys.forEach((building, buildingIndex) => {
+    // Render each building group in original CSV order
+    buildings.forEach((buildingObj, buildingIndex) => {
         const buildingGroup = document.createElement('div');
         buildingGroup.className = 'building-group';
         
         const header = document.createElement('div');
         header.className = 'building-header';
-        header.textContent = building;
+        header.textContent = buildingObj.name;
         buildingGroup.appendChild(header);
         
-        const buildingSubscribers = buildings[building];
+        const buildingSubscribers = buildingObj.subscribers;
         buildingSubscribers.forEach((sub, subIndex) => {
             const card = createSubscriberCard(circuitId, sub, buildingIndex, subIndex, 
-                buildingIndex === buildingKeys.length - 1 && subIndex === buildingSubscribers.length - 1,
-                buildingKeys, buildings, buildingIndex, subIndex);
+                buildingIndex === buildings.length - 1 && subIndex === buildingSubscribers.length - 1,
+                buildings, buildingIndex, subIndex);
             buildingGroup.appendChild(card);
         });
         
@@ -449,7 +457,7 @@ function renderSubscriberList(circuitId, subscribers) {
     });
 }
 
-function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildingKeys, buildings, currentBuildingIndex, currentSubIndex) {
+function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildings, currentBuildingIndex, currentSubIndex) {
     const card = document.createElement('div');
     card.className = 'subscriber-card';
     card.dataset.products = subscriber.products.join(',');
@@ -491,7 +499,7 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     
     // Navigation link (if not last)
     if (!isLast) {
-        const nextAddress = getNextAddress(buildingKeys, buildings, currentBuildingIndex, currentSubIndex);
+        const nextAddress = getNextAddress(buildings, currentBuildingIndex, currentSubIndex);
         if (nextAddress) {
             const link = document.createElement('a');
             link.className = 'nav-link';
@@ -506,9 +514,9 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     return card;
 }
 
-function getNextAddress(buildingKeys, buildings, currentBuildingIndex, currentSubIndex) {
-    const currentBuilding = buildingKeys[currentBuildingIndex];
-    const currentBuildingSubscribers = buildings[currentBuilding];
+function getNextAddress(buildings, currentBuildingIndex, currentSubIndex) {
+    const currentBuilding = buildings[currentBuildingIndex];
+    const currentBuildingSubscribers = currentBuilding.subscribers;
     
     // Try next subscriber in same building
     if (currentSubIndex < currentBuildingSubscribers.length - 1) {
@@ -516,9 +524,9 @@ function getNextAddress(buildingKeys, buildings, currentBuildingIndex, currentSu
     }
     
     // Try first subscriber in next building
-    if (currentBuildingIndex < buildingKeys.length - 1) {
-        const nextBuilding = buildingKeys[currentBuildingIndex + 1];
-        return buildings[nextBuilding][0].address;
+    if (currentBuildingIndex < buildings.length - 1) {
+        const nextBuilding = buildings[currentBuildingIndex + 1];
+        return nextBuilding.subscribers[0].address;
     }
     
     return null;

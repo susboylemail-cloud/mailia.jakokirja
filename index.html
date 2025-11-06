@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mailia - Jakelu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 class="logo">Mailia</h1>
+            <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
+                <span class="icon">🌙</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="tab-container">
+        <button class="tab-button active" data-tab="delivery">Jakelu</button>
+        <button class="tab-button" data-tab="tracker">Piirien seuranta</button>
+    </div>
+
+    <main>
+        <!-- Delivery Tab -->
+        <div id="deliveryTab" class="tab-content active">
+            <div class="circuit-selector-container">
+                <label for="circuitSelect">Valitse piiri:</label>
+                <select id="circuitSelect">
+                    <option value="">-- Valitse piiri --</option>
+                </select>
+            </div>
+
+            <div id="deliveryContent" class="delivery-content" style="display: none;">
+                <!-- Cover Sheet -->
+                <div class="cover-sheet">
+                    <h2>Reitin lehtimäärät</h2>
+                    <div class="date-display" id="dateDisplay"></div>
+                    <div class="product-counts" id="productCounts"></div>
+                    <button id="startRouteBtn" class="route-button">Aloita reitti</button>
+                    <div id="routeStartTime" class="route-time" style="display: none;"></div>
+                </div>
+
+                <!-- STF Filter -->
+                <div class="filter-container">
+                    <label>
+                        <input type="checkbox" id="hideStfFilter">
+                        Piilota STF
+                    </label>
+                </div>
+
+                <!-- Subscriber List -->
+                <div id="subscriberList" class="subscriber-list"></div>
+
+                <!-- Route Complete Button -->
+                <div class="route-complete-container" style="display: none;">
+                    <button id="completeRouteBtn" class="route-button complete">Reitti valmis</button>
+                    <div id="routeEndTime" class="route-time"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Circuit Tracker Tab -->
+        <div id="trackerTab" class="tab-content">
+            <h2>Piirien tilanne</h2>
+            <div id="circuitTracker" class="circuit-tracker"></div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

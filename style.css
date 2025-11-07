@@ -2,6 +2,9 @@
 :root {
     --primary-blue: #0066cc;
     --accent-cyan: #00aacc;
+    --navy: #001f3f;
+    --red-accent: #dc3545;
+    --light-purple: #e6d5f0;
     --header-gradient-start: #0066cc;
     --header-gradient-end: #0088dd;
     --bg-color: #ffffff;
@@ -44,7 +47,10 @@ body {
     left: 0;
     width: 100%;
     height: 100vh;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    background: var(--navy);
+    background-image: 
+        radial-gradient(circle at 20% 80%, var(--red-accent) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, var(--red-accent) 0%, transparent 50%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -158,10 +164,16 @@ body.dark-mode .login-error {
 
 /* Header */
 header {
-    background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
-    color: white;
+    background: #ffffff;
+    color: var(--navy);
     padding: 1rem;
-    box-shadow: 0 2px 8px var(--shadow);
+    box-shadow: none;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+body.dark-mode header {
+    background: #2a2a2a;
+    border-bottom: 1px solid #404040;
 }
 
 .header-content {
@@ -176,12 +188,47 @@ header {
     font-size: 1.8rem;
     font-weight: bold;
     letter-spacing: 1px;
+    color: var(--navy);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.quick-dial {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--navy);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    background: rgba(0, 31, 63, 0.1);
+    border: 2px solid var(--navy);
+    transition: all 0.3s;
+    font-size: 1.2rem;
+}
+
+.quick-dial:hover {
+    background: rgba(0, 31, 63, 0.2);
+    transform: scale(1.05);
+}
+
+.quick-dial-label {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.quick-dial-icon {
+    font-size: 1.2rem;
 }
 
 .dark-mode-toggle {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
+    background: rgba(0, 31, 63, 0.1);
+    border: 2px solid var(--navy);
+    color: var(--navy);
     padding: 0.5rem 1rem;
     border-radius: 20px;
     cursor: pointer;
@@ -190,40 +237,47 @@ header {
 }
 
 .dark-mode-toggle:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 31, 63, 0.2);
 }
 
 /* Tabs */
 .tab-container {
     display: flex;
-    background-color: var(--card-bg);
-    border-bottom: 2px solid var(--border-color);
+    gap: 1rem;
+    padding: 1rem;
+    background-color: transparent;
+    border-bottom: none;
     max-width: 1200px;
     margin: 0 auto;
+    justify-content: center;
 }
 
 .tab-button {
-    flex: 1;
-    padding: 1rem;
-    background: transparent;
-    border: none;
+    padding: 0.75rem 2rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
     color: var(--text-color);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    border-bottom: 3px solid transparent;
+    border-radius: 25px;
     transition: all 0.3s;
+    box-shadow: 0 2px 4px var(--shadow);
 }
 
 .tab-button:hover {
-    background-color: var(--primary-blue);
+    background-color: var(--navy);
     color: white;
+    border-color: var(--navy);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--shadow);
 }
 
 .tab-button.active {
-    background-color: var(--accent-cyan);
+    background-color: var(--navy);
     color: white;
-    border-bottom-color: var(--primary-blue);
+    border-color: var(--navy);
+    box-shadow: 0 4px 8px var(--shadow);
 }
 
 /* Main Content */
@@ -345,7 +399,7 @@ body.dark-mode .product-badge.product-HS .count {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
     margin-top: 0.5rem;
 }
@@ -496,6 +550,16 @@ body.dark-mode .subscriber-name {
 .product-tag.product-STF {
     background: #ff7f50;
     color: white;
+}
+
+.product-tag.product-JO {
+    background: var(--light-purple);
+    color: #333;
+}
+
+.product-badge.product-JO {
+    background: var(--light-purple);
+    color: #333;
 }
 
 .nav-link {

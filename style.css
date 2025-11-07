@@ -266,12 +266,6 @@ body.dark-mode header {
     transform: none;
 }
 
-.quick-dial .icon-img {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-}
-
 /* Settings Container */
 .settings-container {
     position: relative;

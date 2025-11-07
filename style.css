@@ -268,8 +268,7 @@ body.dark-mode header {
 }
 
 .quick-dial .icon-img {
-    /* Simplify icon - remove inner circle effect */
-    filter: invert(1) brightness(0);
+    /* Keep original icon appearance */
 }
 
 .quick-dial:hover {

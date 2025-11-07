@@ -7,10 +7,15 @@
     --accent-green: #8FBC8F;
     --navy: #2C3E50;
     --red-accent: #E07856;
+    --yellow-accent: #FFE082;
+    --orange-accent: #FFA726;
     --light-purple: #e6d5f0;
     --warm-gray: #F5F5F0;
     --medium-gray: #D1D5D8;
     --dark-gray: #6C757D;
+    
+    /* Typography */
+    --base-font-size: 16px;
     
     /* Background and text colors */
     --bg-color: #FAFAFA;
@@ -46,7 +51,7 @@ body {
     color: var(--text-color);
     line-height: 1.6;
     transition: background-color 0.3s, color 0.3s;
-    font-size: 16px;
+    font-size: var(--base-font-size);
     font-weight: 400;
     letter-spacing: 0.01em;
 }
@@ -459,7 +464,7 @@ main {
 }
 
 .product-badge.product-UV {
-    background: #FFE082;
+    background: var(--yellow-accent);
     color: #333;
 }
 
@@ -479,7 +484,7 @@ main {
 }
 
 .product-badge.product-LU {
-    background: #FFA726;
+    background: var(--orange-accent);
     color: white;
 }
 
@@ -660,7 +665,7 @@ body.dark-mode .subscriber-name {
 }
 
 .product-tag.product-UV {
-    background: #FFE082;
+    background: var(--yellow-accent);
     color: #333;
 }
 
@@ -680,7 +685,7 @@ body.dark-mode .subscriber-name {
 }
 
 .product-tag.product-LU {
-    background: #FFA726;
+    background: var(--orange-accent);
     color: white;
 }
 

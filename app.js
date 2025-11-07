@@ -130,11 +130,18 @@ function initializeSwipeUp() {
         if (isMouseDown) {
             handleSwipe(mouseStartY, mouseEndY);
             isMouseDown = false;
+            mouseStartY = 0;
+            mouseEndY = 0;
         }
     });
     
     landingPage.addEventListener('mouseleave', () => {
+        if (isMouseDown) {
+            handleSwipe(mouseStartY, mouseEndY);
+        }
         isMouseDown = false;
+        mouseStartY = 0;
+        mouseEndY = 0;
     });
     
     // Handle swipe gesture

@@ -130,6 +130,21 @@ body {
     }
 }
 
+/* Accessibility: Reduce animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .swipe-icon,
+    .swipe-text {
+        animation: none;
+    }
+    
+    .landing-page,
+    .login-container,
+    .form-group input,
+    .login-button {
+        transition: none;
+    }
+}
+
 /* Login Container */
 .login-container {
     position: absolute;

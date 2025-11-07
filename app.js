@@ -1,15 +1,29 @@
 // Mailia Delivery Tracking Application
 
+// Animation constants
+const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
+
 // Authentication credentials
+// WARNING: This is client-side only implementation for demonstration purposes
+// In production, implement proper server-side authentication
 const CREDENTIALS = {
-    username: 'imatravj',
-    password: 'mailiavj1!'
+    delivery: {
+        username: 'imatravj',
+        password: 'mailiavj1!'
+    },
+    admin: {
+        username: 'paivystys.imatra',
+        password: 'mailia123!'
+    }
 };
 
 // Global state
 let allData = [];
 let currentCircuit = null;
 let isAuthenticated = false;
+let userRole = null; // 'delivery' or 'admin'
+let routeMessages = []; // Store route messages for admin panel
+let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
 
 // Circuit names mapping
 const circuitNames = {
@@ -67,6 +81,12 @@ const circuitNames = {
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', async () => {
+    // Load saved credentials if available
+    loadSavedCredentials();
+    
+    // Load checkbox visibility preference
+    loadCheckboxVisibility();
+    
     // Check if already authenticated
     checkAuthentication();
     
@@ -80,16 +100,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Authentication
 function checkAuthentication() {
     const sessionAuth = sessionStorage.getItem('mailiaAuth');
+    const sessionRole = sessionStorage.getItem('mailiaRole');
     if (sessionAuth === 'authenticated') {
         isAuthenticated = true;
+        userRole = sessionRole || 'delivery';
         showMainApp();
+    }
+}
+
+function loadSavedCredentials() {
+    const savedCreds = localStorage.getItem('mailiaSavedCredentials');
+    if (savedCreds) {
+        try {
+            const {username, password} = JSON.parse(savedCreds);
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            if (usernameInput && passwordInput) {
+                usernameInput.value = username;
+                passwordInput.value = password;
+            }
+        } catch (e) {
+            console.error('Failed to load saved credentials', e);
+        }
     }
 }
 
 function initializeLogin() {
     const loginForm = document.getElementById('loginForm');
+    const passwordInput = document.getElementById('password');
+    const loginButton = document.querySelector('.login-button');
+    
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Add listener to password field to check if correct password is entered
+    if (passwordInput && loginButton) {
+        passwordInput.addEventListener('input', () => {
+            const username = document.getElementById('username').value;
+            const password = passwordInput.value;
+            
+            const isDeliveryUser = username === CREDENTIALS.delivery.username && password === CREDENTIALS.delivery.password;
+            const isAdminUser = username === CREDENTIALS.admin.username && password === CREDENTIALS.admin.password;
+            
+            if (isDeliveryUser || isAdminUser) {
+                loginButton.classList.add('correct-password');
+            } else {
+                loginButton.classList.remove('correct-password');
+            }
+        });
     }
 }
 
@@ -100,11 +159,31 @@ function handleLogin(event) {
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('loginError');
     
-    if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+    let authenticated = false;
+    let role = null;
+    
+    // Check delivery user credentials
+    if (username === CREDENTIALS.delivery.username && password === CREDENTIALS.delivery.password) {
+        authenticated = true;
+        role = 'delivery';
+    }
+    // Check admin credentials
+    else if (username === CREDENTIALS.admin.username && password === CREDENTIALS.admin.password) {
+        authenticated = true;
+        role = 'admin';
+    }
+    
+    if (authenticated) {
         // Successful login
         sessionStorage.setItem('mailiaAuth', 'authenticated');
+        sessionStorage.setItem('mailiaRole', role);
         isAuthenticated = true;
+        userRole = role;
         errorDiv.style.display = 'none';
+        
+        // Prompt to save login info
+        promptSaveLoginInfo(username, password);
+        
         showMainApp();
     } else {
         // Failed login
@@ -114,12 +193,64 @@ function handleLogin(event) {
     }
 }
 
+function promptSaveLoginInfo(username, password) {
+    // Check if credentials are already saved
+    const savedCreds = localStorage.getItem('mailiaSavedCredentials');
+    if (savedCreds) return; // Already saved
+    
+    // WARNING: Storing passwords in localStorage is insecure
+    // This is for convenience in a client-side-only demo application
+    // In production, use secure token-based authentication
+    setTimeout(() => {
+        if (confirm('Haluatko tallentaa kirjautumistiedot?')) {
+            localStorage.setItem('mailiaSavedCredentials', JSON.stringify({
+                username: username,
+                password: password  // Stored in plain text - NOT SECURE
+            }));
+        }
+    }, 500);
+}
+
+// Checkbox visibility functions
+function loadCheckboxVisibility() {
+    const saved = localStorage.getItem('mailiaShowCheckboxes');
+    showCheckboxes = saved === 'true';
+}
+
+function saveCheckboxVisibility(visible) {
+    showCheckboxes = visible;
+    localStorage.setItem('mailiaShowCheckboxes', visible.toString());
+}
+
+function toggleCheckboxVisibility(visible) {
+    saveCheckboxVisibility(visible);
+    updateCheckboxVisibility();
+}
+
+function updateCheckboxVisibility() {
+    const cards = document.querySelectorAll('.subscriber-card');
+    cards.forEach(card => {
+        if (showCheckboxes) {
+            card.classList.add('show-checkboxes');
+        } else {
+            card.classList.remove('show-checkboxes');
+        }
+    });
+}
+
+
 async function showMainApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();
+    
+    // Initialize logout button
+    initializeLogout();
+    
+    // Initialize settings dropdown
+    initializeSettings();
     
     // Initialize the main application
     initializeTabs();
@@ -141,26 +272,95 @@ function initializeDarkMode() {
     // Only setup toggle if user is authenticated
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle && isAuthenticated) {
-        updateDarkModeIcon(darkMode);
         darkModeToggle.addEventListener('click', () => {
             const isDark = document.body.classList.toggle('dark-mode');
             localStorage.setItem('darkMode', isDark);
-            updateDarkModeIcon(isDark);
         });
     }
 }
 
-function updateDarkModeIcon(isDark) {
-    const icon = document.querySelector('#darkModeToggle .icon');
-    if (icon) {
-        icon.textContent = isDark ? '☀️' : '🌙';
+// Settings
+function initializeSettings() {
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsDropdown = document.getElementById('settingsDropdown');
+    const settingsContainer = document.querySelector('.settings-container');
+    const showCheckboxesToggle = document.getElementById('showCheckboxesToggle');
+    
+    if (settingsBtn && settingsDropdown && settingsContainer) {
+        // Toggle dropdown when settings button is clicked
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsDropdown.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!settingsContainer.contains(e.target)) {
+                settingsDropdown.classList.remove('show');
+            }
+        });
+        
+        // Prevent dropdown from closing when clicking inside it
+        settingsDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Initialize checkbox toggle
+        if (showCheckboxesToggle) {
+            showCheckboxesToggle.checked = showCheckboxes;
+            showCheckboxesToggle.addEventListener('change', (e) => {
+                toggleCheckboxVisibility(e.target.checked);
+            });
+        }
     }
+}
+
+// Logout
+function initializeLogout() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn && isAuthenticated) {
+        logoutBtn.addEventListener('click', () => {
+            handleLogout();
+        });
+    }
+}
+
+function handleLogout() {
+    // Clear authentication
+    sessionStorage.removeItem('mailiaAuth');
+    isAuthenticated = false;
+    
+    // Hide main app and show login screen
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    
+    // Reset form
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('loginError').style.display = 'none';
 }
 
 // Tab Navigation
 function initializeTabs() {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Show/hide tabs based on user role
+    const jakeluButton = document.querySelector('[data-tab="delivery"]');
+    const seurantaButton = document.querySelector('[data-tab="tracker"]');
+    const messagesButton = document.querySelector('[data-tab="messages"]');
+    
+    if (userRole === 'admin') {
+        // Admin sees all tabs: Jakelu, Seuranta, and Reittiviestit
+        if (jakeluButton) jakeluButton.style.display = 'inline-block';
+        if (seurantaButton) seurantaButton.style.display = 'inline-block';
+        if (messagesButton) messagesButton.style.display = 'inline-block';
+    } else {
+        // Delivery user sees no tabs (direct access to circuit selector)
+        if (jakeluButton) jakeluButton.style.display = 'none';
+        if (seurantaButton) seurantaButton.style.display = 'none';
+        if (messagesButton) messagesButton.style.display = 'none';
+    }
 
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -170,10 +370,21 @@ function initializeTabs() {
             tabContents.forEach(content => content.classList.remove('active'));
 
             button.classList.add('active');
-            document.getElementById(targetTab === 'delivery' ? 'deliveryTab' : 'trackerTab').classList.add('active');
-
-            if (targetTab === 'tracker') {
+            
+            // Determine which tab content to show
+            let tabContent;
+            if (targetTab === 'delivery') {
+                tabContent = document.getElementById('deliveryTab');
+            } else if (targetTab === 'tracker') {
+                tabContent = document.getElementById('trackerTab');
                 renderCircuitTracker();
+            } else if (targetTab === 'messages') {
+                tabContent = document.getElementById('messagesTab');
+                renderRouteMessages();
+            }
+            
+            if (tabContent) {
+                tabContent.classList.add('active');
             }
         });
     });
@@ -184,7 +395,7 @@ async function loadData() {
     try {
         // List of all circuit CSV files
         const circuitFiles = [
-            'K28 DATA.csv', 'KP2 DATA.csv', 'KP R2 DATA.csv', 'KP R3 DATA.csv', 'KP R4 DATA.csv',
+            'K28 DATA.csv', 'KP R2 DATA.csv', 'KP R3 DATA.csv', 'KP R4 DATA.csv',
             'KP3 DATA.csv', 'KP4 DATA.csv', 'KP7 DATA.csv', 'KP9 DATA.csv',
             'KP10 DATA.csv', 'KP11 DATA.csv', 'KP12 DATA.csv', 'kp13.csv', 'KP15 DATA.csv',
             'KP16 DATA.csv', 'KP16B DATA.csv', 'KP18 DATA.csv', 'KP19 DATA.csv',
@@ -460,12 +671,17 @@ function renderCoverSheet(circuitId, subscribers) {
     const dateStr = `${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()}`;
     dateDisplay.textContent = `${weekday} ${dateStr}`;
     
-    // Aggregate products
+    const today = now.getDay();
+    
+    // Aggregate products - only count products valid for today
     const products = {};
     subscribers.forEach(sub => {
         sub.products.forEach(product => {
             const normalized = normalizeProduct(product);
-            products[normalized] = (products[normalized] || 0) + 1;
+            // Only count if product is valid for today
+            if (isProductValidForDay(normalized, today)) {
+                products[normalized] = (products[normalized] || 0) + 1;
+            }
         });
     });
     
@@ -487,13 +703,113 @@ function normalizeProduct(product) {
 
 function getProductColorClass(product) {
     // Map alternative products to base colors
-    // ESLS→ES, HSTS→HS, MALA→HS
+    // All HS variants → HS (green)
+    // All ES variants → ES (cyan)
+    // UV, JO, STF, LU keep their own colors
     const colorMap = {
-        'ESLS': 'ES',
-        'HSTS': 'HS',
-        'MALA': 'HS'
+        // Helsingin Sanomat variants
+        'SH': 'HS',        // Sunnuntai Hesari
+        'HSPS': 'HS',      // Hesari perjantai-sunnuntai
+        'HSPE': 'HS',      // Hesari perjantai
+        'HSLS': 'HS',      // Hesari lauantai-sunnuntai
+        'HSP': 'HS',       // Hesari maanantai-perjantai
+        'HSTS': 'HS',      // Hesari torstai-sunnuntai
+        'MALA': 'HS',      // Hesari maanantai-lauantai
+        // Etelä-Saimaa variants
+        'ESPS': 'ES',      // Etelä-Saimaa perjantai-sunnuntai
+        'ESLS': 'ES',      // Etelä-Saimaa lauantai-sunnuntai
+        'ESP': 'ES'        // Etelä-Saimaa maanantai-perjantai
     };
     return colorMap[product] || product;
+}
+
+// Day constants for better readability
+const SUNDAY = 0, MONDAY = 1, TUESDAY = 2, WEDNESDAY = 3, THURSDAY = 4, FRIDAY = 5, SATURDAY = 6;
+
+/**
+ * Check if a product should be delivered on a specific day of the week
+ * @param {string} product - The product code (e.g., 'ESLS', 'HSP', 'UV')
+ * @param {number} dayOfWeek - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+ * @returns {boolean} True if the product should be delivered on the given day
+ * 
+ * @example
+ * isProductValidForDay('ESLS', FRIDAY) // returns false (ESLS is weekend-only)
+ * isProductValidForDay('ESLS', SATURDAY) // returns true
+ * isProductValidForDay('UV', MONDAY) // returns true (UV has no day restrictions)
+ */
+function isProductValidForDay(product, dayOfWeek) {
+    const productSchedule = {
+        'SH': [SUNDAY],                              // Sunnuntai Hesari - Sunday only
+        'HSPS': [FRIDAY, SATURDAY, SUNDAY],          // Hesari perjantai-sunnuntai
+        'HSPE': [FRIDAY],                            // Hesari perjantai - Friday only
+        'HSLS': [SATURDAY, SUNDAY],                  // Hesari lauantai-sunnuntai
+        'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai - Monday to Friday
+        'HSTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY],           // Hesari torstai-sunnuntai
+        'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
+        'ESPS': [FRIDAY, SATURDAY, SUNDAY],          // Etelä-Saimaa perjantai-sunnuntai
+        'ESLS': [SATURDAY, SUNDAY],                  // Etelä-Saimaa lauantai-sunnuntai
+        'ESP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]   // Etelä-Saimaa maanantai-perjantai
+    };
+    
+    // If the product has a specific schedule, check if today is valid
+    if (productSchedule[product]) {
+        return productSchedule[product].includes(dayOfWeek);
+    }
+    
+    // All other products (UV, HS, ES, JO, STF, LU, etc.) are always valid
+    return true;
+}
+
+/**
+ * Simplifies product display names based on delivery days
+ * E.g., ESP (mon-fri) displays as "ES" on those days
+ */
+function simplifyProductName(product, dayOfWeek) {
+    const normalized = normalizeProduct(product);
+    
+    // ESP -> ES on Monday-Friday
+    if (normalized === 'ESP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
+        return 'ES';
+    }
+    // ESPS -> ES on Friday-Sunday
+    if (normalized === 'ESPS' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'ES';
+    }
+    // ESLS -> ES on Saturday-Sunday
+    if (normalized === 'ESLS' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'ES';
+    }
+    // HSP -> HS on Monday-Friday
+    if (normalized === 'HSP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // HSPS -> HS on Friday-Sunday
+    if (normalized === 'HSPS' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // HSPE -> HS on Friday
+    if (normalized === 'HSPE' && dayOfWeek === FRIDAY) {
+        return 'HS';
+    }
+    // HSLS -> HS on Saturday-Sunday  
+    if (normalized === 'HSLS' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // HSTS -> HS on Thursday-Sunday
+    if (normalized === 'HSTS' && [THURSDAY, FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // MALA -> HS on Monday-Saturday
+    if (normalized === 'MALA' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // SH -> HS on Sunday
+    if (normalized === 'SH' && dayOfWeek === SUNDAY) {
+        return 'HS';
+    }
+    
+    // Return original for all other cases
+    return product;
 }
 
 // Subscriber List
@@ -501,11 +817,34 @@ function renderSubscriberList(circuitId, subscribers) {
     const listContainer = document.getElementById('subscriberList');
     listContainer.innerHTML = '';
     
+    // Get current day of week
+    const today = new Date().getDay();
+    
+    // Filter subscribers to only include those with at least one valid product for today
+    const validSubscribers = subscribers.map(sub => {
+        // Filter products to only those valid for today
+        const validProducts = sub.products.filter(product => {
+            const normalized = normalizeProduct(product);
+            return isProductValidForDay(normalized, today);
+        });
+        
+        // If no valid products, don't include this subscriber
+        if (validProducts.length === 0) {
+            return null;
+        }
+        
+        // Return subscriber with filtered products
+        return {
+            ...sub,
+            products: validProducts
+        };
+    }).filter(sub => sub !== null);
+    
     // Group by building address while preserving order
     const buildings = [];
     const buildingMap = {};
     
-    subscribers.forEach(sub => {
+    validSubscribers.forEach(sub => {
         const building = sub.buildingAddress;
         if (!buildingMap[building]) {
             buildingMap[building] = {
@@ -545,6 +884,11 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     card.className = 'subscriber-card';
     card.dataset.products = subscriber.products.join(',');
     
+    // Apply checkbox visibility class based on user preference
+    if (showCheckboxes) {
+        card.classList.add('show-checkboxes');
+    }
+    
     // Checkbox
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -554,6 +898,9 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
         applyFilters(); // Re-apply filters to hide/show delivered addresses
     });
     card.appendChild(checkbox);
+    
+    // Add swipe functionality
+    initializeSwipeToMark(card, checkbox, circuitId, subscriber.address);
     
     // Subscriber info
     const info = document.createElement('div');
@@ -566,16 +913,28 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     
     const products = document.createElement('div');
     products.className = 'subscriber-products';
+    const today = new Date().getDay();
     subscriber.products.forEach(product => {
         const tag = document.createElement('span');
-        const colorClass = getProductColorClass(product.trim());
+        const simplifiedProduct = simplifyProductName(product.trim(), today);
+        const colorClass = getProductColorClass(simplifiedProduct);
         tag.className = `product-tag product-${colorClass}`;
-        tag.textContent = product;
+        tag.textContent = simplifiedProduct;
         products.appendChild(tag);
     });
     info.appendChild(products);
     
     card.appendChild(info);
+    
+    // Report undelivered button
+    const reportBtn = document.createElement('button');
+    reportBtn.className = 'report-button';
+    reportBtn.textContent = '🚩';
+    reportBtn.title = 'Ilmoita ongelmasta';
+    reportBtn.addEventListener('click', () => {
+        reportUndelivered(circuitId, subscriber);
+    });
+    card.appendChild(reportBtn);
     
     // Navigation link (if not last)
     if (!isLast) {
@@ -586,7 +945,11 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
             link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextAddress + ', Imatra, Finland')}`;
             link.target = '_blank';
             link.title = `Navigate to ${nextAddress}`;
-            link.textContent = '→';
+            const navImg = document.createElement('img');
+            navImg.src = 'navigation icon.png';
+            navImg.alt = 'Navigate';
+            navImg.className = 'nav-icon-img';
+            link.appendChild(navImg);
             card.appendChild(link);
         }
     }
@@ -610,6 +973,300 @@ function getNextAddress(buildings, currentBuildingIndex, currentSubIndex) {
     }
     
     return null;
+}
+
+// Swipe to Mark as Delivered Functionality
+function initializeSwipeToMark(card, checkbox, circuitId, address) {
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    let startTime = 0;
+    const swipeThreshold = 100; // Minimum pixels to trigger swipe
+    const velocityThreshold = 0.3; // Minimum velocity for quick swipes
+    
+    // Touch events
+    card.addEventListener('touchstart', (e) => {
+        // Don't interfere with checkbox clicks or other button clicks
+        if (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+            return;
+        }
+        
+        startX = e.touches[0].clientX;
+        currentX = startX;
+        startTime = Date.now();
+        isDragging = false;
+        card.style.transition = 'none';
+    }, { passive: true });
+    
+    card.addEventListener('touchmove', (e) => {
+        if (startX === 0) return;
+        
+        currentX = e.touches[0].clientX;
+        const deltaX = currentX - startX;
+        
+        // Only allow right swipe
+        if (deltaX > 0) {
+            isDragging = true;
+            const translateX = Math.min(deltaX, 200); // Cap at 200px
+            card.style.transform = `translateX(${translateX}px)`;
+            card.style.opacity = 1 - (translateX / 300); // Fade out as it swipes
+        }
+    }, { passive: true });
+    
+    card.addEventListener('touchend', (e) => {
+        if (startX === 0) return;
+        
+        const deltaX = currentX - startX;
+        const deltaTime = Date.now() - startTime;
+        const velocity = deltaX / deltaTime; // pixels per ms
+        
+        // Check if swipe is valid (either distance or velocity threshold met)
+        const isValidSwipe = (deltaX > swipeThreshold) || (velocity > velocityThreshold && deltaX > 50);
+        
+        if (isDragging && isValidSwipe && deltaX > 0) {
+            // Mark as delivered with animation
+            card.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            card.style.transform = 'translateX(100%)';
+            card.style.opacity = '0';
+            
+            setTimeout(() => {
+                checkbox.checked = true;
+                saveCheckboxState(circuitId, address, true);
+                applyFilters();
+                
+                // Reset card position (will be hidden by filters if enabled)
+                card.style.transition = '';
+                card.style.transform = '';
+                card.style.opacity = '';
+            }, 300);
+        } else {
+            // Reset card position with animation
+            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transform = '';
+            card.style.opacity = '';
+        }
+        
+        // Reset tracking variables
+        startX = 0;
+        currentX = 0;
+        isDragging = false;
+    });
+    
+    // Mouse events for desktop testing (optional)
+    let isMouseDown = false;
+    
+    card.addEventListener('mousedown', (e) => {
+        if (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+            return;
+        }
+        
+        isMouseDown = true;
+        startX = e.clientX;
+        currentX = startX;
+        startTime = Date.now();
+        isDragging = false;
+        card.style.transition = 'none';
+        e.preventDefault();
+    });
+    
+    card.addEventListener('mousemove', (e) => {
+        if (!isMouseDown || startX === 0) return;
+        
+        currentX = e.clientX;
+        const deltaX = currentX - startX;
+        
+        if (deltaX > 0) {
+            isDragging = true;
+            const translateX = Math.min(deltaX, 200);
+            card.style.transform = `translateX(${translateX}px)`;
+            card.style.opacity = 1 - (translateX / 300);
+        }
+    });
+    
+    card.addEventListener('mouseup', (e) => {
+        if (!isMouseDown) return;
+        
+        const deltaX = currentX - startX;
+        const deltaTime = Date.now() - startTime;
+        const velocity = deltaX / deltaTime;
+        
+        const isValidSwipe = (deltaX > swipeThreshold) || (velocity > velocityThreshold && deltaX > 50);
+        
+        if (isDragging && isValidSwipe && deltaX > 0) {
+            card.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            card.style.transform = 'translateX(100%)';
+            card.style.opacity = '0';
+            
+            setTimeout(() => {
+                checkbox.checked = true;
+                saveCheckboxState(circuitId, address, true);
+                applyFilters();
+                
+                card.style.transition = '';
+                card.style.transform = '';
+                card.style.opacity = '';
+            }, 300);
+        } else {
+            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transform = '';
+            card.style.opacity = '';
+        }
+        
+        isMouseDown = false;
+        startX = 0;
+        currentX = 0;
+        isDragging = false;
+    });
+    
+    // Handle mouse leaving card while dragging
+    card.addEventListener('mouseleave', () => {
+        if (isMouseDown) {
+            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transform = '';
+            card.style.opacity = '';
+            isMouseDown = false;
+            startX = 0;
+            currentX = 0;
+            isDragging = false;
+        }
+    });
+}
+
+// Report Undelivered Functionality
+function reportUndelivered(circuitId, subscriber) {
+    // Create a styled dialog for selecting delivery issue
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    const dialogBox = document.createElement('div');
+    dialogBox.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    `;
+    
+    dialogBox.innerHTML = `
+        <h3 style="margin-top: 0; color: var(--navy); font-size: 1.25rem;">Jakeluhäiriön ilmoitus</h3>
+        <p style="margin-bottom: 1.5rem; color: var(--navy);">Valitse syy:</p>
+        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid #D1D5D8; border-radius: 8px; font-size: 1rem; margin-bottom: 1rem;">
+            <option value="">-- Valitse syy --</option>
+            <option value="Ei pääsyä">Ei pääsyä</option>
+            <option value="Avainongelma">Avainongelma</option>
+            <option value="Lehtipuute">Lehtipuute</option>
+            <option value="Muu">Muu</option>
+        </select>
+        <div id="customReasonContainer" style="display: none; margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--navy);">Tarkenna:</label>
+            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid #D1D5D8; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid #D1D5D8; background: white; color: var(--navy); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
+            <button id="submitBtn" style="padding: 0.75rem 1.5rem; border: none; background: var(--primary-blue); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Lähetä</button>
+        </div>
+    `;
+    
+    dialog.appendChild(dialogBox);
+    document.body.appendChild(dialog);
+    
+    const select = document.getElementById('deliveryIssueSelect');
+    const customContainer = document.getElementById('customReasonContainer');
+    const customText = document.getElementById('customReasonText');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Show custom reason field when "Muu" is selected
+    select.addEventListener('change', () => {
+        if (select.value === 'Muu') {
+            customContainer.style.display = 'block';
+        } else {
+            customContainer.style.display = 'none';
+        }
+    });
+    
+    // Cancel button
+    cancelBtn.addEventListener('click', () => {
+        document.body.removeChild(dialog);
+    });
+    
+    // Submit button
+    submitBtn.addEventListener('click', () => {
+        let reason = select.value;
+        
+        if (!reason) {
+            alert('Valitse syy');
+            return;
+        }
+        
+        // If "Muu" selected, append custom text
+        if (reason === 'Muu') {
+            const customReason = customText.value.trim();
+            if (!customReason) {
+                alert('Kirjoita tarkennusviesti');
+                return;
+            }
+            reason = `Muu: ${customReason}`;
+        }
+        
+        const report = {
+            timestamp: new Date().toISOString(),
+            circuit: circuitId,
+            address: subscriber.address,
+            name: subscriber.name,
+            products: subscriber.products.join(', '),
+            reason: reason
+        };
+        
+        // Save to localStorage
+        saveRouteMessage(report);
+        
+        // Remove dialog
+        document.body.removeChild(dialog);
+        
+        alert('Raportti tallennettu!');
+    });
+    
+    // Close on background click
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+            document.body.removeChild(dialog);
+        }
+    });
+}
+
+function saveRouteMessage(message) {
+    // Load existing messages
+    const messages = loadRouteMessages();
+    messages.push(message);
+    
+    // Save back to localStorage
+    localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+}
+
+function loadRouteMessages() {
+    const stored = localStorage.getItem('mailiaRouteMessages');
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            console.error('Failed to load route messages', e);
+            return [];
+        }
+    }
+    return [];
 }
 
 // Filters and Event Listeners
@@ -657,19 +1314,33 @@ function applyFilters() {
         }
         
         if (shouldHide) {
-            card.style.display = 'none';
+            // Add hiding class for animation
+            card.classList.add('hiding');
+            // After animation completes, hide with display: none
+            setTimeout(() => {
+                if (card.classList.contains('hiding')) {
+                    card.style.display = 'none';
+                }
+            }, ANIMATION_DURATION_MS);
         } else {
+            // Show the card
             card.style.display = '';
+            // Remove hiding class to trigger show animation
+            setTimeout(() => {
+                card.classList.remove('hiding');
+            }, 10);
         }
     });
     
     // Hide empty building groups
-    const buildingGroups = document.querySelectorAll('.building-group');
-    buildingGroups.forEach(group => {
-        const visibleCards = Array.from(group.querySelectorAll('.subscriber-card'))
-            .filter(card => card.style.display !== 'none');
-        group.style.display = visibleCards.length > 0 ? '' : 'none';
-    });
+    setTimeout(() => {
+        const buildingGroups = document.querySelectorAll('.building-group');
+        buildingGroups.forEach(group => {
+            const visibleCards = Array.from(group.querySelectorAll('.subscriber-card'))
+                .filter(card => card.style.display !== 'none');
+            group.style.display = visibleCards.length > 0 ? '' : 'none';
+        });
+    }, ANIMATION_DURATION_MS);
 }
 
 // Checkbox State Management
@@ -753,6 +1424,89 @@ function calculateDuration(start, end) {
         return `${hours}h ${minutes}min`;
     } else {
         return `${minutes}min`;
+    }
+}
+
+// Route Messages (Admin Panel)
+function renderRouteMessages() {
+    const messagesContainer = document.getElementById('routeMessages');
+    const messages = loadRouteMessages();
+    
+    if (messages.length === 0) {
+        messagesContainer.innerHTML = '<p class="no-messages">Ei viestejä</p>';
+        return;
+    }
+    
+    messagesContainer.innerHTML = '';
+    
+    // Sort by timestamp descending (newest first)
+    messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    messages.forEach((message, index) => {
+        const messageCard = document.createElement('div');
+        messageCard.className = 'message-card';
+        
+        const timestamp = new Date(message.timestamp);
+        const formattedDate = timestamp.toLocaleString('fi-FI');
+        
+        // Create elements safely to prevent XSS
+        const messageHeader = document.createElement('div');
+        messageHeader.className = 'message-header';
+        
+        const circuitSpan = document.createElement('span');
+        circuitSpan.className = 'message-circuit';
+        circuitSpan.textContent = message.circuit;
+        
+        const timestampSpan = document.createElement('span');
+        timestampSpan.className = 'message-timestamp';
+        timestampSpan.textContent = formattedDate;
+        
+        messageHeader.appendChild(circuitSpan);
+        messageHeader.appendChild(timestampSpan);
+        
+        const messageBody = document.createElement('div');
+        messageBody.className = 'message-body';
+        
+        const addressDiv = document.createElement('div');
+        addressDiv.className = 'message-address';
+        addressDiv.innerHTML = '<strong>Osoite:</strong> ';
+        addressDiv.appendChild(document.createTextNode(message.address));
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'message-name';
+        nameDiv.innerHTML = '<strong>Asiakas:</strong> ';
+        nameDiv.appendChild(document.createTextNode(message.name));
+        
+        const productsDiv = document.createElement('div');
+        productsDiv.className = 'message-products';
+        productsDiv.innerHTML = '<strong>Tuotteet:</strong> ';
+        productsDiv.appendChild(document.createTextNode(message.products));
+        
+        const reasonDiv = document.createElement('div');
+        reasonDiv.className = 'message-reason';
+        reasonDiv.innerHTML = '<strong>Syy:</strong> ';
+        reasonDiv.appendChild(document.createTextNode(message.reason));
+        
+        messageBody.appendChild(addressDiv);
+        messageBody.appendChild(nameDiv);
+        messageBody.appendChild(productsDiv);
+        messageBody.appendChild(reasonDiv);
+        
+        messageCard.appendChild(messageHeader);
+        messageCard.appendChild(messageBody);
+        
+        messagesContainer.appendChild(messageCard);
+    });
+    
+    // Add clear button handler
+    const clearBtn = document.getElementById('clearMessagesBtn');
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            if (confirm('Haluatko varmasti tyhjentää kaikki viestit?')) {
+                localStorage.removeItem('mailiaRouteMessages');
+                renderRouteMessages();
+            }
+        };
     }
 }
 

@@ -12,19 +12,22 @@
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
+        <video autoplay loop muted playsinline class="login-bg-video">
+            <source src="Simplify_Login_Page_Background.mp4" type="video/mp4">
+        </video>
         <div class="login-container">
             <div class="login-header">
                 <h1 class="login-logo">Mailia</h1>
                 <p class="login-subtitle">Imatran varhaisjakelu</p>
             </div>
             <form id="loginForm" class="login-form">
-                <div class="form-group">
-                    <label for="username">Käyttäjätunnus:</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
+                <div class="input-group">
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder=" ">
+                    <label for="username">Käyttäjätunnus</label>
                 </div>
-                <div class="form-group">
-                    <label for="password">Salasana:</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                <div class="input-group">
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder=" ">
+                    <label for="password">Salasana</label>
                 </div>
                 <div id="loginError" class="login-error" style="display: none;"></div>
                 <button type="submit" class="login-button">Kirjaudu sisään</button>
@@ -38,32 +41,62 @@
         <div class="header-content">
             <h1 class="logo">Sähköinen jakokirja</h1>
             <div class="header-right">
-                <a href="tel:0503728330" class="quick-dial">
-                    <div class="quick-dial-label">0503728330</div>
-                    <div class="quick-dial-icon">📞</div>
+                <a href="tel:0503728330" class="quick-dial icon-button" aria-label="Soita 0503728330">
+                    <img src="quick dial 1.png" alt="Quick dial" class="icon-img">
                 </a>
-                <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
-                    <span class="icon">🌙</span>
+                <button id="darkModeToggle" class="dark-mode-toggle icon-button" aria-label="Toggle dark mode">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+                <div class="settings-container">
+                    <button id="settingsBtn" class="settings-button icon-button" aria-label="Asetukset">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                    </button>
+                    <div id="settingsDropdown" class="settings-dropdown">
+                        <label>
+                            <input type="checkbox" id="showCheckboxesToggle">
+                            Kuittausruudut käytössä
+                        </label>
+                        <label>
+                            <input type="checkbox" id="hideStfFilter">
+                            Piilota STF
+                        </label>
+                        <label>
+                            <input type="checkbox" id="hideDeliveredFilter">
+                            Piilota jaetut tilaukset
+                        </label>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-button icon-button" aria-label="Kirjaudu ulos">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
                 </button>
             </div>
         </div>
     </header>
 
     <div class="tab-container">
-        <button class="tab-button active" data-tab="delivery">Jakelu</button>
-        <button class="tab-button" data-tab="tracker">Seuranta</button>
+        <button class="tab-button admin-only" data-tab="delivery" style="display: none;">Jakelu</button>
+        <button class="tab-button admin-only" data-tab="tracker" style="display: none;">Seuranta</button>
+        <button class="tab-button admin-only" data-tab="messages" style="display: none;">Reittiviestit</button>
+    </div>
+
+    <!-- Circuit selector - always visible -->
+    <div class="circuit-selector-container">
+        <select id="circuitSelect">
+            <option value="">Valitse piiri</option>
+        </select>
     </div>
 
     <main>
         <!-- Delivery Tab -->
         <div id="deliveryTab" class="tab-content active">
-            <div class="circuit-selector-container">
-                <label for="circuitSelect">Valitse piiri:</label>
-                <select id="circuitSelect">
-                    <option value="">-- Valitse piiri --</option>
-                </select>
-            </div>
-
             <div id="deliveryContent" class="delivery-content" style="display: none;">
                 <!-- Cover Sheet -->
                 <div class="cover-sheet">
@@ -72,18 +105,6 @@
                     <div class="product-counts" id="productCounts"></div>
                     <button id="startRouteBtn" class="route-button">Aloita reitti</button>
                     <div id="routeStartTime" class="route-time" style="display: none;"></div>
-                </div>
-
-                <!-- Filters -->
-                <div class="filter-container">
-                    <label>
-                        <input type="checkbox" id="hideStfFilter">
-                        Piilota STF
-                    </label>
-                    <label>
-                        <input type="checkbox" id="hideDeliveredFilter">
-                        Piilota jaetut tilaukset
-                    </label>
                 </div>
 
                 <!-- Subscriber List -->
@@ -101,6 +122,15 @@
         <div id="trackerTab" class="tab-content">
             <h2>Piirien tilanne</h2>
             <div id="circuitTracker" class="circuit-tracker"></div>
+        </div>
+        
+        <!-- Route Messages Tab (Admin Only) -->
+        <div id="messagesTab" class="tab-content">
+            <div class="messages-header">
+                <h2>Reittiviestit</h2>
+                <button id="clearMessagesBtn" class="danger-button">Tyhjennä viestit</button>
+            </div>
+            <div id="routeMessages" class="route-messages"></div>
         </div>
     </main>
     </div>

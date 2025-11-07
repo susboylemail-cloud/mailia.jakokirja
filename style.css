@@ -22,6 +22,7 @@ body.dark-mode {
     --border-color: #404040;
     --building-bg: #1e3a5f;
     --shadow: rgba(0, 0, 0, 0.3);
+    --red-accent: #ff6b6b;
 }
 
 /* Reset */
@@ -257,12 +258,12 @@ body.dark-mode header {
 }
 
 body.dark-mode .logout-button {
-    border-color: #ff6b6b;
-    color: #ff6b6b;
+    border-color: var(--red-accent);
+    color: var(--red-accent);
 }
 
 body.dark-mode .logout-button:hover {
-    background: #ff6b6b;
+    background: var(--red-accent);
     color: white;
 }
 

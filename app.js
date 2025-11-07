@@ -212,7 +212,7 @@ async function loadData() {
     try {
         // List of all circuit CSV files
         const circuitFiles = [
-            'K28 DATA.csv', 'KP2 DATA.csv', 'KP R2 DATA.csv', 'KP R3 DATA.csv', 'KP R4 DATA.csv',
+            'K28 DATA.csv', 'KP R2 DATA.csv', 'KP R3 DATA.csv', 'KP R4 DATA.csv',
             'KP3 DATA.csv', 'KP4 DATA.csv', 'KP7 DATA.csv', 'KP9 DATA.csv',
             'KP10 DATA.csv', 'KP11 DATA.csv', 'KP12 DATA.csv', 'kp13.csv', 'KP15 DATA.csv',
             'KP16 DATA.csv', 'KP16B DATA.csv', 'KP18 DATA.csv', 'KP19 DATA.csv',

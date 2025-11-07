@@ -83,15 +83,16 @@
         <button class="tab-button admin-only" data-tab="messages" style="display: none;">Reittiviestit</button>
     </div>
 
+    <!-- Circuit selector - always visible -->
+    <div class="circuit-selector-container">
+        <select id="circuitSelect">
+            <option value="">Valitse piiri</option>
+        </select>
+    </div>
+
     <main>
         <!-- Delivery Tab -->
         <div id="deliveryTab" class="tab-content active">
-            <div class="circuit-selector-container">
-                <select id="circuitSelect">
-                    <option value="">Valitse piiri</option>
-                </select>
-            </div>
-
             <div id="deliveryContent" class="delivery-content" style="display: none;">
                 <!-- Cover Sheet -->
                 <div class="cover-sheet">

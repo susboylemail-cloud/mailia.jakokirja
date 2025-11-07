@@ -65,13 +65,24 @@ body {
     width: 100%;
     height: 100vh;
     background: var(--navy);
-    background-image: 
-        radial-gradient(circle at 20% 80%, var(--red-accent) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, var(--red-accent) 0%, transparent 50%);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999;
+    overflow: hidden;
+}
+
+.login-bg-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    z-index: 0;
 }
 
 .login-container {
@@ -81,6 +92,8 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     width: 90%;
     max-width: 400px;
+    position: relative;
+    z-index: 1;
 }
 
 body.dark-mode .login-container {

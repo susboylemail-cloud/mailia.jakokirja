@@ -1014,7 +1014,7 @@ body.dark-mode .subscriber-name {
 .circuit-tracker {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .circuit-item {
@@ -1055,18 +1055,18 @@ body.dark-mode .subscriber-name {
 
 /* Add card glows based on status for quick glance */
 .circuit-item.not-started-item {
-    background: linear-gradient(90deg, rgba(220, 53, 69, 0.05) 0%, var(--card-bg) 15%);
-    box-shadow: 0 0 20px rgba(220, 53, 69, 0.3), 0 2px 4px var(--shadow);
+    background: linear-gradient(90deg, rgba(220, 53, 69, 0.08) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 30px rgba(220, 53, 69, 0.5), 0 2px 4px var(--shadow);
 }
 
 .circuit-item.in-progress-item {
-    background: linear-gradient(90deg, rgba(255, 167, 38, 0.08) 0%, var(--card-bg) 15%);
-    box-shadow: 0 0 20px rgba(255, 167, 38, 0.4), 0 2px 4px var(--shadow);
+    background: linear-gradient(90deg, rgba(255, 167, 38, 0.12) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 30px rgba(255, 167, 38, 0.6), 0 2px 4px var(--shadow);
 }
 
 .circuit-item.completed-item {
-    background: linear-gradient(90deg, rgba(40, 167, 69, 0.05) 0%, var(--card-bg) 15%);
-    box-shadow: 0 0 20px rgba(40, 167, 69, 0.3), 0 2px 4px var(--shadow);
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.08) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 30px rgba(40, 167, 69, 0.5), 0 2px 4px var(--shadow);
 }
 
 .circuit-header {

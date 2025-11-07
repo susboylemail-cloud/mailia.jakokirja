@@ -69,6 +69,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check if already authenticated
     checkAuthentication();
     
+    // Setup swipe-up interaction for login
+    initializeSwipeUp();
+    
     // Setup login form
     initializeLogin();
     
@@ -82,6 +85,74 @@ function checkAuthentication() {
     if (sessionAuth === 'authenticated') {
         isAuthenticated = true;
         showMainApp();
+    }
+}
+
+// Swipe-up interaction
+function initializeSwipeUp() {
+    const landingPage = document.getElementById('landingPage');
+    const loginContainer = document.getElementById('loginContainer');
+    
+    if (!landingPage || !loginContainer) return;
+    
+    let touchStartY = 0;
+    let touchEndY = 0;
+    let mouseStartY = 0;
+    let mouseEndY = 0;
+    let isMouseDown = false;
+    
+    // Touch events for mobile
+    landingPage.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    landingPage.addEventListener('touchmove', (e) => {
+        touchEndY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    landingPage.addEventListener('touchend', () => {
+        handleSwipe(touchStartY, touchEndY);
+    });
+    
+    // Mouse events for desktop
+    landingPage.addEventListener('mousedown', (e) => {
+        isMouseDown = true;
+        mouseStartY = e.clientY;
+    });
+    
+    landingPage.addEventListener('mousemove', (e) => {
+        if (isMouseDown) {
+            mouseEndY = e.clientY;
+        }
+    });
+    
+    landingPage.addEventListener('mouseup', () => {
+        if (isMouseDown) {
+            handleSwipe(mouseStartY, mouseEndY);
+            isMouseDown = false;
+        }
+    });
+    
+    landingPage.addEventListener('mouseleave', () => {
+        isMouseDown = false;
+    });
+    
+    // Handle swipe gesture
+    function handleSwipe(startY, endY) {
+        const swipeDistance = startY - endY;
+        const minSwipeDistance = 50; // Minimum pixels to trigger swipe
+        
+        if (swipeDistance > minSwipeDistance) {
+            // Swipe up detected
+            revealLogin();
+        }
+    }
+    
+    function revealLogin() {
+        landingPage.classList.add('swiped');
+        setTimeout(() => {
+            loginContainer.classList.add('visible');
+        }, 300);
     }
 }
 

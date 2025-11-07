@@ -12,19 +12,30 @@
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
-        <div class="login-container">
+        <!-- Landing Page with Swipe Indicator -->
+        <div id="landingPage" class="landing-page">
+            <div class="landing-content">
+                <h1 class="landing-logo">Mailia</h1>
+                <p class="landing-subtitle">Imatran varhaisjakelu</p>
+                <div class="swipe-indicator">
+                    <div class="swipe-icon">↑</div>
+                    <p class="swipe-text">Pyyhkäise ylös kirjautuaksesi</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Login Container (hidden initially) -->
+        <div id="loginContainer" class="login-container">
             <div class="login-header">
                 <h1 class="login-logo">Mailia</h1>
                 <p class="login-subtitle">Imatran varhaisjakelu</p>
             </div>
             <form id="loginForm" class="login-form">
                 <div class="form-group">
-                    <label for="username">Käyttäjätunnus:</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
+                    <input type="text" id="username" name="username" placeholder="Käyttäjätunnus" required autocomplete="username">
                 </div>
                 <div class="form-group">
-                    <label for="password">Salasana:</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                    <input type="password" id="password" name="password" placeholder="Salasana" required autocomplete="current-password">
                 </div>
                 <div id="loginError" class="login-error" style="display: none;"></div>
                 <button type="submit" class="login-button">Kirjaudu sisään</button>

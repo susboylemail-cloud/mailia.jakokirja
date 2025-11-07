@@ -168,31 +168,38 @@ function initializeSwipeUpLogin() {
     let isDragging = false;
     let isFormVisible = false;
     
+    // Swipe gesture thresholds
+    const SWIPE_REVEAL_DISTANCE = 200; // Distance for full login form reveal
+    const SWIPE_TRIGGER_THRESHOLD = 100; // Minimum distance to trigger form reveal
+    
     // Touch events
     loginScreen.addEventListener('touchstart', (e) => {
         if (isFormVisible) return; // Only allow swipe when form is hidden
         
-        startY = e.touches[0].clientY;
-        currentY = startY;
-        isDragging = false;
+        if (e.touches && e.touches.length > 0) {
+            startY = e.touches[0].clientY;
+            currentY = startY;
+            isDragging = false;
+        }
     }, { passive: true });
     
     loginScreen.addEventListener('touchmove', (e) => {
         if (isFormVisible) return;
         
-        currentY = e.touches[0].clientY;
-        const deltaY = startY - currentY; // Positive when swiping up
-        
-        // Only allow upward swipe
-        if (deltaY > 0) {
-            isDragging = true;
-            e.preventDefault();
+        if (e.touches && e.touches.length > 0) {
+            currentY = e.touches[0].clientY;
+            const deltaY = startY - currentY; // Positive when swiping up
             
-            // Show partial login form as user swipes
-            const progress = Math.min(deltaY / 200, 1); // 200px for full reveal
-            loginFormContainer.style.transform = `translateX(-50%) translateY(${100 - (progress * 102)}%)`;
-            landingContent.style.opacity = 1 - progress;
-            landingContent.style.transform = `translate(-50%, ${-50 - (progress * 50)}%)`;
+            // Only allow upward swipe
+            if (deltaY > 0) {
+                isDragging = true;
+                e.preventDefault();
+                
+                // Show partial login form as user swipes
+                const progress = Math.min(deltaY / SWIPE_REVEAL_DISTANCE, 1);
+                loginFormContainer.style.transform = `translateX(-50%) translateY(${100 - (progress * 102)}%)`;
+                landingContent.style.opacity = 1 - progress;
+            }
         }
     }, { passive: false });
     
@@ -200,9 +207,8 @@ function initializeSwipeUpLogin() {
         if (isFormVisible) return;
         
         const deltaY = startY - currentY;
-        const swipeThreshold = 100; // Minimum pixels to trigger form reveal
         
-        if (isDragging && deltaY > swipeThreshold) {
+        if (isDragging && deltaY > SWIPE_TRIGGER_THRESHOLD) {
             // Show the login form
             showLoginForm();
         } else {
@@ -243,7 +249,6 @@ function initializeSwipeUpLogin() {
         landingContent.classList.remove('hide');
         loginFormContainer.style.transform = '';
         landingContent.style.opacity = '';
-        landingContent.style.transform = '';
     }
 }
 

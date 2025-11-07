@@ -178,8 +178,9 @@ function initializeDarkMode() {
 function initializeSettings() {
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsDropdown = document.getElementById('settingsDropdown');
+    const settingsContainer = document.querySelector('.settings-container');
     
-    if (settingsBtn && settingsDropdown) {
+    if (settingsBtn && settingsDropdown && settingsContainer) {
         // Toggle dropdown when settings button is clicked
         settingsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -188,7 +189,7 @@ function initializeSettings() {
         
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
-            if (!settingsDropdown.contains(e.target) && e.target !== settingsBtn) {
+            if (!settingsContainer.contains(e.target)) {
                 settingsDropdown.classList.remove('show');
             }
         });

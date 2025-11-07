@@ -4,6 +4,8 @@
 const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
 
 // Authentication credentials
+// WARNING: This is client-side only implementation for demonstration purposes
+// In production, implement proper server-side authentication
 const CREDENTIALS = {
     delivery: {
         username: 'imatravj',
@@ -192,12 +194,14 @@ function promptSaveLoginInfo(username, password) {
     const savedCreds = localStorage.getItem('mailiaSavedCredentials');
     if (savedCreds) return; // Already saved
     
-    // Use setTimeout to show prompt after login screen transition
+    // WARNING: Storing passwords in localStorage is insecure
+    // This is for convenience in a client-side-only demo application
+    // In production, use secure token-based authentication
     setTimeout(() => {
         if (confirm('Haluatko tallentaa kirjautumistiedot?')) {
             localStorage.setItem('mailiaSavedCredentials', JSON.stringify({
                 username: username,
-                password: password
+                password: password  // Stored in plain text - NOT SECURE
             }));
         }
     }, 500);
@@ -1141,18 +1145,51 @@ function renderRouteMessages() {
         const timestamp = new Date(message.timestamp);
         const formattedDate = timestamp.toLocaleString('fi-FI');
         
-        messageCard.innerHTML = `
-            <div class="message-header">
-                <span class="message-circuit">${message.circuit}</span>
-                <span class="message-timestamp">${formattedDate}</span>
-            </div>
-            <div class="message-body">
-                <div class="message-address"><strong>Osoite:</strong> ${message.address}</div>
-                <div class="message-name"><strong>Asiakas:</strong> ${message.name}</div>
-                <div class="message-products"><strong>Tuotteet:</strong> ${message.products}</div>
-                <div class="message-reason"><strong>Syy:</strong> ${message.reason}</div>
-            </div>
-        `;
+        // Create elements safely to prevent XSS
+        const messageHeader = document.createElement('div');
+        messageHeader.className = 'message-header';
+        
+        const circuitSpan = document.createElement('span');
+        circuitSpan.className = 'message-circuit';
+        circuitSpan.textContent = message.circuit;
+        
+        const timestampSpan = document.createElement('span');
+        timestampSpan.className = 'message-timestamp';
+        timestampSpan.textContent = formattedDate;
+        
+        messageHeader.appendChild(circuitSpan);
+        messageHeader.appendChild(timestampSpan);
+        
+        const messageBody = document.createElement('div');
+        messageBody.className = 'message-body';
+        
+        const addressDiv = document.createElement('div');
+        addressDiv.className = 'message-address';
+        addressDiv.innerHTML = '<strong>Osoite:</strong> ';
+        addressDiv.appendChild(document.createTextNode(message.address));
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'message-name';
+        nameDiv.innerHTML = '<strong>Asiakas:</strong> ';
+        nameDiv.appendChild(document.createTextNode(message.name));
+        
+        const productsDiv = document.createElement('div');
+        productsDiv.className = 'message-products';
+        productsDiv.innerHTML = '<strong>Tuotteet:</strong> ';
+        productsDiv.appendChild(document.createTextNode(message.products));
+        
+        const reasonDiv = document.createElement('div');
+        reasonDiv.className = 'message-reason';
+        reasonDiv.innerHTML = '<strong>Syy:</strong> ';
+        reasonDiv.appendChild(document.createTextNode(message.reason));
+        
+        messageBody.appendChild(addressDiv);
+        messageBody.appendChild(nameDiv);
+        messageBody.appendChild(productsDiv);
+        messageBody.appendChild(reasonDiv);
+        
+        messageCard.appendChild(messageHeader);
+        messageCard.appendChild(messageBody);
         
         messagesContainer.appendChild(messageCard);
     });

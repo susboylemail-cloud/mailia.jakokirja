@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dark-mode">
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
         <video autoplay loop muted playsinline class="login-bg-video">
@@ -44,7 +44,7 @@
     <div id="mainApp" style="display: none;">
     <header>
         <div class="header-content">
-            <h1 class="logo">Sähköinen jakokirja</h1>
+            <h1 class="logo">Jakokirja</h1>
             <div class="header-right">
                 <a href="tel:0503728330" class="quick-dial icon-button" aria-label="Soita 0503728330">
                     <img src="quick dial 1.png" alt="Quick dial" class="icon-img">
@@ -102,9 +102,16 @@
 
     <!-- Circuit selector - always visible -->
     <div class="circuit-selector-container">
-        <select id="circuitSelect">
-            <option value="">Valitse piiri</option>
-        </select>
+        <div class="custom-circuit-select" id="customCircuitSelect">
+            <div class="circuit-select-display" id="circuitSelectDisplay">
+                <span>Valitse piiri</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="circuit-select-dropdown" id="circuitSelectDropdown" style="display: none;">
+                <input type="text" class="circuit-search" id="circuitSearch" placeholder="Etsi piiri...">
+                <div class="circuit-options" id="circuitOptions"></div>
+            </div>
+        </div>
     </div>
 
     <main>

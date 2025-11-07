@@ -412,8 +412,11 @@ function initializeDarkMode() {
     const darkMode = localStorage.getItem('darkMode');
     const isDark = darkMode === null ? true : darkMode === 'true';
     
+    // Set or remove dark mode class based on preference
     if (isDark) {
         document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
     }
     
     // Save the default if not set
@@ -754,24 +757,126 @@ function extractBuildingAddress(address) {
 }
 
 // Circuit Selector
+let circuitSearchMemory = '';
+let favoriteCircuits = [];
+
 function populateCircuitSelector() {
-    const select = document.getElementById('circuitSelect');
+    // Load favorites from localStorage
+    const savedFavorites = localStorage.getItem('favoriteCircuits');
+    if (savedFavorites) {
+        favoriteCircuits = JSON.parse(savedFavorites);
+    }
+    
+    const customSelect = document.getElementById('customCircuitSelect');
+    const display = document.getElementById('circuitSelectDisplay');
+    const dropdown = document.getElementById('circuitSelectDropdown');
+    const search = document.getElementById('circuitSearch');
+    const optionsContainer = document.getElementById('circuitOptions');
+    
     const circuits = Object.keys(allData).sort(sortCircuits);
-
-    circuits.forEach(circuit => {
-        const option = document.createElement('option');
-        option.value = circuit;
-        option.textContent = circuitNames[circuit] || circuit;
-        select.appendChild(option);
-    });
-
-    select.addEventListener('change', (e) => {
-        if (e.target.value) {
-            loadCircuit(e.target.value);
+    
+    // Render circuit options
+    function renderCircuitOptions(filterText = '') {
+        optionsContainer.innerHTML = '';
+        
+        // Filter circuits based on search
+        const filtered = circuits.filter(circuit => {
+            const circuitName = (circuitNames[circuit] || circuit).toLowerCase();
+            return circuitName.includes(filterText.toLowerCase());
+        });
+        
+        // Sort: favorites first, then regular circuits
+        const sortedFiltered = filtered.sort((a, b) => {
+            const aFav = favoriteCircuits.includes(a);
+            const bFav = favoriteCircuits.includes(b);
+            
+            if (aFav && !bFav) return -1;
+            if (!aFav && bFav) return 1;
+            
+            return sortCircuits(a, b);
+        });
+        
+        sortedFiltered.forEach(circuit => {
+            const option = document.createElement('div');
+            option.className = 'circuit-option';
+            if (favoriteCircuits.includes(circuit)) {
+                option.classList.add('favorited');
+            }
+            option.dataset.value = circuit;
+            
+            const circuitLabel = document.createElement('span');
+            circuitLabel.textContent = circuitNames[circuit] || circuit;
+            option.appendChild(circuitLabel);
+            
+            const star = document.createElement('span');
+            star.className = 'favorite-star';
+            star.classList.add(favoriteCircuits.includes(circuit) ? 'active' : 'inactive');
+            star.textContent = '★';
+            star.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleFavorite(circuit);
+            });
+            option.appendChild(star);
+            
+            option.addEventListener('click', () => {
+                selectCircuit(circuit);
+            });
+            
+            optionsContainer.appendChild(option);
+        });
+    }
+    
+    function toggleFavorite(circuit) {
+        const index = favoriteCircuits.indexOf(circuit);
+        if (index > -1) {
+            favoriteCircuits.splice(index, 1);
         } else {
-            document.getElementById('deliveryContent').style.display = 'none';
+            favoriteCircuits.push(circuit);
+        }
+        localStorage.setItem('favoriteCircuits', JSON.stringify(favoriteCircuits));
+        renderCircuitOptions(search.value);
+    }
+    
+    function selectCircuit(circuit) {
+        display.querySelector('span').textContent = circuitNames[circuit] || circuit;
+        dropdown.style.display = 'none';
+        customSelect.classList.remove('open');
+        loadCircuit(circuit);
+        search.value = '';
+        circuitSearchMemory = '';
+    }
+    
+    // Toggle dropdown
+    display.addEventListener('click', () => {
+        const isOpen = dropdown.style.display === 'block';
+        if (isOpen) {
+            dropdown.style.display = 'none';
+            customSelect.classList.remove('open');
+        } else {
+            dropdown.style.display = 'block';
+            customSelect.classList.add('open');
+            renderCircuitOptions(circuitSearchMemory);
+            search.value = circuitSearchMemory;
+            search.focus();
         }
     });
+    
+    // Search with memory
+    search.addEventListener('input', (e) => {
+        circuitSearchMemory = e.target.value;
+        renderCircuitOptions(circuitSearchMemory);
+    });
+    
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!customSelect.contains(e.target)) {
+            dropdown.style.display = 'none';
+            customSelect.classList.remove('open');
+        }
+    });
+    
+    // Initial render
+    renderCircuitOptions();
 }
 
 function sortCircuits(a, b) {
@@ -1729,9 +1834,22 @@ function createCircuitProgressBar(circuitId) {
     const data = allData[circuitId];
     if (!data || data.length === 0) return null;
     
-    const totalSubscribers = data.length;
-    // Count delivered by checking localStorage checkbox state
-    const deliveredCount = data.filter(sub => getCheckboxState(circuitId, sub.address)).length;
+    // Filter out subscribers with only STF products
+    const today = new Date().getDay();
+    const subscribersWithoutOnlySTF = data.filter(sub => {
+        // Check if subscriber has any non-STF products
+        const hasNonSTF = sub.products.some(product => {
+            const simplifiedProduct = simplifyProductName(product.trim(), today);
+            return simplifiedProduct !== 'STF';
+        });
+        return hasNonSTF;
+    });
+    
+    const totalSubscribers = subscribersWithoutOnlySTF.length;
+    if (totalSubscribers === 0) return null;
+    
+    // Count delivered by checking localStorage checkbox state (excluding STF-only)
+    const deliveredCount = subscribersWithoutOnlySTF.filter(sub => getCheckboxState(circuitId, sub.address)).length;
     const percentage = Math.round((deliveredCount / totalSubscribers) * 100);
     
     const container = document.createElement('div');

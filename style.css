@@ -8,7 +8,7 @@
     --navy: #2C3E50;
     --red-accent: #E07856;
     --yellow-accent: #F9A825;       /* UV - Rich gold/yellow */
-    --orange-accent: #F5B041;       /* STF - Distinct orange for attention */
+    --orange-accent: #FF6B35;       /* STF - Bright red-orange to differ from UV */
     --light-purple: #AF7AC5;        /* Alternative for UV - purple for distinction */
     --warm-gray: #F5F5F0;
     --medium-gray: #9E9E9E;         /* Secondary text */
@@ -42,7 +42,7 @@ body.dark-mode {
     /* Product colors optimized for dark theme */
     --accent-blue: #5DADE2;         /* ES */
     --primary-green: #58D68D;       /* HS */
-    --orange-accent: #F5B041;       /* STF */
+    --orange-accent: #FF6B35;       /* STF */
     --yellow-accent: #F9A825;       /* UV */
 }
 
@@ -543,7 +543,13 @@ main {
     color: var(--dark-gray);
 }
 
-#circuitSelect {
+/* Custom Circuit Selector */
+.custom-circuit-select {
+    position: relative;
+    width: 100%;
+}
+
+.circuit-select-display {
     width: 100%;
     padding: 1rem;
     font-size: 1rem;
@@ -551,14 +557,101 @@ main {
     border-radius: 10px;
     background-color: var(--card-bg);
     color: var(--text-color);
-    transition: all 0.2s ease; /* Smooth animation for dropdown */
     cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
 }
 
-#circuitSelect:focus {
-    outline: none;
+.circuit-select-display:hover {
     border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(91, 143, 185, 0.1);
+}
+
+.dropdown-arrow {
+    transition: transform 0.2s ease;
+}
+
+.custom-circuit-select.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.circuit-select-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background-color: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px var(--shadow);
+    z-index: 1000;
+    max-height: 400px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.circuit-search {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-bottom: 1.5px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    outline: none;
+}
+
+.circuit-search::placeholder {
+    color: var(--medium-gray);
+}
+
+.circuit-options {
+    overflow-y: auto;
+    max-height: 350px;
+}
+
+.circuit-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color);
+}
+
+.circuit-option:hover {
+    background-color: var(--hover-bg);
+}
+
+.circuit-option.favorited {
+    background-color: rgba(74, 144, 226, 0.1);
+}
+
+.favorite-star {
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: transform 0.15s ease;
+    user-select: none;
+}
+
+.favorite-star:hover {
+    transform: scale(1.2);
+}
+
+.favorite-star.active {
+    color: #FFD700;
+}
+
+.favorite-star.inactive {
+    color: var(--medium-gray);
+    opacity: 0.5;
+}
+
+/* Old select (kept for compatibility) */
+#circuitSelect {
+    display: none;
 }
 
 /* Cover Sheet */
@@ -622,8 +715,8 @@ main {
 }
 
 .product-badge.product-STF {
-    background: #F5B041;            /* Distinct orange for attention */
-    color: #1A1D21;                 /* Dark text for contrast */
+    background: #FF6B35;            /* Bright red-orange to differ from UV */
+    color: white;
 }
 
 .product-badge.product-JO {
@@ -840,8 +933,8 @@ body.dark-mode .subscriber-name {
 }
 
 .product-tag.product-STF {
-    background: #F5B041;            /* Distinct orange for attention */
-    color: #1A1D21;                 /* Dark text for contrast */
+    background: #FF6B35;            /* Bright red-orange to differ from UV */
+    color: white;
 }
 
 .product-tag.product-JO {
@@ -916,9 +1009,9 @@ body.dark-mode .subscriber-name {
     border: 2px solid var(--border-color);
     border-radius: 12px;
     padding: 0;
-    box-shadow: 0 2px 4px var(--shadow);
     display: flex;
     overflow: hidden;
+    transition: all 0.3s ease;
 }
 
 /* Status bar on the left - Traffic light system */
@@ -931,17 +1024,14 @@ body.dark-mode .subscriber-name {
 
 .circuit-status-bar.not-started {
     background: linear-gradient(180deg, #DC3545 0%, #C82333 100%);
-    box-shadow: 0 0 15px rgba(220, 53, 69, 0.4);
 }
 
 .circuit-status-bar.in-progress {
     background: linear-gradient(180deg, #FFA726 0%, #FF9800 100%);
-    box-shadow: 0 0 15px rgba(255, 167, 38, 0.4);
 }
 
 .circuit-status-bar.completed {
     background: linear-gradient(180deg, #28a745 0%, #218838 100%);
-    box-shadow: 0 0 15px rgba(40, 167, 69, 0.4);
 }
 
 .circuit-content {
@@ -950,17 +1040,20 @@ body.dark-mode .subscriber-name {
     transition: all 0.3s ease;
 }
 
-/* Add subtle background hues to cards based on status */
+/* Add card glows based on status for quick glance */
 .circuit-item.not-started-item {
     background: linear-gradient(90deg, rgba(220, 53, 69, 0.05) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 20px rgba(220, 53, 69, 0.3), 0 2px 4px var(--shadow);
 }
 
 .circuit-item.in-progress-item {
     background: linear-gradient(90deg, rgba(255, 167, 38, 0.08) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 20px rgba(255, 167, 38, 0.4), 0 2px 4px var(--shadow);
 }
 
 .circuit-item.completed-item {
     background: linear-gradient(90deg, rgba(40, 167, 69, 0.05) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 20px rgba(40, 167, 69, 0.3), 0 2px 4px var(--shadow);
 }
 
 .circuit-header {

@@ -214,7 +214,20 @@ body {
 }
 
 .status-icon {
-    font-size: 0.7rem;
+    width: 14px;
+    height: 14px;
+    opacity: 0.9;
+}
+
+.status-battery {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.battery-icon {
+    width: 16px;
+    height: 16px;
 }
 
 /* Phone Notch */

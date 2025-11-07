@@ -213,8 +213,9 @@ function updateStatusTime() {
 }
 
 function updateBatteryStatus() {
-    const batteryElement = document.getElementById('statusBattery');
-    if (!batteryElement) return;
+    const batteryPercent = document.getElementById('batteryPercent');
+    const batteryIcon = document.querySelector('.battery-icon');
+    if (!batteryPercent || !batteryIcon) return;
     
     // Check if Battery Status API is available
     if ('getBattery' in navigator) {
@@ -222,12 +223,19 @@ function updateBatteryStatus() {
             const level = Math.round(battery.level * 100);
             const charging = battery.charging;
             
+            batteryPercent.textContent = `${level}%`;
+            
+            // Change icon stroke color based on battery level and charging state
             if (charging) {
-                batteryElement.textContent = `⚡ ${level}%`;
+                batteryIcon.style.stroke = '#4A90E2'; // Blue when charging
+            } else if (level <= 20) {
+                batteryIcon.style.stroke = '#E07856'; // Red when low
             } else {
-                batteryElement.textContent = `🔋 ${level}%`;
+                batteryIcon.style.stroke = 'currentColor'; // Default
             }
         });
+    } else {
+        batteryPercent.textContent = '100%';
     }
 }
 

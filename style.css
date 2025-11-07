@@ -64,7 +64,7 @@ body {
     letter-spacing: 0.01em;
 }
 
-/* Login Screen - Navy Monochromatic Background */
+/* Login Screen - Navy Monochromatic Background with Geometric Pattern */
 .login-screen {
     position: fixed;
     top: 0;
@@ -79,21 +79,62 @@ body {
     overflow: hidden;
 }
 
-/* Floating Phone Container */
+/* Pulsating background glow - subtle animation */
+.login-screen::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(74, 144, 226, 0.08) 0%, transparent 65%);
+    border-radius: 50%;
+    animation: pulse 6s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+/* Diagonal Lines for Added Depth */
+.login-screen::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 100px,
+            rgba(74, 144, 226, 0.02) 100px,
+            rgba(74, 144, 226, 0.02) 101px
+        );
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Floating Phone Container with Blue Ambient Glow */
 .phone-container {
     position: relative;
     perspective: 1000px;
-    animation: floatPhone 6s ease-in-out infinite;
+    /* Removed floating animation */
+    filter: drop-shadow(0 0 60px rgba(74, 144, 226, 0.4)) 
+            drop-shadow(0 0 30px rgba(74, 144, 226, 0.3));
 }
 
-@keyframes floatPhone {
-    0%, 100% {
-        transform: translateY(0px) rotateY(-5deg);
-    }
-    50% {
-        transform: translateY(-20px) rotateY(5deg);
-    }
-}
+/* Removed floatPhone animation */
 
 /* Phone Device */
 .phone-device {
@@ -101,19 +142,21 @@ body {
     width: 320px;
     height: 650px;
     transform-style: preserve-3d;
-    animation: rotatePhone 12s ease-in-out infinite;
+    /* Removed rotation animation */
 }
 
-@keyframes rotatePhone {
-    0%, 100% {
-        transform: rotateY(-8deg) rotateX(2deg);
-    }
-    50% {
-        transform: rotateY(8deg) rotateX(-2deg);
-    }
+/* Wiggle animation for wrong password */
+@keyframes wiggle {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
 }
 
-/* Phone Frame */
+.phone-device.wiggle {
+    animation: wiggle 0.5s ease-in-out;
+}
+
+/* Phone Frame with Enhanced Shadow and Glow */
 .phone-frame {
     position: relative;
     width: 100%;
@@ -124,6 +167,7 @@ body {
         0 20px 60px rgba(0, 0, 0, 0.6),
         0 0 0 8px #1a1a1a,
         0 0 0 10px #2c3e50,
+        0 0 40px rgba(74, 144, 226, 0.2),
         inset 0 0 0 2px rgba(255, 255, 255, 0.1);
     overflow: hidden;
 }
@@ -139,8 +183,56 @@ body {
     border-radius: 30px;
     overflow: hidden;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+/* Phone Status Bar */
+.phone-status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem;
+    padding-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.75rem;
+    font-weight: 500;
+    z-index: 100;
+}
+
+.status-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.9;
+}
+
+.status-battery {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.battery-icon {
+    width: 16px;
+    height: 16px;
 }
 
 /* Phone Notch */
@@ -160,19 +252,39 @@ body {
 .phone-login-form {
     width: 100%;
     padding: 2rem 1.5rem;
+    padding-top: 3rem; /* Extra padding for status bar */
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 .phone-logo {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #fff;
+    background: linear-gradient(135deg, #fff 0%, #4A90E2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 2rem;
     text-align: center;
     letter-spacing: 0.05em;
+    filter: drop-shadow(0 2px 10px rgba(74, 144, 226, 0.3));
+}
+
+/* Input Groups and Labels for Better Touch Targets */
+.input-group {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.input-label {
+    display: block;
+    width: 100%;
+    cursor: text;
+    position: relative;
 }
 
 /* Phone Input Fields */
@@ -187,6 +299,7 @@ body {
     outline: none;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
+    min-height: 48px; /* Ensure touch target is large enough */
 }
 
 .phone-input::placeholder {
@@ -196,17 +309,25 @@ body {
 .phone-input:focus {
     background: rgba(255, 255, 255, 0.12);
     border-color: #4A90E2;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    box-shadow: 
+        0 0 0 3px rgba(74, 144, 226, 0.3),
+        0 0 15px rgba(74, 144, 226, 0.4),
+        inset 0 0 10px rgba(74, 144, 226, 0.1);
 }
 
 /* Password Container in Phone */
 .phone-login-form .password-container {
     position: relative;
     width: 100%;
+    display: block;
 }
 
 .phone-login-form .password-container input {
     padding-right: 3rem;
+}
+
+.phone-login-form .input-label.password-container {
+    display: block;
 }
 
 .phone-login-form .password-toggle {
@@ -217,9 +338,14 @@ body {
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 0.5rem;
+    padding: 0.75rem; /* Larger touch target */
     color: rgba(255, 255, 255, 0.6);
     transition: color 0.3s ease;
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .phone-login-form .password-toggle:hover {
@@ -231,28 +357,37 @@ body {
     height: 20px;
 }
 
-/* Phone Login Button */
+/* Phone Login Button with Enhanced Gradient */
 .phone-login-button {
     width: 100%;
     padding: 1rem;
     font-size: 1rem;
     font-weight: 600;
     color: #fff;
-    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    background: linear-gradient(135deg, #5DADE2 0%, #4A90E2 50%, #2E5F8A 100%);
     border: none;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+    box-shadow: 
+        0 4px 15px rgba(74, 144, 226, 0.4),
+        0 2px 5px rgba(0, 0, 0, 0.2);
+    min-height: 48px; /* Ensure touch target is large enough */
 }
 
 .phone-login-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+    box-shadow: 
+        0 6px 20px rgba(74, 144, 226, 0.5),
+        0 3px 8px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #6BBEF3 0%, #5DADE2 50%, #357ABD 100%);
 }
 
 .phone-login-button:active {
     transform: translateY(0);
+    box-shadow: 
+        0 2px 10px rgba(74, 144, 226, 0.4),
+        0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Login Error on Phone */
@@ -282,6 +417,66 @@ body {
         font-size: 0.9rem;
         padding: 0.75rem 1rem;
     }
+}
+
+/* Zoom Transition Animation */
+@keyframes zoomIntoPhone {
+    0% {
+        transform: translateY(0px) rotateY(-8deg) rotateX(2deg) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(0px) rotateY(0deg) rotateX(0deg) scale(1.1);
+    }
+    100% {
+        transform: translateY(0px) rotateY(0deg) rotateX(0deg) scale(15);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeOutBackground {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInApp {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.login-screen.zoom-transition .phone-device {
+    animation: zoomIntoPhone 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.login-screen.zoom-transition .phone-container {
+    animation: none; /* Stop floating animation during zoom */
+}
+
+.login-screen.zoom-transition {
+    animation: fadeOutBackground 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+#mainApp {
+    opacity: 0;
+}
+
+#mainApp.zoom-in {
+    animation: fadeInApp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.7s;
+    opacity: 1;
 }
 
 /* Hide old login elements */
@@ -880,10 +1075,10 @@ main {
     justify-content: space-between;
     background: var(--primary-blue);
     color: white;
-    padding: 0.6rem 1.1rem;
-    border-radius: 24px;
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
 }
 
 /* Product-specific colors for badges */
@@ -918,11 +1113,12 @@ main {
 }
 
 .product-badge .count {
-    margin-left: 0.5rem;
+    margin-left: 0.4rem;
     background: rgba(255, 255, 255, 0.3);
-    padding: 0.25rem 0.65rem;
-    border-radius: 12px;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
     font-weight: 700;
+    font-size: 0.8rem;
 }
 
 body.dark-mode .product-badge.product-UV .count,
@@ -1098,9 +1294,9 @@ body.dark-mode .subscriber-name {
     display: inline-block;
     background: var(--primary-blue);
     color: white;
-    padding: 0.35rem 0.75rem;
-    border-radius: 14px;
-    font-size: 0.85rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     position: relative;
 }
@@ -1108,17 +1304,17 @@ body.dark-mode .subscriber-name {
 /* Quantity badge for products (e.g., UV2, ES2, HS2) */
 .quantity-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
+    top: -5px;
+    right: -5px;
     background: rgba(255, 0, 0, 0.9);
     color: white;
     border-radius: 50%;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     border: 2px solid var(--card-bg);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -1159,50 +1355,54 @@ body.dark-mode .subscriber-name {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #6B9E78;
-    color: white;
+    background: transparent;
+    color: var(--text-color);
     padding: 0.5rem;
     border-radius: 8px;
     text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
     transition: all 0.2s;
     flex-shrink: 0;
     width: 38px;
     height: 38px;
-    box-shadow: 0 2px 4px rgba(107, 158, 120, 0.3);
 }
 
 .nav-link:hover {
-    background: #8FBC8F;
-    transform: scale(1.05);
-    box-shadow: 0 3px 6px rgba(107, 158, 120, 0.4);
+    background: rgba(74, 144, 226, 0.1);
+    transform: scale(1.1);
 }
 
-.nav-icon-img {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
+.nav-link .icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
 }
 
 /* Report Button */
 .report-button {
     background: transparent;
     border: none;
-    color: #F5B041;                   /* Warning orange for alert */
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
+    padding: 0.5rem;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 1.1rem;
     transition: all 0.2s;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    width: 38px;
+    height: 38px;
+}
+
+.report-button .icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
 }
 
 .report-button:hover {
-    background: #F5B041;             /* Warning orange */
-    color: white;
-    transform: scale(1.05);
+    background: rgba(74, 144, 226, 0.1);
+    transform: scale(1.1);
 }
 
 /* Circuit Tracker */

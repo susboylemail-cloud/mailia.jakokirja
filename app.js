@@ -98,6 +98,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize dark mode (works on login screen too)
     initializeDarkMode();
+    
+    // Initialize phone status bar with real-time updates
+    initializePhoneStatusBar();
 });
 
 // Authentication
@@ -187,6 +190,55 @@ function initializeSwipeUpLogin() {
     // Phone-based login is always visible, no initialization needed
 }
 
+// Initialize Phone Status Bar with Real-Time Updates
+function initializePhoneStatusBar() {
+    updateStatusTime();
+    updateBatteryStatus();
+    
+    // Update time every second
+    setInterval(updateStatusTime, 1000);
+    
+    // Update battery every minute
+    setInterval(updateBatteryStatus, 60000);
+}
+
+function updateStatusTime() {
+    const timeElement = document.getElementById('statusTime');
+    if (!timeElement) return;
+    
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    timeElement.textContent = `${hours}:${minutes}`;
+}
+
+function updateBatteryStatus() {
+    const batteryPercent = document.getElementById('batteryPercent');
+    const batteryIcon = document.querySelector('.battery-icon');
+    if (!batteryPercent || !batteryIcon) return;
+    
+    // Check if Battery Status API is available
+    if ('getBattery' in navigator) {
+        navigator.getBattery().then(battery => {
+            const level = Math.round(battery.level * 100);
+            const charging = battery.charging;
+            
+            batteryPercent.textContent = `${level}%`;
+            
+            // Change icon stroke color based on battery level and charging state
+            if (charging) {
+                batteryIcon.style.stroke = '#4A90E2'; // Blue when charging
+            } else if (level <= 20) {
+                batteryIcon.style.stroke = '#E07856'; // Red when low
+            } else {
+                batteryIcon.style.stroke = 'currentColor'; // Default
+            }
+        });
+    } else {
+        batteryPercent.textContent = '100%';
+    }
+}
+
 function handleLogin(event) {
     event.preventDefault();
     
@@ -216,12 +268,17 @@ function handleLogin(event) {
         userRole = role;
         errorDiv.style.display = 'none';
         
-        // Prompt to save login info
-        promptSaveLoginInfo(username, password);
-        
         showMainApp();
     } else {
-        // Failed login
+        // Failed login - trigger wiggle animation
+        const phoneDevice = document.querySelector('.phone-device');
+        phoneDevice.classList.add('wiggle');
+        
+        // Remove wiggle class after animation completes
+        setTimeout(() => {
+            phoneDevice.classList.remove('wiggle');
+        }, 500);
+        
         errorDiv.textContent = 'Virheellinen käyttäjätunnus tai salasana';
         errorDiv.style.display = 'block';
         document.getElementById('password').value = '';
@@ -275,8 +332,23 @@ function updateCheckboxVisibility() {
 
 
 async function showMainApp() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
+    // Start the zoom transition animation
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+    
+    // Add zoom transition class
+    loginScreen.classList.add('zoom-transition');
+    
+    // Show main app with fade-in after a delay
+    setTimeout(() => {
+        mainApp.style.display = 'block';
+        mainApp.classList.add('zoom-in');
+    }, 700);
+    
+    // Hide login screen completely after animation
+    setTimeout(() => {
+        loginScreen.style.display = 'none';
+    }, 1500);
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();
@@ -376,9 +448,16 @@ function handleLogout() {
     sessionStorage.removeItem('mailiaAuth');
     isAuthenticated = false;
     
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+    
+    // Remove animation classes
+    loginScreen.classList.remove('zoom-transition');
+    mainApp.classList.remove('zoom-in');
+    
     // Hide main app and show login screen
-    document.getElementById('mainApp').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
+    mainApp.style.display = 'none';
+    loginScreen.style.display = 'flex';
     
     // Reset form
     document.getElementById('username').value = '';
@@ -442,7 +521,7 @@ async function loadData() {
         // List of all circuit CSV files
         const circuitFiles = [
             'K28 DATA.csv', 'KP R2 DATA.csv', 'KP R3 DATA.csv', 'KP R4 DATA.csv',
-            'KP3 DATA.csv', 'KP4 DATA.csv', 'KP7 DATA.csv', 'KP9 DATA.csv',
+            'KP2 DATA.csv', 'KP3 DATA.csv', 'KP4 DATA.csv', 'KP7 DATA.csv', 'KP9 DATA.csv',
             'KP10 DATA.csv', 'KP11 DATA.csv', 'KP12 DATA.csv', 'kp13.csv', 'KP15 DATA.csv',
             'KP16 DATA.csv', 'KP16B DATA.csv', 'KP18 DATA.csv', 'KP19 DATA.csv',
             'KP21B DATA.csv', 'KP22 DATA.csv', 'KP24 DATA.csv', 'KP25 DATA.csv',
@@ -452,7 +531,7 @@ async function loadData() {
             'KP41 DATA.csv', 'KP42 DATA.csv', 'KP43B DATA.csv', 'kp44.csv', 'KP46 DATA.csv',
             'KP47 DATA.csv', 'KP48 DATA.csv', 'KP49 DATA.csv', 'KP51 DATA.csv',
             'KP53 DATA.csv', 'KP54 DATA.csv', 'KP55A DATA.csv', 'KP55B DATA.csv',
-            'kp r1.csv', 'kpr5.csv', 'kpr6.csv', 'kp2.csv'
+            'kp r1.csv', 'kpr5.csv', 'kpr6.csv'
         ];
         
         allData = {};
@@ -534,6 +613,9 @@ function parseCircuitCSV(text, filename) {
 
 function parseOldFormatCSVLine(line) {
     // Parse CSV line with proper quote handling
+    // Detect delimiter: semicolon or comma
+    const delimiter = line.includes(';') ? ';' : ',';
+    
     const fields = [];
     let currentField = '';
     let insideQuotes = false;
@@ -551,7 +633,7 @@ function parseOldFormatCSVLine(line) {
                 // Toggle quote state
                 insideQuotes = !insideQuotes;
             }
-        } else if (char === ',' && !insideQuotes) {
+        } else if (char === delimiter && !insideQuotes) {
             // Field separator
             fields.push(currentField);
             currentField = '';
@@ -561,41 +643,65 @@ function parseOldFormatCSVLine(line) {
     }
     fields.push(currentField);
     
-    // Expected format: "Sivu","Katu","Osoite","Nimi","Merkinnät"
-    if (fields.length >= 5) {
-        const address = fields[2].trim();
-        const name = fields[3].trim();
-        const productsStr = fields[4].trim();
+    // Handle different CSV formats
+    let streetName, houseNumber, name, productsStr;
+    
+    if (fields.length >= 5 && fields[0].includes('Sivu')) {
+        // Format: "Sivu","Katu","Osoite","Nimi","Merkinnät" (KP2 format)
+        streetName = fields[1].trim();
+        houseNumber = fields[2].trim();
+        name = fields[3].trim();
+        productsStr = fields[4].trim();
+    } else if (fields.length >= 6) {
+        // Format: Katu,Numero,Huom,Asunto,Nimi,Tilaukset (standard format)
+        streetName = fields[0].trim();
+        houseNumber = fields[1].trim();
+        const apartment = fields[3].trim();
+        name = fields[4].trim();
+        productsStr = fields[5].trim();
         
-        // Skip if no address
-        if (!address) return null;
-        
-        // Parse products - handle multiline, comma-separated, and space-separated
-        // First split by newline and comma
-        const rawProducts = productsStr.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
-        
-        // Then expand space-separated products (like "ES HSPS") based on today's day
-        const today = new Date().getDay();
-        const products = [];
-        rawProducts.forEach(productGroup => {
-            // If product contains space, it's a combined product like "ES HSPS"
-            if (productGroup.includes(' ')) {
-                // Expand based on current day
-                const expanded = expandCombinedProducts(productGroup, today);
-                products.push(...expanded);
-            } else {
-                // Single product, add as-is
-                products.push(productGroup);
-            }
-        });
-        
-        return {
-            address,
-            products,
-            name,
-            buildingAddress: extractBuildingAddress(address)
-        };
+        // Combine house number with apartment if present
+        if (apartment) {
+            houseNumber += ' ' + apartment;
+        }
+    } else {
+        return null;
     }
+    
+    // Skip if no street or house number
+    if (!streetName || !houseNumber) return null;
+    
+    const address = `${streetName} ${houseNumber}`.trim();
+    
+    // Parse products - handle semicolons, commas, spaces, and UVES
+    // First, replace UVES with "UV ES" to split it
+    productsStr = productsStr.replace(/UVES/g, 'UV ES');
+    
+    // Split by semicolons, commas, newlines, and filter
+    const rawProducts = productsStr.split(/[;\n,]+/).map(p => p.trim()).filter(p => p);
+    
+    // Then expand space-separated products (like "ES HSPS" or "UV ES")
+    const today = new Date().getDay();
+    const products = [];
+    rawProducts.forEach(productGroup => {
+        // If product contains space, it's a combined product like "ES HSPS" or "UV ES"
+        if (productGroup.includes(' ')) {
+            // Split by space and add each product
+            const spaceSeparated = productGroup.split(/\s+/).map(p => p.trim()).filter(p => p);
+            products.push(...spaceSeparated);
+        } else {
+            // Single product, add as-is
+            products.push(productGroup);
+        }
+    });
+    
+    return {
+        address,
+        products,
+        name,
+        buildingAddress: extractBuildingAddress(address)
+    };
+}
     
     return null;
 }
@@ -858,7 +964,9 @@ function renderCoverSheet(circuitId, subscribers) {
             const normalized = normalizeProduct(product);
             // Only count if product is valid for today
             if (isProductValidForDay(normalized, today)) {
-                products[normalized] = (products[normalized] || 0) + 1;
+                // Simplify product name (e.g., HSPE → HS, ESP → ES)
+                const simplified = simplifyProductName(normalized, today);
+                products[simplified] = (products[simplified] || 0) + 1;
             }
         });
     });
@@ -1163,7 +1271,13 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     // Report undelivered button
     const reportBtn = document.createElement('button');
     reportBtn.className = 'report-button';
-    reportBtn.textContent = '🚩';
+    reportBtn.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+    `;
     reportBtn.title = 'Ilmoita ongelmasta';
     reportBtn.addEventListener('click', () => {
         reportUndelivered(circuitId, subscriber);
@@ -1181,11 +1295,12 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
             link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(subscriberAddress + ', Imatra, Finland')}`;
             link.target = '_blank';
             link.title = `Navigate to ${subscriberAddress}`;
-            const navImg = document.createElement('img');
-            navImg.src = 'navigation icon.png';
-            navImg.alt = 'Navigate';
-            navImg.className = 'nav-icon-img';
-            link.appendChild(navImg);
+            link.innerHTML = `
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+            `;
             card.appendChild(link);
         }
     }

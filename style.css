@@ -367,30 +367,25 @@ body.dark-mode header {
     align-items: center;
     justify-content: center;
     background: transparent;
-    border: 1.5px solid var(--medium-gray);
-    color: var(--dark-gray);
-    padding: 0.6rem;
-    border-radius: 8px;
+    border: none;
+    color: var(--text-color);
+    padding: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    width: 40px;
-    height: 40px;
 }
 
 .icon-button:hover {
-    background: var(--warm-gray);
-    border-color: var(--dark-gray);
-    color: var(--navy);
+    transform: scale(1.1);
 }
 
 .icon-button .icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
 }
 
 .icon-button .icon-img {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     object-fit: contain;
 }
 

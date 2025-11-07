@@ -144,6 +144,9 @@ async function showMainApp() {
     // Initialize logout button
     initializeLogout();
     
+    // Initialize settings dropdown
+    initializeSettings();
+    
     // Initialize the main application
     initializeTabs();
     await loadData();
@@ -164,19 +167,36 @@ function initializeDarkMode() {
     // Only setup toggle if user is authenticated
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle && isAuthenticated) {
-        updateDarkModeIcon(darkMode);
         darkModeToggle.addEventListener('click', () => {
             const isDark = document.body.classList.toggle('dark-mode');
             localStorage.setItem('darkMode', isDark);
-            updateDarkModeIcon(isDark);
         });
     }
 }
 
-function updateDarkModeIcon(isDark) {
-    const icon = document.querySelector('#darkModeToggle .icon');
-    if (icon) {
-        icon.textContent = isDark ? '☀️' : '🌙';
+// Settings
+function initializeSettings() {
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsDropdown = document.getElementById('settingsDropdown');
+    
+    if (settingsBtn && settingsDropdown) {
+        // Toggle dropdown when settings button is clicked
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsDropdown.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!settingsDropdown.contains(e.target) && e.target !== settingsBtn) {
+                settingsDropdown.classList.remove('show');
+            }
+        });
+        
+        // Prevent dropdown from closing when clicking inside it
+        settingsDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
     }
 }
 
@@ -710,7 +730,11 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
             link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextAddress + ', Imatra, Finland')}`;
             link.target = '_blank';
             link.title = `Navigate to ${nextAddress}`;
-            link.textContent = '→';
+            const navImg = document.createElement('img');
+            navImg.src = 'navigation icon.png';
+            navImg.alt = 'Navigate';
+            navImg.className = 'nav-icon-img';
+            link.appendChild(navImg);
             card.appendChild(link);
         }
     }

@@ -38,13 +38,27 @@
         <div class="header-content">
             <h1 class="logo">Sähköinen jakokirja</h1>
             <div class="header-right">
-                <a href="tel:0503728330" class="quick-dial">
-                    <div class="quick-dial-label">0503728330</div>
-                    <div class="quick-dial-icon">📞</div>
+                <a href="tel:0503728330" class="quick-dial" aria-label="Soita 0503728330">
+                    <img src="quick dial.png" alt="Quick dial" class="icon-img">
                 </a>
                 <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
-                    <span class="icon">🌙</span>
+                    <img src="dark mode toggle.webp" alt="Dark mode" class="icon-img">
                 </button>
+                <div class="settings-container">
+                    <button id="settingsBtn" class="settings-button" aria-label="Asetukset">
+                        <img src="settings icon.jpg" alt="Settings" class="icon-img">
+                    </button>
+                    <div id="settingsDropdown" class="settings-dropdown">
+                        <label>
+                            <input type="checkbox" id="hideStfFilter">
+                            Piilota STF
+                        </label>
+                        <label>
+                            <input type="checkbox" id="hideDeliveredFilter">
+                            Piilota jaetut tilaukset
+                        </label>
+                    </div>
+                </div>
                 <button id="logoutBtn" class="logout-button" aria-label="Kirjaudu ulos">
                     <span class="icon">📤</span>
                 </button>
@@ -75,18 +89,6 @@
                     <div class="product-counts" id="productCounts"></div>
                     <button id="startRouteBtn" class="route-button">Aloita reitti</button>
                     <div id="routeStartTime" class="route-time" style="display: none;"></div>
-                </div>
-
-                <!-- Filters -->
-                <div class="filter-container">
-                    <label>
-                        <input type="checkbox" id="hideStfFilter">
-                        Piilota STF
-                    </label>
-                    <label>
-                        <input type="checkbox" id="hideDeliveredFilter">
-                        Piilota jaetut tilaukset
-                    </label>
                 </div>
 
                 <!-- Subscriber List -->

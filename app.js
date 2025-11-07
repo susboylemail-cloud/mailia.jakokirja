@@ -643,41 +643,65 @@ function parseOldFormatCSVLine(line) {
     }
     fields.push(currentField);
     
-    // Expected format: "Sivu","Katu","Osoite","Nimi","Merkinnät"
-    if (fields.length >= 5) {
-        const address = fields[2].trim();
-        const name = fields[3].trim();
-        const productsStr = fields[4].trim();
+    // Handle different CSV formats
+    let streetName, houseNumber, name, productsStr;
+    
+    if (fields.length >= 5 && fields[0].includes('Sivu')) {
+        // Format: "Sivu","Katu","Osoite","Nimi","Merkinnät" (KP2 format)
+        streetName = fields[1].trim();
+        houseNumber = fields[2].trim();
+        name = fields[3].trim();
+        productsStr = fields[4].trim();
+    } else if (fields.length >= 6) {
+        // Format: Katu,Numero,Huom,Asunto,Nimi,Tilaukset (standard format)
+        streetName = fields[0].trim();
+        houseNumber = fields[1].trim();
+        const apartment = fields[3].trim();
+        name = fields[4].trim();
+        productsStr = fields[5].trim();
         
-        // Skip if no address
-        if (!address) return null;
-        
-        // Parse products - handle multiline, comma-separated, and space-separated
-        // First split by newline and comma
-        const rawProducts = productsStr.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
-        
-        // Then expand space-separated products (like "ES HSPS") based on today's day
-        const today = new Date().getDay();
-        const products = [];
-        rawProducts.forEach(productGroup => {
-            // If product contains space, it's a combined product like "ES HSPS"
-            if (productGroup.includes(' ')) {
-                // Expand based on current day
-                const expanded = expandCombinedProducts(productGroup, today);
-                products.push(...expanded);
-            } else {
-                // Single product, add as-is
-                products.push(productGroup);
-            }
-        });
-        
-        return {
-            address,
-            products,
-            name,
-            buildingAddress: extractBuildingAddress(address)
-        };
+        // Combine house number with apartment if present
+        if (apartment) {
+            houseNumber += ' ' + apartment;
+        }
+    } else {
+        return null;
     }
+    
+    // Skip if no street or house number
+    if (!streetName || !houseNumber) return null;
+    
+    const address = `${streetName} ${houseNumber}`.trim();
+    
+    // Parse products - handle semicolons, commas, spaces, and UVES
+    // First, replace UVES with "UV ES" to split it
+    productsStr = productsStr.replace(/UVES/g, 'UV ES');
+    
+    // Split by semicolons, commas, newlines, and filter
+    const rawProducts = productsStr.split(/[;\n,]+/).map(p => p.trim()).filter(p => p);
+    
+    // Then expand space-separated products (like "ES HSPS" or "UV ES")
+    const today = new Date().getDay();
+    const products = [];
+    rawProducts.forEach(productGroup => {
+        // If product contains space, it's a combined product like "ES HSPS" or "UV ES"
+        if (productGroup.includes(' ')) {
+            // Split by space and add each product
+            const spaceSeparated = productGroup.split(/\s+/).map(p => p.trim()).filter(p => p);
+            products.push(...spaceSeparated);
+        } else {
+            // Single product, add as-is
+            products.push(productGroup);
+        }
+    });
+    
+    return {
+        address,
+        products,
+        name,
+        buildingAddress: extractBuildingAddress(address)
+    };
+}
     
     return null;
 }

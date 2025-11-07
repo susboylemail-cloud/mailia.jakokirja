@@ -328,37 +328,6 @@ body {
     text-align: center;
 }
 
-/* Login Links - Forgot Password and Create Account */
-.login-links {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-
-.login-link {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.6);
-    text-decoration: none;
-    transition: color 0.3s ease;
-    padding: 0.5rem;
-    min-height: 40px; /* Ensure touch target is large enough */
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.login-link:hover {
-    color: rgba(255, 255, 255, 0.9);
-    text-decoration: underline;
-}
-
-.login-link:active {
-    color: #4A90E2;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .phone-device {

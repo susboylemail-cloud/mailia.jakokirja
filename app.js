@@ -133,27 +133,9 @@ function initializeLogin() {
     const passwordInput = document.getElementById('password');
     const loginButton = document.querySelector('.login-button');
     const passwordToggle = document.getElementById('passwordToggle');
-    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-    const createAccountLink = document.getElementById('createAccountLink');
     
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
-    }
-    
-    // Forgot password link handler
-    if (forgotPasswordLink) {
-        forgotPasswordLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('Ota yhteyttä järjestelmänvalvojaan salasanan palauttamiseksi.');
-        });
-    }
-    
-    // Create account link handler
-    if (createAccountLink) {
-        createAccountLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('Ota yhteyttä järjestelmänvalvojaan uuden tilin luomiseksi.');
-        });
     }
     
     // Password visibility toggle

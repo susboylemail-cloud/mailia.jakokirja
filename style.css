@@ -79,20 +79,30 @@ body {
     overflow: hidden;
 }
 
-/* Geometric Grid Pattern Background */
+/* Pulsating background glow - replaces geometric grid */
 .login-screen::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        linear-gradient(rgba(74, 144, 226, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(74, 144, 226, 0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-    opacity: 0.6;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(74, 144, 226, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: pulse 4s ease-in-out infinite;
     pointer-events: none;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.15);
+        opacity: 1;
+    }
 }
 
 /* Diagonal Lines for Added Depth */
@@ -119,19 +129,12 @@ body {
 .phone-container {
     position: relative;
     perspective: 1000px;
-    animation: floatPhone 6s ease-in-out infinite;
+    /* Removed floating animation */
     filter: drop-shadow(0 0 60px rgba(74, 144, 226, 0.4)) 
             drop-shadow(0 0 30px rgba(74, 144, 226, 0.3));
 }
 
-@keyframes floatPhone {
-    0%, 100% {
-        transform: translateY(0px) rotateY(-5deg);
-    }
-    50% {
-        transform: translateY(-20px) rotateY(5deg);
-    }
-}
+/* Removed floatPhone animation */
 
 /* Phone Device */
 .phone-device {
@@ -139,10 +142,21 @@ body {
     width: 320px;
     height: 650px;
     transform-style: preserve-3d;
-    animation: rotatePhone 12s ease-in-out infinite;
+    /* Removed rotation animation */
 }
 
-@keyframes rotatePhone {
+/* Wiggle animation for wrong password */
+@keyframes wiggle {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+.phone-device.wiggle {
+    animation: wiggle 0.5s ease-in-out;
+}
+
+/* Removed rotatePhone animation */
     0%, 100% {
         transform: rotateY(-8deg) rotateX(2deg);
     }
@@ -1350,55 +1364,54 @@ body.dark-mode .subscriber-name {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #6B9E78;
-    color: white;
+    background: transparent;
+    color: var(--text-color);
     padding: 0.5rem;
     border-radius: 8px;
     text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
     transition: all 0.2s;
     flex-shrink: 0;
     width: 38px;
     height: 38px;
-    box-shadow: 0 2px 4px rgba(107, 158, 120, 0.3);
 }
 
 .nav-link:hover {
-    background: #8FBC8F;
-    transform: scale(1.05);
-    box-shadow: 0 3px 6px rgba(107, 158, 120, 0.4);
+    background: rgba(74, 144, 226, 0.1);
+    transform: scale(1.1);
 }
 
 .nav-link .icon {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
 }
 
 /* Report Button */
 .report-button {
     background: transparent;
     border: none;
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
+    padding: 0.5rem;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #F5B041;
+    color: var(--text-color);
+    width: 38px;
+    height: 38px;
 }
 
 .report-button .icon {
     width: 20px;
     height: 20px;
+    stroke: currentColor;
 }
 
 .report-button:hover {
-    background: rgba(245, 176, 65, 0.1);
-    transform: scale(1.05);
-    color: #F39C12;
+    background: rgba(74, 144, 226, 0.1);
+    transform: scale(1.1);
 }
 
 /* Circuit Tracker */

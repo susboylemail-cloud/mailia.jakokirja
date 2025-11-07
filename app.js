@@ -270,7 +270,15 @@ function handleLogin(event) {
         
         showMainApp();
     } else {
-        // Failed login
+        // Failed login - trigger wiggle animation
+        const phoneDevice = document.querySelector('.phone-device');
+        phoneDevice.classList.add('wiggle');
+        
+        // Remove wiggle class after animation completes
+        setTimeout(() => {
+            phoneDevice.classList.remove('wiggle');
+        }, 500);
+        
         errorDiv.textContent = 'Virheellinen käyttäjätunnus tai salasana';
         errorDiv.style.display = 'block';
         document.getElementById('password').value = '';

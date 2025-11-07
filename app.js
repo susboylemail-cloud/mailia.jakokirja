@@ -408,9 +408,17 @@ async function showMainApp() {
 
 // Dark Mode
 function initializeDarkMode() {
-    const darkMode = localStorage.getItem('darkMode') === 'true';
-    if (darkMode) {
+    // Default to dark mode if no preference is set
+    const darkMode = localStorage.getItem('darkMode');
+    const isDark = darkMode === null ? true : darkMode === 'true';
+    
+    if (isDark) {
         document.body.classList.add('dark-mode');
+    }
+    
+    // Save the default if not set
+    if (darkMode === null) {
+        localStorage.setItem('darkMode', 'true');
     }
 
     // Only setup toggle if user is authenticated
@@ -1677,6 +1685,9 @@ function createCircuitItem(circuitId) {
     
     const status = getCircuitStatus(circuitId);
     
+    // Add status class for gradient background
+    item.classList.add(`${status}-item`);
+    
     // Status bar on the left
     const statusBar = document.createElement('div');
     statusBar.className = `circuit-status-bar ${status}`;
@@ -1719,7 +1730,8 @@ function createCircuitProgressBar(circuitId) {
     if (!data || data.length === 0) return null;
     
     const totalSubscribers = data.length;
-    const deliveredCount = data.filter(sub => sub.delivered).length;
+    // Count delivered by checking localStorage checkbox state
+    const deliveredCount = data.filter(sub => getCheckboxState(circuitId, sub.address)).length;
     const percentage = Math.round((deliveredCount / totalSubscribers) * 100);
     
     const container = document.createElement('div');

@@ -172,100 +172,32 @@ function initializeLogin() {
     }
 }
 
-// Swipe-up gesture for login form reveal
+// Tap-to-login gesture for login form reveal
 function initializeSwipeUpLogin() {
     const loginScreen = document.getElementById('loginScreen');
     const landingContent = document.querySelector('.landing-content');
     const loginFormContainer = document.getElementById('loginFormContainer');
+    const tapIndicator = document.querySelector('.tap-to-login');
     
     if (!loginScreen || !landingContent || !loginFormContainer) return;
     
-    let startY = 0;
-    let currentY = 0;
-    let isDragging = false;
     let isFormVisible = false;
     
-    // Swipe gesture thresholds - more sensitive for pronounced effect
-    const SWIPE_REVEAL_DISTANCE = 150; // Reduced for easier activation
-    const SWIPE_TRIGGER_THRESHOLD = 80; // Lower threshold for easier triggering
-    const FORM_TRANSLATE_OFFSET = 150; // Increased for more dramatic slide
-    
-    // Helper function to validate touch events
-    function isValidTouch(e) {
-        return e.touches && e.touches.length > 0;
-    }
-    
-    // Touch events
-    loginScreen.addEventListener('touchstart', (e) => {
-        if (isFormVisible) return; // Only allow swipe when form is hidden
-        
-        if (isValidTouch(e)) {
-            startY = e.touches[0].clientY;
-            currentY = startY;
-            isDragging = false;
-        }
-    }, { passive: true });
-    
-    loginScreen.addEventListener('touchmove', (e) => {
-        if (isFormVisible) return;
-        
-        if (isValidTouch(e)) {
-            currentY = e.touches[0].clientY;
-            const deltaY = startY - currentY; // Positive when swiping up
-            
-            // Only allow upward swipe
-            if (deltaY > 0) {
-                isDragging = true;
-                e.preventDefault();
-                
-                // Show partial login form as user swipes with more pronounced effect
-                const progress = Math.min(deltaY / SWIPE_REVEAL_DISTANCE, 1);
-                
-                // Sliding animation for form
-                loginFormContainer.style.transform = `translateX(-50%) translateY(${100 - (progress * FORM_TRANSLATE_OFFSET)}%)`;
-                
-                // Fade out landing content
-                landingContent.style.opacity = 1 - progress;
-                
-                // Fade and blur background video progressively
-                loginScreen.style.setProperty('--bg-fade-progress', progress);
-                const bgVideo = loginScreen.querySelector('.login-bg-video');
-                if (bgVideo) {
-                    bgVideo.style.opacity = 1 - (progress * 0.7);
-                    bgVideo.style.filter = `blur(${progress * 8}px)`;
-                }
-            }
-        }
-    }, { passive: false });
-    
-    loginScreen.addEventListener('touchend', (e) => {
-        if (isFormVisible) return;
-        
-        const deltaY = startY - currentY;
-        
-        if (isDragging && deltaY > SWIPE_TRIGGER_THRESHOLD) {
-            // Show the login form
-            showLoginForm();
-        } else {
-            // Reset to original position
-            hideLoginForm();
-        }
-        
-        isDragging = false;
-        startY = 0;
-        currentY = 0;
-    });
-    
-    // Also allow click on swipe indicator
-    const swipeIndicator = document.querySelector('.swipe-indicator');
-    if (swipeIndicator) {
-        swipeIndicator.addEventListener('click', () => {
+    // Click/tap on indicator to show login form
+    if (tapIndicator) {
+        tapIndicator.addEventListener('click', () => {
             if (!isFormVisible) {
                 showLoginForm();
             }
         });
-        swipeIndicator.style.cursor = 'pointer';
     }
+    
+    // Also allow tapping anywhere on the screen
+    loginScreen.addEventListener('click', (e) => {
+        // Don't trigger if clicking on the form itself or if form is already visible
+        if (isFormVisible || e.target.closest('.login-form-container')) return;
+        showLoginForm();
+    });
     
     function showLoginForm() {
         isFormVisible = true;
@@ -284,8 +216,6 @@ function initializeSwipeUpLogin() {
         loginFormContainer.classList.remove('show');
         landingContent.classList.remove('hide');
         loginScreen.classList.remove('form-active');
-        loginFormContainer.style.transform = '';
-        landingContent.style.opacity = '';
         
         // Reset background video
         const bgVideo = loginScreen.querySelector('.login-bg-video');
@@ -1171,12 +1101,40 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const products = document.createElement('div');
     products.className = 'subscriber-products';
     const today = new Date().getDay();
+    
+    // Group products by base name and count quantities
+    const productCounts = {};
     subscriber.products.forEach(product => {
+        const trimmed = product.trim();
+        const simplifiedProduct = simplifyProductName(trimmed, today);
+        
+        // Extract quantity if present (e.g., UV2 -> UV with quantity 2)
+        const match = trimmed.match(/^([A-Z]+)(\d+)$/);
+        if (match) {
+            const baseName = match[1];
+            const quantity = parseInt(match[2]);
+            const simpleBase = simplifyProductName(baseName, today);
+            productCounts[simpleBase] = (productCounts[simpleBase] || 0) + quantity;
+        } else {
+            productCounts[simplifiedProduct] = (productCounts[simplifiedProduct] || 0) + 1;
+        }
+    });
+    
+    // Display products with quantity badges
+    Object.entries(productCounts).forEach(([product, count]) => {
         const tag = document.createElement('span');
-        const simplifiedProduct = simplifyProductName(product.trim(), today);
-        const colorClass = getProductColorClass(simplifiedProduct);
+        const colorClass = getProductColorClass(product);
         tag.className = `product-tag product-${colorClass}`;
-        tag.textContent = simplifiedProduct;
+        tag.textContent = product;
+        
+        // Add quantity badge if count > 1
+        if (count > 1) {
+            const badge = document.createElement('span');
+            badge.className = 'quantity-badge';
+            badge.textContent = count;
+            tag.appendChild(badge);
+        }
+        
         products.appendChild(tag);
     });
     info.appendChild(products);
@@ -1199,9 +1157,11 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
         if (nextAddress) {
             const link = document.createElement('a');
             link.className = 'nav-link';
-            link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextAddress + ', Imatra, Finland')}`;
+            // Use the subscriber's actual address from the current card
+            const subscriberAddress = subscriber.address;
+            link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(subscriberAddress + ', Imatra, Finland')}`;
             link.target = '_blank';
-            link.title = `Navigate to ${nextAddress}`;
+            link.title = `Navigate to ${subscriberAddress}`;
             const navImg = document.createElement('img');
             navImg.src = 'navigation icon.png';
             navImg.alt = 'Navigate';

@@ -925,7 +925,9 @@ function renderCoverSheet(circuitId, subscribers) {
             const normalized = normalizeProduct(product);
             // Only count if product is valid for today
             if (isProductValidForDay(normalized, today)) {
-                products[normalized] = (products[normalized] || 0) + 1;
+                // Simplify product name (e.g., HSPE → HS, ESP → ES)
+                const simplified = simplifyProductName(normalized, today);
+                products[simplified] = (products[simplified] || 0) + 1;
             }
         });
     });

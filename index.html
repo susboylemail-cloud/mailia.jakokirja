@@ -49,15 +49,21 @@
                         <div class="phone-login-form">
                             <div class="phone-logo">Mailia</div>
                             <form id="loginForm" class="login-form">
-                                <input type="text" id="username" name="username" required autocomplete="username" placeholder="Käyttäjätunnus" class="phone-input">
-                                <div class="password-container">
-                                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Salasana" class="phone-input">
-                                    <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">
-                                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                            <circle cx="12" cy="12" r="3"></circle>
-                                        </svg>
-                                    </button>
+                                <div class="input-group">
+                                    <label for="username" class="input-label">
+                                        <input type="text" id="username" name="username" required autocomplete="username" placeholder="Käyttäjätunnus" class="phone-input">
+                                    </label>
+                                </div>
+                                <div class="input-group">
+                                    <label for="password" class="input-label password-container">
+                                        <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Salasana" class="phone-input">
+                                        <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">
+                                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </label>
                                 </div>
                                 <div id="loginError" class="login-error" style="display: none;"></div>
                                 <button type="submit" class="phone-login-button">Kirjaudu sisään</button>

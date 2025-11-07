@@ -269,6 +269,19 @@ body {
     filter: drop-shadow(0 2px 10px rgba(74, 144, 226, 0.3));
 }
 
+/* Input Groups and Labels for Better Touch Targets */
+.input-group {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.input-label {
+    display: block;
+    width: 100%;
+    cursor: text;
+    position: relative;
+}
+
 /* Phone Input Fields */
 .phone-input {
     width: 100%;
@@ -301,10 +314,15 @@ body {
 .phone-login-form .password-container {
     position: relative;
     width: 100%;
+    display: block;
 }
 
 .phone-login-form .password-container input {
     padding-right: 3rem;
+}
+
+.phone-login-form .input-label.password-container {
+    display: block;
 }
 
 .phone-login-form .password-toggle {

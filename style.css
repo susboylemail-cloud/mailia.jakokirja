@@ -36,6 +36,7 @@ body.dark-mode {
     --shadow: rgba(0, 0, 0, 0.3);
     --red-accent: #ff6b6b;
     --warm-gray: #3a3a3a;
+    --navy: #B8C5D6; /* Improved readability - light blue-gray for dark mode */
 }
 
 /* Reset */
@@ -266,6 +267,11 @@ body.dark-mode header {
     height: 40px;
 }
 
+.quick-dial .icon-img {
+    /* Simplify icon - remove inner circle effect */
+    filter: invert(1) brightness(0);
+}
+
 .quick-dial:hover {
     background: var(--warm-gray);
     border-color: var(--primary-blue);
@@ -407,12 +413,14 @@ main {
     border-radius: 10px;
     background-color: var(--card-bg);
     color: var(--text-color);
-    transition: border-color 0.2s;
+    transition: all 0.2s ease; /* Smooth animation for dropdown */
+    cursor: pointer;
 }
 
 #circuitSelect:focus {
     outline: none;
     border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(91, 143, 185, 0.1);
 }
 
 /* Cover Sheet */
@@ -624,11 +632,18 @@ body.dark-mode .building-header {
     border-radius: 0 0 8px 8px;
 }
 
+/* Checkbox visibility control - hidden by default, swipe is primary method */
 .subscriber-card input[type="checkbox"] {
     width: 24px;
     height: 24px;
     cursor: pointer;
     flex-shrink: 0;
+    display: none; /* Hidden by default */
+}
+
+/* Show checkboxes when user enables the setting */
+.subscriber-card.show-checkboxes input[type="checkbox"] {
+    display: block;
 }
 
 .subscriber-info {

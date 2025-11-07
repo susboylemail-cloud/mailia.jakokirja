@@ -23,6 +23,7 @@ let currentCircuit = null;
 let isAuthenticated = false;
 let userRole = null; // 'delivery' or 'admin'
 let routeMessages = []; // Store route messages for admin panel
+let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
 
 // Circuit names mapping
 const circuitNames = {
@@ -82,6 +83,9 @@ const circuitNames = {
 document.addEventListener('DOMContentLoaded', async () => {
     // Load saved credentials if available
     loadSavedCredentials();
+    
+    // Load checkbox visibility preference
+    loadCheckboxVisibility();
     
     // Check if already authenticated
     checkAuthentication();
@@ -207,6 +211,34 @@ function promptSaveLoginInfo(username, password) {
     }, 500);
 }
 
+// Checkbox visibility functions
+function loadCheckboxVisibility() {
+    const saved = localStorage.getItem('mailiaShowCheckboxes');
+    showCheckboxes = saved === 'true';
+}
+
+function saveCheckboxVisibility(visible) {
+    showCheckboxes = visible;
+    localStorage.setItem('mailiaShowCheckboxes', visible.toString());
+}
+
+function toggleCheckboxVisibility(visible) {
+    saveCheckboxVisibility(visible);
+    updateCheckboxVisibility();
+}
+
+function updateCheckboxVisibility() {
+    const cards = document.querySelectorAll('.subscriber-card');
+    cards.forEach(card => {
+        if (showCheckboxes) {
+            card.classList.add('show-checkboxes');
+        } else {
+            card.classList.remove('show-checkboxes');
+        }
+    });
+}
+
+
 async function showMainApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
@@ -252,6 +284,7 @@ function initializeSettings() {
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsDropdown = document.getElementById('settingsDropdown');
     const settingsContainer = document.querySelector('.settings-container');
+    const showCheckboxesToggle = document.getElementById('showCheckboxesToggle');
     
     if (settingsBtn && settingsDropdown && settingsContainer) {
         // Toggle dropdown when settings button is clicked
@@ -271,6 +304,14 @@ function initializeSettings() {
         settingsDropdown.addEventListener('click', (e) => {
             e.stopPropagation();
         });
+        
+        // Initialize checkbox toggle
+        if (showCheckboxesToggle) {
+            showCheckboxesToggle.checked = showCheckboxes;
+            showCheckboxesToggle.addEventListener('change', (e) => {
+                toggleCheckboxVisibility(e.target.checked);
+            });
+        }
     }
 }
 
@@ -839,6 +880,11 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const card = document.createElement('div');
     card.className = 'subscriber-card';
     card.dataset.products = subscriber.products.join(',');
+    
+    // Apply checkbox visibility class based on user preference
+    if (showCheckboxes) {
+        card.classList.add('show-checkboxes');
+    }
     
     // Checkbox
     const checkbox = document.createElement('input');

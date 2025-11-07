@@ -54,6 +54,10 @@
                     </button>
                     <div id="settingsDropdown" class="settings-dropdown">
                         <label>
+                            <input type="checkbox" id="showCheckboxesToggle">
+                            Kuittausruudut käytössä
+                        </label>
+                        <label>
                             <input type="checkbox" id="hideStfFilter">
                             Piilota STF
                         </label>
@@ -75,7 +79,6 @@
     </header>
 
     <div class="tab-container">
-        <button class="tab-button active" data-tab="delivery">Jakelu</button>
         <button class="tab-button admin-only" data-tab="tracker" style="display: none;">Seuranta</button>
         <button class="tab-button admin-only" data-tab="messages" style="display: none;">Reittiviestit</button>
     </div>
@@ -86,6 +89,8 @@
             <div class="circuit-selector-container">
                 <label for="circuitSelect">Valitse piiri:</label>
                 <select id="circuitSelect">
+                    <option value="">Valitse piiri</option>
+                </select>
                     <option value="">-- Valitse piiri --</option>
                 </select>
             </div>

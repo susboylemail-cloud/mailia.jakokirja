@@ -5,14 +5,22 @@ const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
 
 // Authentication credentials
 const CREDENTIALS = {
-    username: 'imatravj',
-    password: 'mailiavj1!'
+    delivery: {
+        username: 'imatravj',
+        password: 'mailiavj1!'
+    },
+    admin: {
+        username: 'paivystys.imatra',
+        password: 'mailia123!'
+    }
 };
 
 // Global state
 let allData = [];
 let currentCircuit = null;
 let isAuthenticated = false;
+let userRole = null; // 'delivery' or 'admin'
+let routeMessages = []; // Store route messages for admin panel
 
 // Circuit names mapping
 const circuitNames = {
@@ -70,6 +78,9 @@ const circuitNames = {
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', async () => {
+    // Load saved credentials if available
+    loadSavedCredentials();
+    
     // Check if already authenticated
     checkAuthentication();
     
@@ -83,9 +94,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Authentication
 function checkAuthentication() {
     const sessionAuth = sessionStorage.getItem('mailiaAuth');
+    const sessionRole = sessionStorage.getItem('mailiaRole');
     if (sessionAuth === 'authenticated') {
         isAuthenticated = true;
+        userRole = sessionRole || 'delivery';
         showMainApp();
+    }
+}
+
+function loadSavedCredentials() {
+    const savedCreds = localStorage.getItem('mailiaSavedCredentials');
+    if (savedCreds) {
+        try {
+            const {username, password} = JSON.parse(savedCreds);
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            if (usernameInput && passwordInput) {
+                usernameInput.value = username;
+                passwordInput.value = password;
+            }
+        } catch (e) {
+            console.error('Failed to load saved credentials', e);
+        }
     }
 }
 
@@ -104,7 +134,10 @@ function initializeLogin() {
             const username = document.getElementById('username').value;
             const password = passwordInput.value;
             
-            if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+            const isDeliveryUser = username === CREDENTIALS.delivery.username && password === CREDENTIALS.delivery.password;
+            const isAdminUser = username === CREDENTIALS.admin.username && password === CREDENTIALS.admin.password;
+            
+            if (isDeliveryUser || isAdminUser) {
                 loginButton.classList.add('correct-password');
             } else {
                 loginButton.classList.remove('correct-password');
@@ -120,11 +153,31 @@ function handleLogin(event) {
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('loginError');
     
-    if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+    let authenticated = false;
+    let role = null;
+    
+    // Check delivery user credentials
+    if (username === CREDENTIALS.delivery.username && password === CREDENTIALS.delivery.password) {
+        authenticated = true;
+        role = 'delivery';
+    }
+    // Check admin credentials
+    else if (username === CREDENTIALS.admin.username && password === CREDENTIALS.admin.password) {
+        authenticated = true;
+        role = 'admin';
+    }
+    
+    if (authenticated) {
         // Successful login
         sessionStorage.setItem('mailiaAuth', 'authenticated');
+        sessionStorage.setItem('mailiaRole', role);
         isAuthenticated = true;
+        userRole = role;
         errorDiv.style.display = 'none';
+        
+        // Prompt to save login info
+        promptSaveLoginInfo(username, password);
+        
         showMainApp();
     } else {
         // Failed login
@@ -132,6 +185,22 @@ function handleLogin(event) {
         errorDiv.style.display = 'block';
         document.getElementById('password').value = '';
     }
+}
+
+function promptSaveLoginInfo(username, password) {
+    // Check if credentials are already saved
+    const savedCreds = localStorage.getItem('mailiaSavedCredentials');
+    if (savedCreds) return; // Already saved
+    
+    // Use setTimeout to show prompt after login screen transition
+    setTimeout(() => {
+        if (confirm('Haluatko tallentaa kirjautumistiedot?')) {
+            localStorage.setItem('mailiaSavedCredentials', JSON.stringify({
+                username: username,
+                password: password
+            }));
+        }
+    }, 500);
 }
 
 async function showMainApp() {
@@ -230,6 +299,19 @@ function handleLogout() {
 function initializeTabs() {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Show/hide tabs based on user role
+    const seurantaButton = document.querySelector('[data-tab="tracker"]');
+    const messagesButton = document.querySelector('[data-tab="messages"]');
+    
+    if (userRole === 'admin') {
+        // Admin sees both Seuranta and Route Messages
+        if (messagesButton) messagesButton.style.display = 'inline-block';
+    } else {
+        // Delivery user doesn't see Seuranta
+        if (seurantaButton) seurantaButton.style.display = 'none';
+        if (messagesButton) messagesButton.style.display = 'none';
+    }
 
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -239,10 +321,21 @@ function initializeTabs() {
             tabContents.forEach(content => content.classList.remove('active'));
 
             button.classList.add('active');
-            document.getElementById(targetTab === 'delivery' ? 'deliveryTab' : 'trackerTab').classList.add('active');
-
-            if (targetTab === 'tracker') {
+            
+            // Determine which tab content to show
+            let tabContent;
+            if (targetTab === 'delivery') {
+                tabContent = document.getElementById('deliveryTab');
+            } else if (targetTab === 'tracker') {
+                tabContent = document.getElementById('trackerTab');
                 renderCircuitTracker();
+            } else if (targetTab === 'messages') {
+                tabContent = document.getElementById('messagesTab');
+                renderRouteMessages();
+            }
+            
+            if (tabContent) {
+                tabContent.classList.add('active');
             }
         });
     });
@@ -618,6 +711,58 @@ function isProductValidForDay(product, dayOfWeek) {
     return true;
 }
 
+/**
+ * Simplifies product display names based on delivery days
+ * E.g., ESP (mon-fri) displays as "ES" on those days
+ */
+function simplifyProductName(product, dayOfWeek) {
+    const normalized = normalizeProduct(product);
+    
+    // ESP -> ES on Monday-Friday
+    if (normalized === 'ESP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
+        return 'ES';
+    }
+    // ESPS -> ES on Friday-Sunday
+    if (normalized === 'ESPS' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'ES';
+    }
+    // ESLS -> ES on Saturday-Sunday
+    if (normalized === 'ESLS' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'ES';
+    }
+    // HSP -> HS on Monday-Friday
+    if (normalized === 'HSP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // HSPS -> HS on Friday-Sunday
+    if (normalized === 'HSPS' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // HSPE -> HS on Friday
+    if (normalized === 'HSPE' && dayOfWeek === FRIDAY) {
+        return 'HS';
+    }
+    // HSLS -> HS on Saturday-Sunday  
+    if (normalized === 'HSLS' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // HSTS -> HS on Thursday-Sunday
+    if (normalized === 'HSTS' && [THURSDAY, FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // MALA -> HS on Monday-Saturday
+    if (normalized === 'MALA' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
+    // SH -> HS on Sunday
+    if (normalized === 'SH' && dayOfWeek === SUNDAY) {
+        return 'HS';
+    }
+    
+    // Return original for all other cases
+    return product;
+}
+
 // Subscriber List
 function renderSubscriberList(circuitId, subscribers) {
     const listContainer = document.getElementById('subscriberList');
@@ -711,16 +856,28 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     
     const products = document.createElement('div');
     products.className = 'subscriber-products';
+    const today = new Date().getDay();
     subscriber.products.forEach(product => {
         const tag = document.createElement('span');
-        const colorClass = getProductColorClass(product.trim());
+        const simplifiedProduct = simplifyProductName(product.trim(), today);
+        const colorClass = getProductColorClass(simplifiedProduct);
         tag.className = `product-tag product-${colorClass}`;
-        tag.textContent = product;
+        tag.textContent = simplifiedProduct;
         products.appendChild(tag);
     });
     info.appendChild(products);
     
     card.appendChild(info);
+    
+    // Report undelivered button
+    const reportBtn = document.createElement('button');
+    reportBtn.className = 'report-button';
+    reportBtn.textContent = '⚠️';
+    reportBtn.title = 'Raportoi toimittamaton';
+    reportBtn.addEventListener('click', () => {
+        reportUndelivered(circuitId, subscriber);
+    });
+    card.appendChild(reportBtn);
     
     // Navigation link (if not last)
     if (!isLast) {
@@ -759,6 +916,49 @@ function getNextAddress(buildings, currentBuildingIndex, currentSubIndex) {
     }
     
     return null;
+}
+
+// Report Undelivered Functionality
+function reportUndelivered(circuitId, subscriber) {
+    const reason = prompt('Miksi tuotetta ei saatu jaettua?');
+    
+    if (reason && reason.trim()) {
+        const report = {
+            timestamp: new Date().toISOString(),
+            circuit: circuitId,
+            address: subscriber.address,
+            name: subscriber.name,
+            products: subscriber.products.join(', '),
+            reason: reason.trim()
+        };
+        
+        // Save to localStorage
+        saveRouteMessage(report);
+        
+        alert('Raportti tallennettu!');
+    }
+}
+
+function saveRouteMessage(message) {
+    // Load existing messages
+    const messages = loadRouteMessages();
+    messages.push(message);
+    
+    // Save back to localStorage
+    localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+}
+
+function loadRouteMessages() {
+    const stored = localStorage.getItem('mailiaRouteMessages');
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            console.error('Failed to load route messages', e);
+            return [];
+        }
+    }
+    return [];
 }
 
 // Filters and Event Listeners
@@ -916,6 +1116,56 @@ function calculateDuration(start, end) {
         return `${hours}h ${minutes}min`;
     } else {
         return `${minutes}min`;
+    }
+}
+
+// Route Messages (Admin Panel)
+function renderRouteMessages() {
+    const messagesContainer = document.getElementById('routeMessages');
+    const messages = loadRouteMessages();
+    
+    if (messages.length === 0) {
+        messagesContainer.innerHTML = '<p class="no-messages">Ei viestejä</p>';
+        return;
+    }
+    
+    messagesContainer.innerHTML = '';
+    
+    // Sort by timestamp descending (newest first)
+    messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    messages.forEach((message, index) => {
+        const messageCard = document.createElement('div');
+        messageCard.className = 'message-card';
+        
+        const timestamp = new Date(message.timestamp);
+        const formattedDate = timestamp.toLocaleString('fi-FI');
+        
+        messageCard.innerHTML = `
+            <div class="message-header">
+                <span class="message-circuit">${message.circuit}</span>
+                <span class="message-timestamp">${formattedDate}</span>
+            </div>
+            <div class="message-body">
+                <div class="message-address"><strong>Osoite:</strong> ${message.address}</div>
+                <div class="message-name"><strong>Asiakas:</strong> ${message.name}</div>
+                <div class="message-products"><strong>Tuotteet:</strong> ${message.products}</div>
+                <div class="message-reason"><strong>Syy:</strong> ${message.reason}</div>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageCard);
+    });
+    
+    // Add clear button handler
+    const clearBtn = document.getElementById('clearMessagesBtn');
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            if (confirm('Haluatko varmasti tyhjentää kaikki viestit?')) {
+                localStorage.removeItem('mailiaRouteMessages');
+                renderRouteMessages();
+            }
+        };
     }
 }
 

@@ -78,6 +78,7 @@
     <div class="tab-container">
         <button class="tab-button active" data-tab="delivery">Jakelu</button>
         <button class="tab-button" data-tab="tracker">Seuranta</button>
+        <button class="tab-button admin-only" data-tab="messages" style="display: none;">Reittiviestit</button>
     </div>
 
     <main>
@@ -115,6 +116,15 @@
         <div id="trackerTab" class="tab-content">
             <h2>Piirien tilanne</h2>
             <div id="circuitTracker" class="circuit-tracker"></div>
+        </div>
+        
+        <!-- Route Messages Tab (Admin Only) -->
+        <div id="messagesTab" class="tab-content">
+            <h2>Reittiviestit</h2>
+            <div class="messages-controls">
+                <button id="clearMessagesBtn" class="danger-button">Tyhjennä viestit</button>
+            </div>
+            <div id="routeMessages" class="route-messages"></div>
         </div>
     </main>
     </div>

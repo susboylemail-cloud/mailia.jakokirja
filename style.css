@@ -64,7 +64,7 @@ body {
     letter-spacing: 0.01em;
 }
 
-/* Login Screen - Navy Monochromatic Background */
+/* Login Screen - Navy Monochromatic Background with Geometric Pattern */
 .login-screen {
     position: fixed;
     top: 0;
@@ -79,11 +79,49 @@ body {
     overflow: hidden;
 }
 
-/* Floating Phone Container */
+/* Geometric Grid Pattern Background */
+.login-screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(74, 144, 226, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74, 144, 226, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Diagonal Lines for Added Depth */
+.login-screen::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 100px,
+            rgba(74, 144, 226, 0.02) 100px,
+            rgba(74, 144, 226, 0.02) 101px
+        );
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Floating Phone Container with Blue Ambient Glow */
 .phone-container {
     position: relative;
     perspective: 1000px;
     animation: floatPhone 6s ease-in-out infinite;
+    filter: drop-shadow(0 0 60px rgba(74, 144, 226, 0.4)) 
+            drop-shadow(0 0 30px rgba(74, 144, 226, 0.3));
 }
 
 @keyframes floatPhone {
@@ -113,7 +151,7 @@ body {
     }
 }
 
-/* Phone Frame */
+/* Phone Frame with Enhanced Shadow and Glow */
 .phone-frame {
     position: relative;
     width: 100%;
@@ -124,6 +162,7 @@ body {
         0 20px 60px rgba(0, 0, 0, 0.6),
         0 0 0 8px #1a1a1a,
         0 0 0 10px #2c3e50,
+        0 0 40px rgba(74, 144, 226, 0.2),
         inset 0 0 0 2px rgba(255, 255, 255, 0.1);
     overflow: hidden;
 }
@@ -169,10 +208,14 @@ body {
 .phone-logo {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #fff;
+    background: linear-gradient(135deg, #fff 0%, #4A90E2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 2rem;
     text-align: center;
     letter-spacing: 0.05em;
+    text-shadow: 0 2px 10px rgba(74, 144, 226, 0.3);
 }
 
 /* Phone Input Fields */
@@ -187,6 +230,7 @@ body {
     outline: none;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
+    min-height: 48px; /* Ensure touch target is large enough */
 }
 
 .phone-input::placeholder {
@@ -196,7 +240,10 @@ body {
 .phone-input:focus {
     background: rgba(255, 255, 255, 0.12);
     border-color: #4A90E2;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    box-shadow: 
+        0 0 0 3px rgba(74, 144, 226, 0.3),
+        0 0 15px rgba(74, 144, 226, 0.4),
+        inset 0 0 10px rgba(74, 144, 226, 0.1);
 }
 
 /* Password Container in Phone */
@@ -217,9 +264,14 @@ body {
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 0.5rem;
+    padding: 0.75rem; /* Larger touch target */
     color: rgba(255, 255, 255, 0.6);
     transition: color 0.3s ease;
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .phone-login-form .password-toggle:hover {
@@ -231,28 +283,37 @@ body {
     height: 20px;
 }
 
-/* Phone Login Button */
+/* Phone Login Button with Enhanced Gradient */
 .phone-login-button {
     width: 100%;
     padding: 1rem;
     font-size: 1rem;
     font-weight: 600;
     color: #fff;
-    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    background: linear-gradient(135deg, #5DADE2 0%, #4A90E2 50%, #2E5F8A 100%);
     border: none;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+    box-shadow: 
+        0 4px 15px rgba(74, 144, 226, 0.4),
+        0 2px 5px rgba(0, 0, 0, 0.2);
+    min-height: 48px; /* Ensure touch target is large enough */
 }
 
 .phone-login-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+    box-shadow: 
+        0 6px 20px rgba(74, 144, 226, 0.5),
+        0 3px 8px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #6BBEF3 0%, #5DADE2 50%, #357ABD 100%);
 }
 
 .phone-login-button:active {
     transform: translateY(0);
+    box-shadow: 
+        0 2px 10px rgba(74, 144, 226, 0.4),
+        0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Login Error on Phone */
@@ -265,6 +326,37 @@ body {
     color: #ff6b7a;
     font-size: 0.875rem;
     text-align: center;
+}
+
+/* Login Links - Forgot Password and Create Account */
+.login-links {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.login-link {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    padding: 0.5rem;
+    min-height: 40px; /* Ensure touch target is large enough */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.login-link:hover {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: underline;
+}
+
+.login-link:active {
+    color: #4A90E2;
 }
 
 /* Responsive adjustments */

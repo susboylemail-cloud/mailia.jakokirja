@@ -609,8 +609,24 @@ function parseOldFormatCSVLine(line) {
         // Skip if no address
         if (!address) return null;
         
-        // Parse products - handle multiline and comma-separated
-        const products = productsStr.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
+        // Parse products - handle multiline, comma-separated, and space-separated
+        // First split by newline and comma
+        const rawProducts = productsStr.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
+        
+        // Then expand space-separated products (like "ES HSPS") based on today's day
+        const today = new Date().getDay();
+        const products = [];
+        rawProducts.forEach(productGroup => {
+            // If product contains space, it's a combined product like "ES HSPS"
+            if (productGroup.includes(' ')) {
+                // Expand based on current day
+                const expanded = expandCombinedProducts(productGroup, today);
+                products.push(...expanded);
+            } else {
+                // Single product, add as-is
+                products.push(productGroup);
+            }
+        });
         
         return {
             address,
@@ -644,12 +660,26 @@ function parseNewFormatCSVLine(line) {
         if (apartment) address += ` ${apartment}`;
         
         // Parse products - extract product codes from brackets
+        // Also handle space-separated products like "ES HSPS"
         const productMatches = productsStr.matchAll(/([A-Z]+\d*)/g);
-        const products = Array.from(productMatches, m => m[1]);
+        const rawProducts = Array.from(productMatches, m => m[1]);
+        
+        // Check if original string had spaces indicating combined products
+        const today = new Date().getDay();
+        let products = [];
+        
+        if (productsStr.includes(' ') && rawProducts.length > 1) {
+            // This is a combined product string, expand based on day
+            const expanded = expandCombinedProducts(productsStr, today);
+            products = expanded;
+        } else {
+            // Regular products, use as-is
+            products = rawProducts.length > 0 ? rawProducts : [productsStr.trim()];
+        }
         
         return {
             address,
-            products: products.length > 0 ? products : [productsStr.trim()],
+            products,
             name,
             buildingAddress: extractBuildingAddress(address)
         };
@@ -926,6 +956,7 @@ const SUNDAY = 0, MONDAY = 1, TUESDAY = 2, WEDNESDAY = 3, THURSDAY = 4, FRIDAY =
  */
 function isProductValidForDay(product, dayOfWeek) {
     const productSchedule = {
+        // Helsingin Sanomat variants
         'SH': [SUNDAY],                              // Sunnuntai Hesari - Sunday only
         'HSPS': [FRIDAY, SATURDAY, SUNDAY],          // Hesari perjantai-sunnuntai
         'HSPE': [FRIDAY],                            // Hesari perjantai - Friday only
@@ -933,6 +964,8 @@ function isProductValidForDay(product, dayOfWeek) {
         'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai - Monday to Friday
         'HSTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY],           // Hesari torstai-sunnuntai
         'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
+        // Etelä-Saimaa variants
+        // Note: plain ES is a daily product (delivered every day), so it's not listed here
         'ESPS': [FRIDAY, SATURDAY, SUNDAY],          // Etelä-Saimaa perjantai-sunnuntai
         'ESLS': [SATURDAY, SUNDAY],                  // Etelä-Saimaa lauantai-sunnuntai
         'ESP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]   // Etelä-Saimaa maanantai-perjantai
@@ -943,8 +976,33 @@ function isProductValidForDay(product, dayOfWeek) {
         return productSchedule[product].includes(dayOfWeek);
     }
     
-    // All other products (UV, HS, ES, JO, STF, LU, etc.) are always valid
+    // All other products (UV, HS, ES, JO, STF, LU, etc.) are always valid (every day)
     return true;
+}
+
+/**
+ * Expands combined products (like "ES HSPS") into separate product codes based on the day
+ * This handles cases where a customer orders multiple products with different schedules
+ * E.g., "ES HSPS" means ES (Mon-Sat) + HS (Fri-Sun), so on Friday both ES and HS are delivered
+ * 
+ * @param {string} productString - Space-separated product codes (e.g., "ES HSPS", "UV ES HS")
+ * @param {number} dayOfWeek - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+ * @returns {Array<string>} Array of individual products valid for the given day
+ */
+function expandCombinedProducts(productString, dayOfWeek) {
+    const products = productString.trim().split(/\s+/);
+    const expandedProducts = [];
+    
+    products.forEach(product => {
+        const normalized = normalizeProduct(product);
+        
+        // Check if this product is valid for today
+        if (isProductValidForDay(normalized, dayOfWeek)) {
+            expandedProducts.push(product);
+        }
+    });
+    
+    return expandedProducts;
 }
 
 /**

@@ -121,6 +121,9 @@ async function showMainApp() {
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();
     
+    // Initialize logout button
+    initializeLogout();
+    
     // Initialize the main application
     initializeTabs();
     await loadData();
@@ -155,6 +158,31 @@ function updateDarkModeIcon(isDark) {
     if (icon) {
         icon.textContent = isDark ? '☀️' : '🌙';
     }
+}
+
+// Logout
+function initializeLogout() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn && isAuthenticated) {
+        logoutBtn.addEventListener('click', () => {
+            handleLogout();
+        });
+    }
+}
+
+function handleLogout() {
+    // Clear authentication
+    sessionStorage.removeItem('mailiaAuth');
+    isAuthenticated = false;
+    
+    // Hide main app and show login screen
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    
+    // Reset form
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('loginError').style.display = 'none';
 }
 
 // Tab Navigation
@@ -532,7 +560,7 @@ function isProductValidForDay(product, dayOfWeek) {
         'HSPS': [FRIDAY, SATURDAY, SUNDAY],          // Hesari perjantai-sunnuntai
         'HSPE': [FRIDAY],                            // Hesari perjantai - Friday only
         'HSLS': [SATURDAY, SUNDAY],                  // Hesari lauantai-sunnuntai
-        'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai
+        'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai - Monday to Friday
         'HSTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY],           // Hesari torstai-sunnuntai
         'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
         'ESPS': [FRIDAY, SATURDAY, SUNDAY],          // Etelä-Saimaa perjantai-sunnuntai

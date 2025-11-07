@@ -309,10 +309,11 @@ function initializeTabs() {
     const messagesButton = document.querySelector('[data-tab="messages"]');
     
     if (userRole === 'admin') {
-        // Admin sees both Seuranta and Route Messages
+        // Admin sees Seuranta and Reittiviestit
+        if (seurantaButton) seurantaButton.style.display = 'inline-block';
         if (messagesButton) messagesButton.style.display = 'inline-block';
     } else {
-        // Delivery user doesn't see Seuranta
+        // Delivery user only sees Jakelu
         if (seurantaButton) seurantaButton.style.display = 'none';
         if (messagesButton) messagesButton.style.display = 'none';
     }
@@ -876,8 +877,8 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     // Report undelivered button
     const reportBtn = document.createElement('button');
     reportBtn.className = 'report-button';
-    reportBtn.textContent = '⚠️';
-    reportBtn.title = 'Raportoi toimittamaton';
+    reportBtn.textContent = '🚩';
+    reportBtn.title = 'Ilmoita ongelmasta';
     reportBtn.addEventListener('click', () => {
         reportUndelivered(circuitId, subscriber);
     });
@@ -924,7 +925,7 @@ function getNextAddress(buildings, currentBuildingIndex, currentSubIndex) {
 
 // Report Undelivered Functionality
 function reportUndelivered(circuitId, subscriber) {
-    const reason = prompt('Miksi tuotetta ei saatu jaettua?');
+    const reason = prompt('Ilmoita ongelmasta');
     
     if (reason && reason.trim()) {
         const report = {

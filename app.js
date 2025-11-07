@@ -613,6 +613,9 @@ function parseCircuitCSV(text, filename) {
 
 function parseOldFormatCSVLine(line) {
     // Parse CSV line with proper quote handling
+    // Detect delimiter: semicolon or comma
+    const delimiter = line.includes(';') ? ';' : ',';
+    
     const fields = [];
     let currentField = '';
     let insideQuotes = false;
@@ -630,7 +633,7 @@ function parseOldFormatCSVLine(line) {
                 // Toggle quote state
                 insideQuotes = !insideQuotes;
             }
-        } else if (char === ',' && !insideQuotes) {
+        } else if (char === delimiter && !insideQuotes) {
             // Field separator
             fields.push(currentField);
             currentField = '';

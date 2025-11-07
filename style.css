@@ -1052,10 +1052,10 @@ main {
     justify-content: space-between;
     background: var(--primary-blue);
     color: white;
-    padding: 0.6rem 1.1rem;
-    border-radius: 24px;
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
 }
 
 /* Product-specific colors for badges */
@@ -1090,11 +1090,12 @@ main {
 }
 
 .product-badge .count {
-    margin-left: 0.5rem;
+    margin-left: 0.4rem;
     background: rgba(255, 255, 255, 0.3);
-    padding: 0.25rem 0.65rem;
-    border-radius: 12px;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
     font-weight: 700;
+    font-size: 0.8rem;
 }
 
 body.dark-mode .product-badge.product-UV .count,
@@ -1270,9 +1271,9 @@ body.dark-mode .subscriber-name {
     display: inline-block;
     background: var(--primary-blue);
     color: white;
-    padding: 0.35rem 0.75rem;
-    border-radius: 14px;
-    font-size: 0.85rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     position: relative;
 }
@@ -1280,17 +1281,17 @@ body.dark-mode .subscriber-name {
 /* Quantity badge for products (e.g., UV2, ES2, HS2) */
 .quantity-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
+    top: -5px;
+    right: -5px;
     background: rgba(255, 0, 0, 0.9);
     color: white;
     border-radius: 50%;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     border: 2px solid var(--card-bg);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -1362,19 +1363,31 @@ body.dark-mode .subscriber-name {
 .report-button {
     background: transparent;
     border: none;
-    color: #F5B041;                   /* Warning orange for alert */
     padding: 0.4rem 0.6rem;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 1.1rem;
     transition: all 0.2s;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.report-icon-img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    opacity: 0.8;
+    transition: opacity 0.2s;
 }
 
 .report-button:hover {
-    background: #F5B041;             /* Warning orange */
-    color: white;
+    background: rgba(245, 176, 65, 0.1);
     transform: scale(1.05);
+}
+
+.report-button:hover .report-icon-img {
+    opacity: 1;
 }
 
 /* Circuit Tracker */

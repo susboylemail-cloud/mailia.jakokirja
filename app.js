@@ -268,9 +268,6 @@ function handleLogin(event) {
         userRole = role;
         errorDiv.style.display = 'none';
         
-        // Prompt to save login info
-        promptSaveLoginInfo(username, password);
-        
         showMainApp();
     } else {
         // Failed login
@@ -1232,7 +1229,11 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     // Report undelivered button
     const reportBtn = document.createElement('button');
     reportBtn.className = 'report-button';
-    reportBtn.textContent = '🚩';
+    const reportImg = document.createElement('img');
+    reportImg.src = '198251378-error-report-icon-failed-test-vector-icon.jpg';
+    reportImg.alt = 'Report issue';
+    reportImg.className = 'report-icon-img';
+    reportBtn.appendChild(reportImg);
     reportBtn.title = 'Ilmoita ongelmasta';
     reportBtn.addEventListener('click', () => {
         reportUndelivered(circuitId, subscriber);
@@ -1251,7 +1252,7 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
             link.target = '_blank';
             link.title = `Navigate to ${subscriberAddress}`;
             const navImg = document.createElement('img');
-            navImg.src = 'navigation icon.png';
+            navImg.src = 'Google_Maps-Icon-Logo.wine.svg';
             navImg.alt = 'Navigate';
             navImg.className = 'nav-icon-img';
             link.appendChild(navImg);

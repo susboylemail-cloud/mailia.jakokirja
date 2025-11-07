@@ -142,13 +142,23 @@ function initializeLogin() {
     if (passwordToggle && passwordInput) {
         passwordToggle.addEventListener('click', () => {
             const type = passwordInput.getAttribute('type');
+            const svg = passwordToggle.querySelector('svg');
             if (type === 'password') {
                 passwordInput.setAttribute('type', 'text');
-                passwordToggle.innerHTML = '👁&#xFE0F;&#x0336;'; // Eye with strikethrough
+                // Add strikethrough line to eye icon
+                svg.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
                 passwordToggle.setAttribute('aria-label', 'Hide password');
             } else {
                 passwordInput.setAttribute('type', 'password');
-                passwordToggle.innerHTML = '👁&#xFE0F;'; // Eye
+                // Eye icon without strikethrough
+                svg.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
                 passwordToggle.setAttribute('aria-label', 'Show password');
             }
         });

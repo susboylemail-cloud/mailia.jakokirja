@@ -1,23 +1,23 @@
 /* CSS Variables */
 :root {
-    /* Modern, softer color palette */
-    --primary-blue: #5B8FB9;
-    --accent-blue: #779ECB;
-    --primary-green: #6B9E78;
+    /* New Dark Theme Color Palette */
+    --primary-blue: #4A90E2;        /* Action Blue for primary button */
+    --accent-blue: #5DADE2;         /* ES - Clear accessible blue */
+    --primary-green: #58D68D;       /* HS - Success green */
     --accent-green: #8FBC8F;
     --navy: #2C3E50;
     --red-accent: #E07856;
-    --yellow-accent: #FFE082;
-    --orange-accent: #FFA726;
-    --light-purple: #e6d5f0;
+    --yellow-accent: #F9A825;       /* UV - Rich gold/yellow */
+    --orange-accent: #F5B041;       /* STF - Distinct orange for attention */
+    --light-purple: #AF7AC5;        /* Alternative for UV - purple for distinction */
     --warm-gray: #F5F5F0;
-    --medium-gray: #D1D5D8;
+    --medium-gray: #9E9E9E;         /* Secondary text */
     --dark-gray: #6C757D;
     
     /* Typography */
     --base-font-size: 16px;
     
-    /* Background and text colors */
+    /* Background and text colors - Default Light Mode */
     --bg-color: #FAFAFA;
     --text-color: #2C3E50;
     --card-bg: #FFFFFF;
@@ -28,15 +28,22 @@
 }
 
 body.dark-mode {
-    --bg-color: #1a1a1a;
-    --text-color: #e0e0e0;
-    --card-bg: #2a2a2a;
+    /* Dark Theme Colors */
+    --bg-color: #1A1D21;            /* Dark Charcoal - main background */
+    --text-color: #F0F0F0;          /* Off-White - primary text */
+    --card-bg: #2C2F36;             /* Dark Gray - card background */
     --border-color: #404040;
-    --building-bg: #1e3a5f;
+    --building-bg: #2C2F36;         /* Dark Gray for building headers */
     --shadow: rgba(0, 0, 0, 0.3);
-    --red-accent: #ff6b6b;
     --warm-gray: #3a3a3a;
-    --navy: #B8C5D6; /* Improved readability - light blue-gray for dark mode */
+    --medium-gray: #9E9E9E;         /* Secondary text color */
+    --navy: #4A90E2;                /* Action Blue in dark mode */
+    
+    /* Product colors optimized for dark theme */
+    --accent-blue: #5DADE2;         /* ES */
+    --primary-green: #58D68D;       /* HS */
+    --orange-accent: #F5B041;       /* STF */
+    --yellow-accent: #F9A825;       /* UV */
 }
 
 /* Reset */
@@ -565,7 +572,7 @@ main {
 }
 
 .cover-sheet h2 {
-    color: var(--primary-blue);
+    color: var(--text-color);         /* Primary text color (Off-White in dark mode) */
     margin-bottom: 1.25rem;
     font-size: 1.4rem;
     font-weight: 600;
@@ -575,19 +582,21 @@ main {
     font-size: 1rem;
     font-weight: 500;
     margin-bottom: 1.25rem;
-    color: var(--dark-gray);
+    color: var(--medium-gray);        /* Secondary text (Medium Gray) */
 }
 
 .product-counts {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.875rem;
     margin-bottom: 1.5rem;
+    max-width: 400px;
 }
 
 .product-badge {
     display: inline-flex;
     align-items: center;
+    justify-content: space-between;
     background: var(--primary-blue);
     color: white;
     padding: 0.6rem 1.1rem;
@@ -598,32 +607,32 @@ main {
 
 /* Product-specific colors for badges */
 .product-badge.product-ES {
-    background: var(--accent-blue);
+    background: #5DADE2;            /* Clear accessible blue */
     color: white;
 }
 
 .product-badge.product-UV {
-    background: var(--yellow-accent);
-    color: #333;
+    background: #F9A825;            /* Rich gold/yellow */
+    color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-badge.product-HS {
-    background: var(--primary-green);
+    background: #58D68D;            /* Success green */
     color: white;
 }
 
 .product-badge.product-STF {
-    background: var(--red-accent);
-    color: white;
+    background: #F5B041;            /* Distinct orange for attention */
+    color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-badge.product-JO {
-    background: var(--light-purple);
-    color: #333;
+    background: #AF7AC5;            /* Purple for distinction */
+    color: white;
 }
 
 .product-badge.product-LU {
-    background: var(--orange-accent);
+    background: #FFA726;
     color: white;
 }
 
@@ -636,8 +645,7 @@ main {
 }
 
 body.dark-mode .product-badge.product-UV .count,
-body.dark-mode .product-badge.product-HS .count,
-body.dark-mode .product-badge.product-JO .count {
+body.dark-mode .product-badge.product-STF .count {
     background: rgba(0, 0, 0, 0.2);
 }
 
@@ -647,21 +655,21 @@ body.dark-mode .product-badge.product-JO .count {
     padding: 1.15rem;
     font-size: 1.05rem;
     font-weight: 600;
-    border: 2px solid var(--primary-green);
+    border: 2px solid var(--primary-blue);    /* Action Blue */
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
-    background: var(--primary-green);
+    background: var(--primary-blue);          /* Action Blue for "Aloita reitti" */
     color: white;
     margin-top: 0.75rem;
-    box-shadow: 0 2px 8px rgba(107, 158, 120, 0.3);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
 }
 
 .route-button:hover {
-    background: var(--accent-green);
-    border-color: var(--accent-green);
+    background: #5DADE2;                      /* Lighter blue on hover */
+    border-color: #5DADE2;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(107, 158, 120, 0.4);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
 }
 
 .route-button:active {
@@ -720,12 +728,12 @@ body.dark-mode .route-time {
     border-radius: 12px 12px 0 0;
     font-weight: 600;
     font-size: 1.05rem;
-    color: var(--primary-blue);
+    color: var(--text-color);         /* Use primary text color */
     letter-spacing: -0.01em;
 }
 
 body.dark-mode .building-header {
-    color: var(--accent-blue);
+    color: var(--text-color);         /* Off-White in dark mode */
 }
 
 .subscriber-card {
@@ -817,32 +825,32 @@ body.dark-mode .subscriber-name {
 
 /* Product-specific colors for tags */
 .product-tag.product-ES {
-    background: var(--accent-blue);
+    background: #5DADE2;            /* Clear accessible blue */
     color: white;
 }
 
 .product-tag.product-UV {
-    background: var(--yellow-accent);
-    color: #333;
+    background: #F9A825;            /* Rich gold/yellow */
+    color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-tag.product-HS {
-    background: var(--primary-green);
+    background: #58D68D;            /* Success green */
     color: white;
 }
 
 .product-tag.product-STF {
-    background: var(--red-accent);
-    color: white;
+    background: #F5B041;            /* Distinct orange for attention */
+    color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-tag.product-JO {
-    background: var(--light-purple);
-    color: #333;
+    background: #AF7AC5;            /* Purple for distinction */
+    color: white;
 }
 
 .product-tag.product-LU {
-    background: var(--orange-accent);
+    background: #FFA726;
     color: white;
 }
 
@@ -881,7 +889,7 @@ body.dark-mode .subscriber-name {
 .report-button {
     background: transparent;
     border: none;
-    color: var(--red-accent);
+    color: #F5B041;                   /* Warning orange for alert */
     padding: 0.4rem 0.6rem;
     border-radius: 6px;
     cursor: pointer;
@@ -891,7 +899,7 @@ body.dark-mode .subscriber-name {
 }
 
 .report-button:hover {
-    background: var(--red-accent);
+    background: #F5B041;             /* Warning orange */
     color: white;
     transform: scale(1.05);
 }

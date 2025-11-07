@@ -500,17 +500,17 @@ body.dark-mode header {
 }
 
 .tab-button:hover {
-    background-color: var(--navy);
+    background-color: var(--primary-blue);
     color: white;
-    border-color: var(--navy);
+    border-color: var(--primary-blue);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px var(--shadow);
 }
 
 .tab-button.active {
-    background-color: var(--navy);
+    background-color: var(--primary-blue);  /* Action Blue for active tab */
     color: white;
-    border-color: var(--navy);
+    border-color: var(--primary-blue);
     box-shadow: 0 4px 8px var(--shadow);
 }
 
@@ -915,72 +915,67 @@ body.dark-mode .subscriber-name {
     background-color: var(--card-bg);
     border: 2px solid var(--border-color);
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0;
     box-shadow: 0 2px 4px var(--shadow);
+    display: flex;
+    overflow: hidden;
+}
+
+/* Status bar on the left - Traffic light system */
+.circuit-status-bar {
+    width: 6px;
+    min-height: 100%;
+    flex-shrink: 0;
+}
+
+.circuit-status-bar.not-started {
+    background: #DC3545;  /* Red */
+}
+
+.circuit-status-bar.in-progress {
+    background: #FFA726;  /* Orange */
+}
+
+.circuit-status-bar.completed {
+    background: #28a745;  /* Green */
+}
+
+.circuit-content {
+    flex: 1;
+    padding: 1rem;
 }
 
 .circuit-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 0.75rem;
-}
-
-.status-indicator {
-    font-size: 1.5rem;
-    flex-shrink: 0;
+    margin-bottom: 0.5rem;
 }
 
 .circuit-name {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.1rem;
+    color: var(--text-color);
     flex: 1;
 }
 
 .circuit-status {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--medium-gray);
     margin-bottom: 0.75rem;
 }
 
-body.dark-mode .circuit-status {
-    color: #999;
+.circuit-progress-bar {
+    margin-top: 0.75rem;
 }
 
+/* Remove old circuit controls and buttons */
 .circuit-controls {
-    display: flex;
-    gap: 0.5rem;
+    display: none;
 }
 
 .circuit-btn {
-    flex: 1;
-    padding: 0.6rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.circuit-btn.start {
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
-    color: white;
-}
-
-.circuit-btn.complete {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    color: white;
-}
-
-.circuit-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.circuit-btn:not(:disabled):hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--shadow);
+    display: none;
 }
 
 .route-complete-container {

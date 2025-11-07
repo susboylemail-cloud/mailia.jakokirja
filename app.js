@@ -1677,50 +1677,69 @@ function createCircuitItem(circuitId) {
     
     const status = getCircuitStatus(circuitId);
     
+    // Status bar on the left
+    const statusBar = document.createElement('div');
+    statusBar.className = `circuit-status-bar ${status}`;
+    item.appendChild(statusBar);
+    
+    // Content container
+    const content = document.createElement('div');
+    content.className = 'circuit-content';
+    
     const header = document.createElement('div');
     header.className = 'circuit-header';
-    
-    const indicator = document.createElement('div');
-    indicator.className = 'status-indicator';
-    indicator.textContent = status === 'not-started' ? '🔴' : status === 'in-progress' ? '🟠' : '🟢';
-    header.appendChild(indicator);
     
     const name = document.createElement('div');
     name.className = 'circuit-name';
     name.textContent = circuitNames[circuitId] || circuitId;
     header.appendChild(name);
     
-    item.appendChild(header);
+    content.appendChild(header);
     
     const statusText = document.createElement('div');
     statusText.className = 'circuit-status';
     statusText.textContent = getCircuitStatusText(circuitId, status);
-    item.appendChild(statusText);
+    content.appendChild(statusText);
     
-    const controls = document.createElement('div');
-    controls.className = 'circuit-controls';
+    // Add progress bar for in-progress circuits
+    if (status === 'in-progress') {
+        const progressBar = createCircuitProgressBar(circuitId);
+        if (progressBar) {
+            content.appendChild(progressBar);
+        }
+    }
     
-    const startBtn = document.createElement('button');
-    startBtn.className = 'circuit-btn start';
-    startBtn.textContent = 'Aloita';
-    startBtn.disabled = status !== 'not-started';
-    startBtn.addEventListener('click', () => {
-        startCircuitFromTracker(circuitId);
-    });
-    controls.appendChild(startBtn);
-    
-    const completeBtn = document.createElement('button');
-    completeBtn.className = 'circuit-btn complete';
-    completeBtn.textContent = 'Valmis';
-    completeBtn.disabled = status !== 'in-progress';
-    completeBtn.addEventListener('click', () => {
-        completeCircuitFromTracker(circuitId);
-    });
-    controls.appendChild(completeBtn);
-    
-    item.appendChild(controls);
+    item.appendChild(content);
     
     return item;
+}
+
+function createCircuitProgressBar(circuitId) {
+    const data = allData[circuitId];
+    if (!data || data.length === 0) return null;
+    
+    const totalSubscribers = data.length;
+    const deliveredCount = data.filter(sub => sub.delivered).length;
+    const percentage = Math.round((deliveredCount / totalSubscribers) * 100);
+    
+    const container = document.createElement('div');
+    container.className = 'circuit-progress-bar';
+    
+    const progressWrapper = document.createElement('div');
+    progressWrapper.style.cssText = 'background: rgba(0,0,0,0.1); border-radius: 10px; height: 8px; overflow: hidden; margin-bottom: 0.25rem;';
+    
+    const progressFill = document.createElement('div');
+    progressFill.style.cssText = `background: #FFA726; height: 100%; width: ${percentage}%; transition: width 0.3s;`;
+    progressWrapper.appendChild(progressFill);
+    
+    const progressText = document.createElement('div');
+    progressText.style.cssText = 'font-size: 0.85rem; color: var(--medium-gray); text-align: right;';
+    progressText.textContent = `${deliveredCount}/${totalSubscribers} (${percentage}%)`;
+    
+    container.appendChild(progressWrapper);
+    container.appendChild(progressText);
+    
+    return container;
 }
 
 function getCircuitStatus(circuitId) {
@@ -1742,11 +1761,10 @@ function getCircuitStatusText(circuitId, status) {
         const startTime = localStorage.getItem(startKey);
         return `Aloitettu: ${formatTime(new Date(startTime))}`;
     } else {
-        const startKey = `route_start_${circuitId}`;
+        // Completed - show completion time
         const endKey = `route_end_${circuitId}`;
-        const startTime = localStorage.getItem(startKey);
         const endTime = localStorage.getItem(endKey);
-        return `${formatTime(new Date(startTime))} - ${formatTime(new Date(endTime))}`;
+        return `Valmis: ${formatTime(new Date(endTime))}`;
     }
 }
 

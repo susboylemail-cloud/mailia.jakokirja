@@ -182,58 +182,9 @@ function initializeLogin() {
     }
 }
 
-// Tap-to-login gesture for login form reveal
+// No swipe/tap login needed - phone UI is always visible
 function initializeSwipeUpLogin() {
-    const loginScreen = document.getElementById('loginScreen');
-    const landingContent = document.querySelector('.landing-content');
-    const loginFormContainer = document.getElementById('loginFormContainer');
-    const tapIndicator = document.querySelector('.tap-to-login');
-    
-    if (!loginScreen || !landingContent || !loginFormContainer) return;
-    
-    let isFormVisible = false;
-    
-    // Click/tap on indicator to show login form
-    if (tapIndicator) {
-        tapIndicator.addEventListener('click', () => {
-            if (!isFormVisible) {
-                showLoginForm();
-            }
-        });
-    }
-    
-    // Also allow tapping anywhere on the screen
-    loginScreen.addEventListener('click', (e) => {
-        // Don't trigger if clicking on the form itself or if form is already visible
-        if (isFormVisible || e.target.closest('.login-form-container')) return;
-        showLoginForm();
-    });
-    
-    function showLoginForm() {
-        isFormVisible = true;
-        loginFormContainer.classList.add('show');
-        landingContent.classList.add('hide');
-        loginScreen.classList.add('form-active');
-        
-        // Focus on username field after animation
-        setTimeout(() => {
-            document.getElementById('username')?.focus();
-        }, 500);
-    }
-    
-    function hideLoginForm() {
-        isFormVisible = false;
-        loginFormContainer.classList.remove('show');
-        landingContent.classList.remove('hide');
-        loginScreen.classList.remove('form-active');
-        
-        // Reset background video
-        const bgVideo = loginScreen.querySelector('.login-bg-video');
-        if (bgVideo) {
-            bgVideo.style.opacity = '';
-            bgVideo.style.filter = '';
-        }
-    }
+    // Phone-based login is always visible, no initialization needed
 }
 
 function handleLogin(event) {

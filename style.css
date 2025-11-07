@@ -399,7 +399,7 @@ body.dark-mode .product-badge.product-HS .count {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
     margin-top: 0.5rem;
 }

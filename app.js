@@ -144,11 +144,11 @@ function initializeLogin() {
             const type = passwordInput.getAttribute('type');
             if (type === 'password') {
                 passwordInput.setAttribute('type', 'text');
-                passwordToggle.textContent = '🙈';
+                passwordToggle.innerHTML = '👁&#xFE0F;&#x0336;'; // Eye with strikethrough
                 passwordToggle.setAttribute('aria-label', 'Hide password');
             } else {
                 passwordInput.setAttribute('type', 'password');
-                passwordToggle.textContent = '👁️';
+                passwordToggle.innerHTML = '👁&#xFE0F;'; // Eye
                 passwordToggle.setAttribute('aria-label', 'Show password');
             }
         });

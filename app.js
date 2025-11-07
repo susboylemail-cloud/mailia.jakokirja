@@ -93,6 +93,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup login form
     initializeLogin();
     
+    // Initialize swipe-up gesture for login form
+    initializeSwipeUpLogin();
+    
     // Initialize dark mode (works on login screen too)
     initializeDarkMode();
 });
@@ -149,6 +152,98 @@ function initializeLogin() {
                 loginButton.classList.remove('correct-password');
             }
         });
+    }
+}
+
+// Swipe-up gesture for login form reveal
+function initializeSwipeUpLogin() {
+    const loginScreen = document.getElementById('loginScreen');
+    const landingContent = document.querySelector('.landing-content');
+    const loginFormContainer = document.getElementById('loginFormContainer');
+    
+    if (!loginScreen || !landingContent || !loginFormContainer) return;
+    
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+    let isFormVisible = false;
+    
+    // Touch events
+    loginScreen.addEventListener('touchstart', (e) => {
+        if (isFormVisible) return; // Only allow swipe when form is hidden
+        
+        startY = e.touches[0].clientY;
+        currentY = startY;
+        isDragging = false;
+    }, { passive: true });
+    
+    loginScreen.addEventListener('touchmove', (e) => {
+        if (isFormVisible) return;
+        
+        currentY = e.touches[0].clientY;
+        const deltaY = startY - currentY; // Positive when swiping up
+        
+        // Only allow upward swipe
+        if (deltaY > 0) {
+            isDragging = true;
+            e.preventDefault();
+            
+            // Show partial login form as user swipes
+            const progress = Math.min(deltaY / 200, 1); // 200px for full reveal
+            loginFormContainer.style.transform = `translateX(-50%) translateY(${100 - (progress * 102)}%)`;
+            landingContent.style.opacity = 1 - progress;
+            landingContent.style.transform = `translate(-50%, ${-50 - (progress * 50)}%)`;
+        }
+    }, { passive: false });
+    
+    loginScreen.addEventListener('touchend', (e) => {
+        if (isFormVisible) return;
+        
+        const deltaY = startY - currentY;
+        const swipeThreshold = 100; // Minimum pixels to trigger form reveal
+        
+        if (isDragging && deltaY > swipeThreshold) {
+            // Show the login form
+            showLoginForm();
+        } else {
+            // Reset to original position
+            hideLoginForm();
+        }
+        
+        isDragging = false;
+        startY = 0;
+        currentY = 0;
+    });
+    
+    // Also allow click on swipe indicator
+    const swipeIndicator = document.querySelector('.swipe-indicator');
+    if (swipeIndicator) {
+        swipeIndicator.addEventListener('click', () => {
+            if (!isFormVisible) {
+                showLoginForm();
+            }
+        });
+        swipeIndicator.style.cursor = 'pointer';
+    }
+    
+    function showLoginForm() {
+        isFormVisible = true;
+        loginFormContainer.classList.add('show');
+        landingContent.classList.add('hide');
+        
+        // Focus on username field after animation
+        setTimeout(() => {
+            document.getElementById('username')?.focus();
+        }, 400);
+    }
+    
+    function hideLoginForm() {
+        isFormVisible = false;
+        loginFormContainer.classList.remove('show');
+        landingContent.classList.remove('hide');
+        loginFormContainer.style.transform = '';
+        landingContent.style.opacity = '';
+        landingContent.style.transform = '';
     }
 }
 

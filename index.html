@@ -15,20 +15,22 @@
         <video autoplay loop muted playsinline class="login-bg-video">
             <source src="Simplify_Login_Page_Background.mp4" type="video/mp4">
         </video>
-        <div class="login-container">
-            <div class="login-header">
-                <h1 class="login-logo">Mailia</h1>
-                <p class="login-subtitle">Imatran varhaisjakelu</p>
+        
+        <!-- Landing Page Content -->
+        <div class="landing-content">
+            <h1 class="landing-logo">Mailia</h1>
+            <p class="landing-subtitle">Imatran varhaisjakelu</p>
+            <div class="swipe-indicator">
+                <div class="swipe-icon">↑</div>
+                <p class="swipe-text">Vedä ylös kirjautuaksesi</p>
             </div>
+        </div>
+        
+        <!-- Login Form (initially hidden, revealed by swipe) -->
+        <div id="loginFormContainer" class="login-form-container">
             <form id="loginForm" class="login-form">
-                <div class="input-group">
-                    <input type="text" id="username" name="username" required autocomplete="username" placeholder=" ">
-                    <label for="username">Käyttäjätunnus</label>
-                </div>
-                <div class="input-group">
-                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder=" ">
-                    <label for="password">Salasana</label>
-                </div>
+                <input type="text" id="username" name="username" required autocomplete="username" placeholder="Käyttäjätunnus">
+                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Salasana">
                 <div id="loginError" class="login-error" style="display: none;"></div>
                 <button type="submit" class="login-button">Kirjaudu sisään</button>
             </form>

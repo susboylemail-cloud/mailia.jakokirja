@@ -1370,11 +1370,9 @@ body.dark-mode .subscriber-name {
     box-shadow: 0 3px 6px rgba(107, 158, 120, 0.4);
 }
 
-.nav-icon-img {
+.nav-link .icon {
     width: 18px;
     height: 18px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
 }
 
 /* Report Button */
@@ -1389,23 +1387,18 @@ body.dark-mode .subscriber-name {
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #F5B041;
 }
 
-.report-icon-img {
+.report-button .icon {
     width: 20px;
     height: 20px;
-    object-fit: contain;
-    opacity: 0.8;
-    transition: opacity 0.2s;
 }
 
 .report-button:hover {
     background: rgba(245, 176, 65, 0.1);
     transform: scale(1.05);
-}
-
-.report-button:hover .report-icon-img {
-    opacity: 1;
+    color: #F39C12;
 }
 
 /* Circuit Tracker */

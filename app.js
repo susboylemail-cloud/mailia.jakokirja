@@ -1229,11 +1229,13 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     // Report undelivered button
     const reportBtn = document.createElement('button');
     reportBtn.className = 'report-button';
-    const reportImg = document.createElement('img');
-    reportImg.src = '198251378-error-report-icon-failed-test-vector-icon.jpg';
-    reportImg.alt = 'Report issue';
-    reportImg.className = 'report-icon-img';
-    reportBtn.appendChild(reportImg);
+    reportBtn.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+    `;
     reportBtn.title = 'Ilmoita ongelmasta';
     reportBtn.addEventListener('click', () => {
         reportUndelivered(circuitId, subscriber);
@@ -1251,11 +1253,12 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
             link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(subscriberAddress + ', Imatra, Finland')}`;
             link.target = '_blank';
             link.title = `Navigate to ${subscriberAddress}`;
-            const navImg = document.createElement('img');
-            navImg.src = 'Google_Maps-Icon-Logo.wine.svg';
-            navImg.alt = 'Navigate';
-            navImg.className = 'nav-icon-img';
-            link.appendChild(navImg);
+            link.innerHTML = `
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+            `;
             card.appendChild(link);
         }
     }

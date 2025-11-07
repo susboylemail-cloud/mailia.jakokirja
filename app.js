@@ -1,5 +1,8 @@
 // Mailia Delivery Tracking Application
 
+// Animation constants
+const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
+
 // Authentication credentials
 const CREDENTIALS = {
     username: 'imatravj',
@@ -785,7 +788,7 @@ function applyFilters() {
                 if (card.classList.contains('hiding')) {
                     card.style.display = 'none';
                 }
-            }, 500); // Match the CSS transition duration
+            }, ANIMATION_DURATION_MS);
         } else {
             // Show the card
             card.style.display = '';
@@ -804,7 +807,7 @@ function applyFilters() {
                 .filter(card => card.style.display !== 'none');
             group.style.display = visibleCards.length > 0 ? '' : 'none';
         });
-    }, 500);
+    }, ANIMATION_DURATION_MS);
 }
 
 // Checkbox State Management

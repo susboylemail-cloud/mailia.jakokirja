@@ -121,6 +121,13 @@ body {
     }
 }
 
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .swipe-indicator {
+        animation: none;
+    }
+}
+
 .swipe-icon {
     font-size: 2.5rem;
     color: rgba(255, 255, 255, 0.8);

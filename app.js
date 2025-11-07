@@ -171,12 +171,18 @@ function initializeSwipeUpLogin() {
     // Swipe gesture thresholds
     const SWIPE_REVEAL_DISTANCE = 200; // Distance for full login form reveal
     const SWIPE_TRIGGER_THRESHOLD = 100; // Minimum distance to trigger form reveal
+    const FORM_TRANSLATE_OFFSET = 102; // Percentage offset for form reveal animation
+    
+    // Helper function to validate touch events
+    function isValidTouch(e) {
+        return e.touches && e.touches.length > 0;
+    }
     
     // Touch events
     loginScreen.addEventListener('touchstart', (e) => {
         if (isFormVisible) return; // Only allow swipe when form is hidden
         
-        if (e.touches && e.touches.length > 0) {
+        if (isValidTouch(e)) {
             startY = e.touches[0].clientY;
             currentY = startY;
             isDragging = false;
@@ -186,7 +192,7 @@ function initializeSwipeUpLogin() {
     loginScreen.addEventListener('touchmove', (e) => {
         if (isFormVisible) return;
         
-        if (e.touches && e.touches.length > 0) {
+        if (isValidTouch(e)) {
             currentY = e.touches[0].clientY;
             const deltaY = startY - currentY; // Positive when swiping up
             
@@ -197,7 +203,7 @@ function initializeSwipeUpLogin() {
                 
                 // Show partial login form as user swipes
                 const progress = Math.min(deltaY / SWIPE_REVEAL_DISTANCE, 1);
-                loginFormContainer.style.transform = `translateX(-50%) translateY(${100 - (progress * 102)}%)`;
+                loginFormContainer.style.transform = `translateX(-50%) translateY(${100 - (progress * FORM_TRANSLATE_OFFSET)}%)`;
                 landingContent.style.opacity = 1 - progress;
             }
         }

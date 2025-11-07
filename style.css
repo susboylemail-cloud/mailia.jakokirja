@@ -79,10 +79,7 @@ body.dark-mode .login-container {
 .login-logo {
     font-size: 2.5rem;
     font-weight: bold;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--navy);
     margin-bottom: 0.5rem;
 }
 
@@ -144,19 +141,27 @@ body.dark-mode .login-error {
 
 .login-button {
     padding: 1rem;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    background: var(--red-accent);
     color: white;
     border: none;
     border-radius: 8px;
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.3s;
+    transition: transform 0.2s, box-shadow 0.3s, background 0.3s;
+}
+
+.login-button.correct-password {
+    background: #28a745;
 }
 
 .login-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 102, 204, 0.3);
+    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+}
+
+.login-button.correct-password:hover {
+    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
 }
 
 .login-button:active {
@@ -507,6 +512,18 @@ body.dark-mode .building-header {
     display: flex;
     align-items: center;
     gap: 1rem;
+    transition: max-height 0.5s ease-out, opacity 0.4s ease-out, margin 0.4s ease-out, padding 0.4s ease-out;
+    max-height: 500px;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.subscriber-card.hiding {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
 }
 
 .subscriber-card:last-child {
@@ -604,11 +621,11 @@ body.dark-mode .subscriber-name {
     align-items: center;
     background-color: var(--primary-blue);
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
     text-decoration: none;
     font-weight: 600;
-    font-size: 1.2rem;
+    font-size: 0.9rem;
     transition: all 0.3s;
     flex-shrink: 0;
 }

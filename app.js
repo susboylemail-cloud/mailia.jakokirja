@@ -88,8 +88,25 @@ function checkAuthentication() {
 
 function initializeLogin() {
     const loginForm = document.getElementById('loginForm');
+    const passwordInput = document.getElementById('password');
+    const loginButton = document.querySelector('.login-button');
+    
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Add listener to password field to check if correct password is entered
+    if (passwordInput && loginButton) {
+        passwordInput.addEventListener('input', () => {
+            const username = document.getElementById('username').value;
+            const password = passwordInput.value;
+            
+            if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+                loginButton.classList.add('correct-password');
+            } else {
+                loginButton.classList.remove('correct-password');
+            }
+        });
     }
 }
 
@@ -761,19 +778,33 @@ function applyFilters() {
         }
         
         if (shouldHide) {
-            card.style.display = 'none';
+            // Add hiding class for animation
+            card.classList.add('hiding');
+            // After animation completes, hide with display: none
+            setTimeout(() => {
+                if (card.classList.contains('hiding')) {
+                    card.style.display = 'none';
+                }
+            }, 500); // Match the CSS transition duration
         } else {
+            // Show the card
             card.style.display = '';
+            // Remove hiding class to trigger show animation
+            setTimeout(() => {
+                card.classList.remove('hiding');
+            }, 10);
         }
     });
     
     // Hide empty building groups
-    const buildingGroups = document.querySelectorAll('.building-group');
-    buildingGroups.forEach(group => {
-        const visibleCards = Array.from(group.querySelectorAll('.subscriber-card'))
-            .filter(card => card.style.display !== 'none');
-        group.style.display = visibleCards.length > 0 ? '' : 'none';
-    });
+    setTimeout(() => {
+        const buildingGroups = document.querySelectorAll('.building-group');
+        buildingGroups.forEach(group => {
+            const visibleCards = Array.from(group.querySelectorAll('.subscriber-card'))
+                .filter(card => card.style.display !== 'none');
+            group.style.display = visibleCards.length > 0 ? '' : 'none';
+        });
+    }, 500);
 }
 
 // Checkbox State Management

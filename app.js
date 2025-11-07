@@ -460,12 +460,17 @@ function renderCoverSheet(circuitId, subscribers) {
     const dateStr = `${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()}`;
     dateDisplay.textContent = `${weekday} ${dateStr}`;
     
-    // Aggregate products
+    const today = now.getDay();
+    
+    // Aggregate products - only count products valid for today
     const products = {};
     subscribers.forEach(sub => {
         sub.products.forEach(product => {
             const normalized = normalizeProduct(product);
-            products[normalized] = (products[normalized] || 0) + 1;
+            // Only count if product is valid for today
+            if (isProductValidForDay(normalized, today)) {
+                products[normalized] = (products[normalized] || 0) + 1;
+            }
         });
     });
     
@@ -487,13 +492,50 @@ function normalizeProduct(product) {
 
 function getProductColorClass(product) {
     // Map alternative products to base colors
-    // ESLS→ES, HSTS→HS, MALA→HS
+    // All HS variants → HS (green)
+    // All ES variants → ES (cyan)
+    // UV, JO, STF, LU keep their own colors
     const colorMap = {
-        'ESLS': 'ES',
-        'HSTS': 'HS',
-        'MALA': 'HS'
+        // Helsingin Sanomat variants
+        'SH': 'HS',        // Sunnuntai Hesari
+        'HSPS': 'HS',      // Hesari perjantai-sunnuntai
+        'HSPE': 'HS',      // Hesari perjantai
+        'HSLS': 'HS',      // Hesari lauantai-sunnuntai
+        'HSP': 'HS',       // Hesari maanantai-perjantai
+        'HSTS': 'HS',      // Hesari torstai-sunnuntai
+        'MALA': 'HS',      // Hesari maanantai-lauantai
+        // Etelä-Saimaa variants
+        'ESPS': 'ES',      // Etelä-Saimaa perjantai-sunnuntai
+        'ESLS': 'ES',      // Etelä-Saimaa lauantai-sunnuntai
+        'ESP': 'ES'        // Etelä-Saimaa maanantai-perjantai
     };
     return colorMap[product] || product;
+}
+
+// Check if a product should be delivered on a specific day of the week
+function isProductValidForDay(product, dayOfWeek) {
+    // dayOfWeek: 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday
+    
+    const productSchedule = {
+        'SH': [0],                    // Sunnuntai Hesari - Sunday only
+        'HSPS': [5, 6, 0],            // Hesari perjantai-sunnuntai - Fri, Sat, Sun
+        'HSPE': [5],                  // Hesari perjantai - Friday only
+        'HSLS': [6, 0],               // Hesari lauantai-sunnuntai - Sat, Sun
+        'HSP': [1, 2, 3, 4, 5],       // Hesari maanantai-perjantai - Mon-Fri
+        'HSTS': [4, 5, 6, 0],         // Hesari torstai-sunnuntai - Thu-Sun
+        'MALA': [1, 2, 3, 4, 5, 6],   // Hesari maanantai-lauantai - Mon-Sat
+        'ESPS': [5, 6, 0],            // Etelä-Saimaa perjantai-sunnuntai - Fri, Sat, Sun
+        'ESLS': [6, 0],               // Etelä-Saimaa lauantai-sunnuntai - Sat, Sun
+        'ESP': [1, 2, 3, 4, 5]        // Etelä-Saimaa maanantai-perjantai - Mon-Fri
+    };
+    
+    // If the product has a specific schedule, check if today is valid
+    if (productSchedule[product]) {
+        return productSchedule[product].includes(dayOfWeek);
+    }
+    
+    // All other products (UV, HS, ES, JO, STF, LU, etc.) are always valid
+    return true;
 }
 
 // Subscriber List
@@ -501,11 +543,35 @@ function renderSubscriberList(circuitId, subscribers) {
     const listContainer = document.getElementById('subscriberList');
     listContainer.innerHTML = '';
     
+    // Get current day of week
+    const today = new Date().getDay();
+    
+    // Filter subscribers to only include those with at least one valid product for today
+    const validSubscribers = subscribers.map(sub => {
+        // Filter products to only those valid for today
+        const validProducts = sub.products.filter(product => {
+            const normalized = normalizeProduct(product);
+            return isProductValidForDay(normalized, today);
+        });
+        
+        // If no valid products, don't include this subscriber
+        if (validProducts.length === 0) {
+            return null;
+        }
+        
+        // Return subscriber with filtered products
+        return {
+            ...sub,
+            products: validProducts,
+            allProducts: sub.products  // Keep original products for reference
+        };
+    }).filter(sub => sub !== null);
+    
     // Group by building address while preserving order
     const buildings = [];
     const buildingMap = {};
     
-    subscribers.forEach(sub => {
+    validSubscribers.forEach(sub => {
         const building = sub.buildingAddress;
         if (!buildingMap[building]) {
             buildingMap[building] = {

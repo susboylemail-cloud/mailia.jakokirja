@@ -562,6 +562,16 @@ body.dark-mode .subscriber-name {
     color: #333;
 }
 
+.product-tag.product-LU {
+    background: #ffa726;
+    color: white;
+}
+
+.product-badge.product-LU {
+    background: #ffa726;
+    color: white;
+}
+
 .nav-link {
     display: inline-flex;
     align-items: center;

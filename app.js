@@ -132,9 +132,26 @@ function initializeLogin() {
     const loginForm = document.getElementById('loginForm');
     const passwordInput = document.getElementById('password');
     const loginButton = document.querySelector('.login-button');
+    const passwordToggle = document.getElementById('passwordToggle');
     
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Password visibility toggle
+    if (passwordToggle && passwordInput) {
+        passwordToggle.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type');
+            if (type === 'password') {
+                passwordInput.setAttribute('type', 'text');
+                passwordToggle.textContent = '🙈';
+                passwordToggle.setAttribute('aria-label', 'Hide password');
+            } else {
+                passwordInput.setAttribute('type', 'password');
+                passwordToggle.textContent = '👁️';
+                passwordToggle.setAttribute('aria-label', 'Show password');
+            }
+        });
     }
     
     // Add listener to password field to check if correct password is entered
@@ -168,10 +185,10 @@ function initializeSwipeUpLogin() {
     let isDragging = false;
     let isFormVisible = false;
     
-    // Swipe gesture thresholds
-    const SWIPE_REVEAL_DISTANCE = 200; // Distance for full login form reveal
-    const SWIPE_TRIGGER_THRESHOLD = 100; // Minimum distance to trigger form reveal
-    const FORM_TRANSLATE_OFFSET = 102; // Percentage offset for form reveal animation
+    // Swipe gesture thresholds - more sensitive for pronounced effect
+    const SWIPE_REVEAL_DISTANCE = 150; // Reduced for easier activation
+    const SWIPE_TRIGGER_THRESHOLD = 80; // Lower threshold for easier triggering
+    const FORM_TRANSLATE_OFFSET = 150; // Increased for more dramatic slide
     
     // Helper function to validate touch events
     function isValidTouch(e) {
@@ -201,10 +218,22 @@ function initializeSwipeUpLogin() {
                 isDragging = true;
                 e.preventDefault();
                 
-                // Show partial login form as user swipes
+                // Show partial login form as user swipes with more pronounced effect
                 const progress = Math.min(deltaY / SWIPE_REVEAL_DISTANCE, 1);
+                
+                // Sliding animation for form
                 loginFormContainer.style.transform = `translateX(-50%) translateY(${100 - (progress * FORM_TRANSLATE_OFFSET)}%)`;
+                
+                // Fade out landing content
                 landingContent.style.opacity = 1 - progress;
+                
+                // Fade and blur background video progressively
+                loginScreen.style.setProperty('--bg-fade-progress', progress);
+                const bgVideo = loginScreen.querySelector('.login-bg-video');
+                if (bgVideo) {
+                    bgVideo.style.opacity = 1 - (progress * 0.7);
+                    bgVideo.style.filter = `blur(${progress * 8}px)`;
+                }
             }
         }
     }, { passive: false });
@@ -242,19 +271,28 @@ function initializeSwipeUpLogin() {
         isFormVisible = true;
         loginFormContainer.classList.add('show');
         landingContent.classList.add('hide');
+        loginScreen.classList.add('form-active');
         
         // Focus on username field after animation
         setTimeout(() => {
             document.getElementById('username')?.focus();
-        }, 400);
+        }, 500);
     }
     
     function hideLoginForm() {
         isFormVisible = false;
         loginFormContainer.classList.remove('show');
         landingContent.classList.remove('hide');
+        loginScreen.classList.remove('form-active');
         loginFormContainer.style.transform = '';
         landingContent.style.opacity = '';
+        
+        // Reset background video
+        const bgVideo = loginScreen.querySelector('.login-bg-video');
+        if (bgVideo) {
+            bgVideo.style.opacity = '';
+            bgVideo.style.filter = '';
+        }
     }
 }
 

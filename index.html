@@ -28,7 +28,12 @@
         <div id="loginFormContainer" class="login-form-container">
             <form id="loginForm" class="login-form">
                 <input type="text" id="username" name="username" required autocomplete="username" placeholder="Käyttäjätunnus">
-                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Salasana">
+                <div class="password-container">
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Salasana">
+                    <button type="button" class="password-toggle" id="passwordToggle" aria-label="Toggle password visibility">
+                        👁️
+                    </button>
+                </div>
                 <div id="loginError" class="login-error" style="display: none;"></div>
                 <button type="submit" class="login-button">Kirjaudu sisään</button>
             </form>

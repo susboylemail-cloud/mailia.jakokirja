@@ -850,6 +850,9 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     });
     card.appendChild(checkbox);
     
+    // Add swipe functionality
+    initializeSwipeToMark(card, checkbox, circuitId, subscriber.address);
+    
     // Subscriber info
     const info = document.createElement('div');
     info.className = 'subscriber-info';
@@ -921,6 +924,163 @@ function getNextAddress(buildings, currentBuildingIndex, currentSubIndex) {
     }
     
     return null;
+}
+
+// Swipe to Mark as Delivered Functionality
+function initializeSwipeToMark(card, checkbox, circuitId, address) {
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    let startTime = 0;
+    const swipeThreshold = 100; // Minimum pixels to trigger swipe
+    const velocityThreshold = 0.3; // Minimum velocity for quick swipes
+    
+    // Touch events
+    card.addEventListener('touchstart', (e) => {
+        // Don't interfere with checkbox clicks or other button clicks
+        if (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+            return;
+        }
+        
+        startX = e.touches[0].clientX;
+        currentX = startX;
+        startTime = Date.now();
+        isDragging = false;
+        card.style.transition = 'none';
+    }, { passive: true });
+    
+    card.addEventListener('touchmove', (e) => {
+        if (startX === 0) return;
+        
+        currentX = e.touches[0].clientX;
+        const deltaX = currentX - startX;
+        
+        // Only allow right swipe
+        if (deltaX > 0) {
+            isDragging = true;
+            const translateX = Math.min(deltaX, 200); // Cap at 200px
+            card.style.transform = `translateX(${translateX}px)`;
+            card.style.opacity = 1 - (translateX / 300); // Fade out as it swipes
+        }
+    }, { passive: true });
+    
+    card.addEventListener('touchend', (e) => {
+        if (startX === 0) return;
+        
+        const deltaX = currentX - startX;
+        const deltaTime = Date.now() - startTime;
+        const velocity = deltaX / deltaTime; // pixels per ms
+        
+        // Check if swipe is valid (either distance or velocity threshold met)
+        const isValidSwipe = (deltaX > swipeThreshold) || (velocity > velocityThreshold && deltaX > 50);
+        
+        if (isDragging && isValidSwipe && deltaX > 0) {
+            // Mark as delivered with animation
+            card.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            card.style.transform = 'translateX(100%)';
+            card.style.opacity = '0';
+            
+            setTimeout(() => {
+                checkbox.checked = true;
+                saveCheckboxState(circuitId, address, true);
+                applyFilters();
+                
+                // Reset card position (will be hidden by filters if enabled)
+                card.style.transition = '';
+                card.style.transform = '';
+                card.style.opacity = '';
+            }, 300);
+        } else {
+            // Reset card position with animation
+            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transform = '';
+            card.style.opacity = '';
+        }
+        
+        // Reset tracking variables
+        startX = 0;
+        currentX = 0;
+        isDragging = false;
+    });
+    
+    // Mouse events for desktop testing (optional)
+    let isMouseDown = false;
+    
+    card.addEventListener('mousedown', (e) => {
+        if (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+            return;
+        }
+        
+        isMouseDown = true;
+        startX = e.clientX;
+        currentX = startX;
+        startTime = Date.now();
+        isDragging = false;
+        card.style.transition = 'none';
+        e.preventDefault();
+    });
+    
+    card.addEventListener('mousemove', (e) => {
+        if (!isMouseDown || startX === 0) return;
+        
+        currentX = e.clientX;
+        const deltaX = currentX - startX;
+        
+        if (deltaX > 0) {
+            isDragging = true;
+            const translateX = Math.min(deltaX, 200);
+            card.style.transform = `translateX(${translateX}px)`;
+            card.style.opacity = 1 - (translateX / 300);
+        }
+    });
+    
+    card.addEventListener('mouseup', (e) => {
+        if (!isMouseDown) return;
+        
+        const deltaX = currentX - startX;
+        const deltaTime = Date.now() - startTime;
+        const velocity = deltaX / deltaTime;
+        
+        const isValidSwipe = (deltaX > swipeThreshold) || (velocity > velocityThreshold && deltaX > 50);
+        
+        if (isDragging && isValidSwipe && deltaX > 0) {
+            card.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            card.style.transform = 'translateX(100%)';
+            card.style.opacity = '0';
+            
+            setTimeout(() => {
+                checkbox.checked = true;
+                saveCheckboxState(circuitId, address, true);
+                applyFilters();
+                
+                card.style.transition = '';
+                card.style.transform = '';
+                card.style.opacity = '';
+            }, 300);
+        } else {
+            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transform = '';
+            card.style.opacity = '';
+        }
+        
+        isMouseDown = false;
+        startX = 0;
+        currentX = 0;
+        isDragging = false;
+    });
+    
+    // Handle mouse leaving card while dragging
+    card.addEventListener('mouseleave', () => {
+        if (isMouseDown) {
+            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transform = '';
+            card.style.opacity = '';
+            isMouseDown = false;
+            startX = 0;
+            currentX = 0;
+            isDragging = false;
+        }
+    });
 }
 
 // Report Undelivered Functionality

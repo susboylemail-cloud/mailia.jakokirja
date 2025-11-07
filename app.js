@@ -346,15 +346,18 @@ function initializeTabs() {
     const tabContents = document.querySelectorAll('.tab-content');
     
     // Show/hide tabs based on user role
+    const jakeluButton = document.querySelector('[data-tab="delivery"]');
     const seurantaButton = document.querySelector('[data-tab="tracker"]');
     const messagesButton = document.querySelector('[data-tab="messages"]');
     
     if (userRole === 'admin') {
-        // Admin sees Seuranta and Reittiviestit
+        // Admin sees all tabs: Jakelu, Seuranta, and Reittiviestit
+        if (jakeluButton) jakeluButton.style.display = 'inline-block';
         if (seurantaButton) seurantaButton.style.display = 'inline-block';
         if (messagesButton) messagesButton.style.display = 'inline-block';
     } else {
-        // Delivery user only sees Jakelu
+        // Delivery user sees no tabs (direct access to circuit selector)
+        if (jakeluButton) jakeluButton.style.display = 'none';
         if (seurantaButton) seurantaButton.style.display = 'none';
         if (messagesButton) messagesButton.style.display = 'none';
     }
@@ -1131,23 +1134,117 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
 
 // Report Undelivered Functionality
 function reportUndelivered(circuitId, subscriber) {
-    const reason = prompt('Ilmoita ongelmasta');
+    // Create a styled dialog for selecting delivery issue
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
     
-    if (reason && reason.trim()) {
+    const dialogBox = document.createElement('div');
+    dialogBox.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    `;
+    
+    dialogBox.innerHTML = `
+        <h3 style="margin-top: 0; color: var(--navy); font-size: 1.25rem;">Jakeluhäiriön ilmoitus</h3>
+        <p style="margin-bottom: 1.5rem; color: var(--navy);">Valitse syy:</p>
+        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid #D1D5D8; border-radius: 8px; font-size: 1rem; margin-bottom: 1rem;">
+            <option value="">-- Valitse syy --</option>
+            <option value="Ei pääsyä">Ei pääsyä</option>
+            <option value="Avainongelma">Avainongelma</option>
+            <option value="Lehtipuute">Lehtipuute</option>
+            <option value="Muu">Muu</option>
+        </select>
+        <div id="customReasonContainer" style="display: none; margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--navy);">Tarkenna:</label>
+            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid #D1D5D8; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid #D1D5D8; background: white; color: var(--navy); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
+            <button id="submitBtn" style="padding: 0.75rem 1.5rem; border: none; background: var(--primary-blue); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Lähetä</button>
+        </div>
+    `;
+    
+    dialog.appendChild(dialogBox);
+    document.body.appendChild(dialog);
+    
+    const select = document.getElementById('deliveryIssueSelect');
+    const customContainer = document.getElementById('customReasonContainer');
+    const customText = document.getElementById('customReasonText');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Show custom reason field when "Muu" is selected
+    select.addEventListener('change', () => {
+        if (select.value === 'Muu') {
+            customContainer.style.display = 'block';
+        } else {
+            customContainer.style.display = 'none';
+        }
+    });
+    
+    // Cancel button
+    cancelBtn.addEventListener('click', () => {
+        document.body.removeChild(dialog);
+    });
+    
+    // Submit button
+    submitBtn.addEventListener('click', () => {
+        let reason = select.value;
+        
+        if (!reason) {
+            alert('Valitse syy');
+            return;
+        }
+        
+        // If "Muu" selected, append custom text
+        if (reason === 'Muu') {
+            const customReason = customText.value.trim();
+            if (!customReason) {
+                alert('Kirjoita tarkennusviesti');
+                return;
+            }
+            reason = `Muu: ${customReason}`;
+        }
+        
         const report = {
             timestamp: new Date().toISOString(),
             circuit: circuitId,
             address: subscriber.address,
             name: subscriber.name,
             products: subscriber.products.join(', '),
-            reason: reason.trim()
+            reason: reason
         };
         
         // Save to localStorage
         saveRouteMessage(report);
         
+        // Remove dialog
+        document.body.removeChild(dialog);
+        
         alert('Raportti tallennettu!');
-    }
+    });
+    
+    // Close on background click
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+            document.body.removeChild(dialog);
+        }
+    });
 }
 
 function saveRouteMessage(message) {

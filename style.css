@@ -178,8 +178,43 @@ body {
     border-radius: 30px;
     overflow: hidden;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+/* Phone Status Bar */
+.phone-status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem;
+    padding-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.75rem;
+    font-weight: 500;
+    z-index: 100;
+}
+
+.status-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-icon {
+    font-size: 0.7rem;
 }
 
 /* Phone Notch */
@@ -199,10 +234,13 @@ body {
 .phone-login-form {
     width: 100%;
     padding: 2rem 1.5rem;
+    padding-top: 3rem; /* Extra padding for status bar */
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 .phone-logo {
@@ -343,6 +381,66 @@ body {
         font-size: 0.9rem;
         padding: 0.75rem 1rem;
     }
+}
+
+/* Zoom Transition Animation */
+@keyframes zoomIntoPhone {
+    0% {
+        transform: translateY(0px) rotateY(-8deg) rotateX(2deg) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(0px) rotateY(0deg) rotateX(0deg) scale(1.1);
+    }
+    100% {
+        transform: translateY(0px) rotateY(0deg) rotateX(0deg) scale(15);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeOutBackground {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInApp {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.login-screen.zoom-transition .phone-device {
+    animation: zoomIntoPhone 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.login-screen.zoom-transition .phone-container {
+    animation: none; /* Stop floating animation during zoom */
+}
+
+.login-screen.zoom-transition {
+    animation: fadeOutBackground 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+#mainApp {
+    opacity: 0;
+}
+
+#mainApp.zoom-in {
+    animation: fadeInApp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.7s;
+    opacity: 1;
 }
 
 /* Hide old login elements */

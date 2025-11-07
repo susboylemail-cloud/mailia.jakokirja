@@ -98,6 +98,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize dark mode (works on login screen too)
     initializeDarkMode();
+    
+    // Initialize phone status bar with real-time updates
+    initializePhoneStatusBar();
 });
 
 // Authentication
@@ -185,6 +188,47 @@ function initializeLogin() {
 // No swipe/tap login needed - phone UI is always visible
 function initializeSwipeUpLogin() {
     // Phone-based login is always visible, no initialization needed
+}
+
+// Initialize Phone Status Bar with Real-Time Updates
+function initializePhoneStatusBar() {
+    updateStatusTime();
+    updateBatteryStatus();
+    
+    // Update time every second
+    setInterval(updateStatusTime, 1000);
+    
+    // Update battery every minute
+    setInterval(updateBatteryStatus, 60000);
+}
+
+function updateStatusTime() {
+    const timeElement = document.getElementById('statusTime');
+    if (!timeElement) return;
+    
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    timeElement.textContent = `${hours}:${minutes}`;
+}
+
+function updateBatteryStatus() {
+    const batteryElement = document.getElementById('statusBattery');
+    if (!batteryElement) return;
+    
+    // Check if Battery Status API is available
+    if ('getBattery' in navigator) {
+        navigator.getBattery().then(battery => {
+            const level = Math.round(battery.level * 100);
+            const charging = battery.charging;
+            
+            if (charging) {
+                batteryElement.textContent = `⚡ ${level}%`;
+            } else {
+                batteryElement.textContent = `🔋 ${level}%`;
+            }
+        });
+    }
 }
 
 function handleLogin(event) {
@@ -275,8 +319,23 @@ function updateCheckboxVisibility() {
 
 
 async function showMainApp() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
+    // Start the zoom transition animation
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+    
+    // Add zoom transition class
+    loginScreen.classList.add('zoom-transition');
+    
+    // Show main app with fade-in after a delay
+    setTimeout(() => {
+        mainApp.style.display = 'block';
+        mainApp.classList.add('zoom-in');
+    }, 700);
+    
+    // Hide login screen completely after animation
+    setTimeout(() => {
+        loginScreen.style.display = 'none';
+    }, 1500);
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();

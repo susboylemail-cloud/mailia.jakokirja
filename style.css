@@ -245,6 +245,12 @@ body.dark-mode header {
     height: 20px;
 }
 
+.icon-button .icon-img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
 .quick-dial {
     display: flex;
     align-items: center;
@@ -719,7 +725,7 @@ body.dark-mode .subscriber-name {
 /* Report Button */
 .report-button {
     background: transparent;
-    border: 1.5px solid var(--red-accent);
+    border: none;
     color: var(--red-accent);
     padding: 0.4rem 0.6rem;
     border-radius: 6px;

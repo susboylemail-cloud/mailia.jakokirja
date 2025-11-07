@@ -448,9 +448,16 @@ function handleLogout() {
     sessionStorage.removeItem('mailiaAuth');
     isAuthenticated = false;
     
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+    
+    // Remove animation classes
+    loginScreen.classList.remove('zoom-transition');
+    mainApp.classList.remove('zoom-in');
+    
     // Hide main app and show login screen
-    document.getElementById('mainApp').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
+    mainApp.style.display = 'none';
+    loginScreen.style.display = 'flex';
     
     // Reset form
     document.getElementById('username').value = '';

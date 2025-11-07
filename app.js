@@ -512,21 +512,32 @@ function getProductColorClass(product) {
     return colorMap[product] || product;
 }
 
-// Check if a product should be delivered on a specific day of the week
+// Day constants for better readability
+const SUNDAY = 0, MONDAY = 1, TUESDAY = 2, WEDNESDAY = 3, THURSDAY = 4, FRIDAY = 5, SATURDAY = 6;
+
+/**
+ * Check if a product should be delivered on a specific day of the week
+ * @param {string} product - The product code (e.g., 'ESLS', 'HSP', 'UV')
+ * @param {number} dayOfWeek - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+ * @returns {boolean} True if the product should be delivered on the given day
+ * 
+ * @example
+ * isProductValidForDay('ESLS', FRIDAY) // returns false (ESLS is weekend-only)
+ * isProductValidForDay('ESLS', SATURDAY) // returns true
+ * isProductValidForDay('UV', MONDAY) // returns true (UV has no day restrictions)
+ */
 function isProductValidForDay(product, dayOfWeek) {
-    // dayOfWeek: 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday
-    
     const productSchedule = {
-        'SH': [0],                    // Sunnuntai Hesari - Sunday only
-        'HSPS': [5, 6, 0],            // Hesari perjantai-sunnuntai - Fri, Sat, Sun
-        'HSPE': [5],                  // Hesari perjantai - Friday only
-        'HSLS': [6, 0],               // Hesari lauantai-sunnuntai - Sat, Sun
-        'HSP': [1, 2, 3, 4, 5],       // Hesari maanantai-perjantai - Mon-Fri
-        'HSTS': [4, 5, 6, 0],         // Hesari torstai-sunnuntai - Thu-Sun
-        'MALA': [1, 2, 3, 4, 5, 6],   // Hesari maanantai-lauantai - Mon-Sat
-        'ESPS': [5, 6, 0],            // Etelä-Saimaa perjantai-sunnuntai - Fri, Sat, Sun
-        'ESLS': [6, 0],               // Etelä-Saimaa lauantai-sunnuntai - Sat, Sun
-        'ESP': [1, 2, 3, 4, 5]        // Etelä-Saimaa maanantai-perjantai - Mon-Fri
+        'SH': [SUNDAY],                              // Sunnuntai Hesari - Sunday only
+        'HSPS': [FRIDAY, SATURDAY, SUNDAY],          // Hesari perjantai-sunnuntai
+        'HSPE': [FRIDAY],                            // Hesari perjantai - Friday only
+        'HSLS': [SATURDAY, SUNDAY],                  // Hesari lauantai-sunnuntai
+        'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai
+        'HSTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY],           // Hesari torstai-sunnuntai
+        'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
+        'ESPS': [FRIDAY, SATURDAY, SUNDAY],          // Etelä-Saimaa perjantai-sunnuntai
+        'ESLS': [SATURDAY, SUNDAY],                  // Etelä-Saimaa lauantai-sunnuntai
+        'ESP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]   // Etelä-Saimaa maanantai-perjantai
     };
     
     // If the product has a specific schedule, check if today is valid
@@ -562,8 +573,7 @@ function renderSubscriberList(circuitId, subscribers) {
         // Return subscriber with filtered products
         return {
             ...sub,
-            products: validProducts,
-            allProducts: sub.products  // Keep original products for reference
+            products: validProducts
         };
     }).filter(sub => sub !== null);
     

@@ -1924,7 +1924,7 @@ function reportUndelivered(circuitId, subscriber) {
     
     const dialogBox = document.createElement('div');
     dialogBox.style.cssText = `
-        background: var(--background-color);
+        background: var(--card-bg);
         padding: 2rem;
         border-radius: 12px;
         max-width: 400px;
@@ -1934,7 +1934,7 @@ function reportUndelivered(circuitId, subscriber) {
     
     dialogBox.innerHTML = `
         <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem;">Jakeluhäiriön ilmoitus</h3>
-        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--background-color); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none;">
+        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--card-bg); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none;">
             <option value="">Valitse syy</option>
             <option value="Ei pääsyä">Ei pääsyä</option>
             <option value="Avaimongelma">Avainongelma</option>
@@ -1943,10 +1943,10 @@ function reportUndelivered(circuitId, subscriber) {
         </select>
         <div id="customReasonContainer" style="display: none; margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Tarkenna:</label>
-            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; resize: vertical; background: var(--background-color); color: var(--text-color);"></textarea>
+            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; resize: vertical; background: var(--card-bg); color: var(--text-color);"></textarea>
         </div>
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid var(--border-color); background: var(--background-color); color: var(--text-color); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
+            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
             <button id="submitBtn" style="padding: 0.75rem 1.5rem; border: none; background: var(--primary-blue); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Lähetä</button>
         </div>
     `;

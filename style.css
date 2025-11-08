@@ -141,7 +141,7 @@ body {
         transparent 70%
     );
     border-radius: 50%;
-    animation: glowPulse 3s ease-in-out infinite;
+    animation: glowPulse 3s ease-in-out infinite, hueShift 12s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
 }
@@ -154,6 +154,63 @@ body {
     50% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+@keyframes hueShift {
+    0% {
+        background: radial-gradient(
+            circle,
+            rgba(74, 144, 226, 0.4) 0%,    /* primary-blue */
+            rgba(74, 144, 226, 0.2) 30%,
+            rgba(74, 144, 226, 0.1) 50%,
+            transparent 70%
+        );
+    }
+    20% {
+        background: radial-gradient(
+            circle,
+            rgba(93, 173, 226, 0.4) 0%,    /* accent-blue */
+            rgba(93, 173, 226, 0.2) 30%,
+            rgba(93, 173, 226, 0.1) 50%,
+            transparent 70%
+        );
+    }
+    40% {
+        background: radial-gradient(
+            circle,
+            rgba(88, 214, 141, 0.4) 0%,    /* primary-green */
+            rgba(88, 214, 141, 0.2) 30%,
+            rgba(88, 214, 141, 0.1) 50%,
+            transparent 70%
+        );
+    }
+    60% {
+        background: radial-gradient(
+            circle,
+            rgba(249, 168, 37, 0.4) 0%,    /* yellow-accent */
+            rgba(249, 168, 37, 0.2) 30%,
+            rgba(249, 168, 37, 0.1) 50%,
+            transparent 70%
+        );
+    }
+    80% {
+        background: radial-gradient(
+            circle,
+            rgba(255, 107, 53, 0.4) 0%,    /* orange-accent */
+            rgba(255, 107, 53, 0.2) 30%,
+            rgba(255, 107, 53, 0.1) 50%,
+            transparent 70%
+        );
+    }
+    100% {
+        background: radial-gradient(
+            circle,
+            rgba(74, 144, 226, 0.4) 0%,    /* back to primary-blue */
+            rgba(74, 144, 226, 0.2) 30%,
+            rgba(74, 144, 226, 0.1) 50%,
+            transparent 70%
+        );
     }
 }
 

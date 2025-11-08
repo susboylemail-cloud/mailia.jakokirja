@@ -479,23 +479,23 @@ function updateCheckboxVisibility() {
 
 
 async function showMainApp() {
-    // Start the zoom transition animation
+    // Start the page-turn transition animation
     const loginScreen = document.getElementById('loginScreen');
     const mainApp = document.getElementById('mainApp');
     
-    // Add zoom transition class
+    // Add page-turn transition class
     loginScreen.classList.add('zoom-transition');
     
-    // Show main app with fade-in after a delay
+    // Show main app with page slide-in after a shorter delay
     setTimeout(() => {
         mainApp.style.display = 'block';
         mainApp.classList.add('zoom-in');
-    }, 700);
+    }, 300);
     
     // Hide login screen completely after animation
     setTimeout(() => {
         loginScreen.style.display = 'none';
-    }, 1500);
+    }, 1100);
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();

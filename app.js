@@ -1608,7 +1608,7 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
         
         if (isDragging && isValidSwipe && deltaX > 0) {
             // Mark as delivered with animation
-            card.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.transform = 'translateX(100%)';
             card.style.opacity = '0';
             
@@ -1621,10 +1621,10 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
                 card.style.transition = '';
                 card.style.transform = '';
                 card.style.opacity = '';
-            }, 300);
+            }, 250);
         } else {
             // Reset card position with animation
-            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.transform = '';
             card.style.opacity = '';
         }
@@ -1676,7 +1676,7 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
         const isValidSwipe = (deltaX > swipeThreshold) || (velocity > velocityThreshold && deltaX > 50);
         
         if (isDragging && isValidSwipe && deltaX > 0) {
-            card.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.transform = 'translateX(100%)';
             card.style.opacity = '0';
             
@@ -1688,9 +1688,9 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
                 card.style.transition = '';
                 card.style.transform = '';
                 card.style.opacity = '';
-            }, 300);
+            }, 250);
         } else {
-            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.transform = '';
             card.style.opacity = '';
         }
@@ -1941,10 +1941,12 @@ function saveCheckboxState(circuitId, address, checked) {
 function startRoute(circuitId) {
     const now = new Date();
     const startKey = `route_start_${circuitId}`;
+    const endKey = `route_end_${circuitId}`;
     const completeKey = `route_complete_${circuitId}`;
     
     // Clear any existing completion data when restarting route
     localStorage.removeItem(completeKey);
+    localStorage.removeItem(endKey);  // Also clear end time to fully reset route
     
     // Set new start time
     localStorage.setItem(startKey, now.toISOString());
@@ -1973,10 +1975,10 @@ function showSubscriberListWithAnimation() {
         
         // Animate in with staggered delay
         setTimeout(() => {
-            card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+            card.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
-        }, index * 50); // 50ms delay between each card
+        }, index * 40); // 40ms delay between each card for faster reveal
     });
 }
 
@@ -2003,10 +2005,10 @@ function hideSubscriberListWithAnimation() {
         const reverseIndex = totalCards - index - 1;
         
         setTimeout(() => {
-            card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+            card.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';
-        }, reverseIndex * 50); // 50ms delay between each card
+        }, reverseIndex * 40); // 40ms delay between each card for faster hiding
     });
     
     // Hide the subscriber list after all animations complete
@@ -2018,7 +2020,7 @@ function hideSubscriberListWithAnimation() {
             card.style.transform = '';
             card.style.transition = '';
         });
-    }, totalCards * 50 + 500); // Wait for all animations plus transition duration
+    }, totalCards * 40 + 400); // Wait for all animations plus transition duration
 }
 
 function updateRouteButtons(circuitId) {

@@ -164,6 +164,142 @@ const circuitNames = {
 };
 
 // Initialize the app
+// Weather widget functionality
+async function initializeWeatherWidget() {
+    const weatherWidget = document.getElementById('weatherWidget');
+    if (!weatherWidget) return;
+    
+    // iOS-style weather icon SVGs
+    const weatherIcons = {
+        sunny: `<circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`,
+        partlyCloudy: `<circle cx="12" cy="12" r="4"></circle>
+                       <path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3"></path>
+                       <path d="M20 17H8.5a3.5 3.5 0 1 1 0-7c.96 0 1.82.41 2.42 1.06"></path>`,
+        cloudy: `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`,
+        rainy: `<line x1="16" y1="13" x2="16" y2="21"></line>
+                <line x1="8" y1="13" x2="8" y2="21"></line>
+                <line x1="12" y1="15" x2="12" y2="23"></line>
+                <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>`,
+        snow: `<path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path>
+               <line x1="8" y1="16" x2="8" y2="16"></line>
+               <line x1="8" y1="20" x2="8" y2="20"></line>
+               <line x1="12" y1="18" x2="12" y2="18"></line>
+               <line x1="12" y1="22" x2="12" y2="22"></line>
+               <line x1="16" y1="16" x2="16" y2="16"></line>
+               <line x1="16" y1="20" x2="16" y2="20"></line>`
+    };
+    
+    const iconSvg = weatherWidget.querySelector('.weather-icon');
+    const tempSpan = weatherWidget.querySelector('.weather-temp');
+    
+    // Function to update weather display
+    function updateWeatherDisplay(temp, condition) {
+        if (iconSvg && tempSpan) {
+            let iconKey = 'sunny';
+            
+            // Map weather conditions to icon types
+            if (condition.includes('clear') || condition.includes('sunny')) {
+                iconKey = 'sunny';
+            } else if (condition.includes('cloud') && (condition.includes('partly') || condition.includes('few'))) {
+                iconKey = 'partlyCloudy';
+            } else if (condition.includes('cloud') || condition.includes('overcast')) {
+                iconKey = 'cloudy';
+            } else if (condition.includes('rain') || condition.includes('drizzle') || condition.includes('shower')) {
+                iconKey = 'rainy';
+            } else if (condition.includes('snow') || condition.includes('sleet')) {
+                iconKey = 'snow';
+            }
+            
+            iconSvg.innerHTML = weatherIcons[iconKey];
+            tempSpan.textContent = `${Math.round(temp)}°C`;
+        }
+    }
+    
+    // Try to get user's location and fetch weather
+    if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                
+                try {
+                    // Using Open-Meteo API (free, no API key required)
+                    const response = await fetch(
+                        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=auto`
+                    );
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const temp = data.current.temperature_2m;
+                        const weatherCode = data.current.weather_code;
+                        
+                        // Map WMO weather codes to conditions
+                        let condition = 'clear';
+                        if (weatherCode === 0) condition = 'clear';
+                        else if ([1, 2].includes(weatherCode)) condition = 'partly cloudy';
+                        else if (weatherCode === 3) condition = 'overcast';
+                        else if ([45, 48].includes(weatherCode)) condition = 'fog';
+                        else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(weatherCode)) condition = 'rain';
+                        else if ([71, 73, 75, 77, 85, 86].includes(weatherCode)) condition = 'snow';
+                        else if ([95, 96, 99].includes(weatherCode)) condition = 'thunderstorm';
+                        
+                        updateWeatherDisplay(temp, condition);
+                    } else {
+                        throw new Error('Weather API response not ok');
+                    }
+                } catch (error) {
+                    console.warn('Failed to fetch weather data:', error);
+                    // Fall back to time-based simulation
+                    useFallbackWeather();
+                }
+            },
+            (error) => {
+                console.warn('Geolocation error:', error);
+                // Fall back to time-based simulation
+                useFallbackWeather();
+            },
+            {
+                timeout: 5000,
+                maximumAge: 300000 // Cache position for 5 minutes
+            }
+        );
+    } else {
+        // Geolocation not supported, use fallback
+        useFallbackWeather();
+    }
+    
+    // Fallback weather based on time of day
+    function useFallbackWeather() {
+        const hour = new Date().getHours();
+        let temp = 20;
+        let condition = 'clear';
+        
+        if (hour >= 6 && hour < 12) {
+            temp = 22;
+            condition = 'clear';
+        } else if (hour >= 12 && hour < 18) {
+            temp = 18;
+            condition = 'partly cloudy';
+        } else if (hour >= 18 && hour < 21) {
+            temp = 15;
+            condition = 'cloudy';
+        } else {
+            temp = 12;
+            condition = 'rain';
+        }
+        
+        updateWeatherDisplay(temp, condition);
+    }
+}
+
+// Phone theme toggle functionality
 document.addEventListener('DOMContentLoaded', async () => {
     // Load saved credentials if available
     loadSavedCredentials();
@@ -188,7 +324,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Update notification time to show current device time
     updateNotificationTime();
+    
+    // Initialize weather widget on phone screen
+    initializeWeatherWidget();
+    
+    // Initialize stamp animation
+    initializeLogoAnimation();
 });
+
+// Logo Animation - Simple fade in (no stamp animation needed)
+function initializeLogoAnimation() {
+    // Logo fades in automatically via CSS animation
+    // No JavaScript needed for the logo
+}
 
 // Authentication
 function checkAuthentication() {
@@ -479,23 +627,23 @@ function updateCheckboxVisibility() {
 
 
 async function showMainApp() {
-    // Start the zoom transition animation
+    // Start the page-turn transition animation
     const loginScreen = document.getElementById('loginScreen');
     const mainApp = document.getElementById('mainApp');
     
-    // Add zoom transition class
+    // Add page-turn transition class
     loginScreen.classList.add('zoom-transition');
     
-    // Show main app with fade-in after a delay
+    // Show main app with simple fade-in after page turn completes
     setTimeout(() => {
         mainApp.style.display = 'block';
         mainApp.classList.add('zoom-in');
-    }, 700);
+    }, 1200);
     
     // Hide login screen completely after animation
     setTimeout(() => {
         loginScreen.style.display = 'none';
-    }, 1500);
+    }, 2400);
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();
@@ -1035,7 +1183,8 @@ function populateCircuitSelector() {
     }
     
     async function selectCircuit(circuit) {
-        display.querySelector('span').textContent = circuitNames[circuit] || circuit;
+        const displayText = display.querySelector('.circuit-display-text');
+        displayText.textContent = circuitNames[circuit] || circuit;
         dropdown.style.display = 'none';
         customSelect.classList.remove('open');
         await loadCircuit(circuit);

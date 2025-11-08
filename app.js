@@ -1997,10 +1997,36 @@ function showSubscriberListWithAnimation() {
 function completeRoute(circuitId) {
     const now = new Date();
     const key = `route_end_${circuitId}`;
+    
+    // Show loading overlay
+    const loader = document.getElementById('routeCompleteLoader');
+    if (loader) {
+        loader.style.display = 'flex';
+    }
+    
+    // Save completion time
     localStorage.setItem(key, now.toISOString());
     
     // Hide subscriber cards with cascading animation
     hideSubscriberListWithAnimation();
+    
+    // Calculate total animation time for hiding cards
+    const subscriberList = document.getElementById('subscriberList');
+    const cards = subscriberList.querySelectorAll('.subscriber-card');
+    const totalAnimationTime = cards.length * 40 + 400; // Match hideSubscriberListWithAnimation timing
+    
+    // Hide loader after animations complete
+    setTimeout(() => {
+        if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.3s ease-out';
+            setTimeout(() => {
+                loader.style.display = 'none';
+                loader.style.opacity = '';
+                loader.style.transition = '';
+            }, 300);
+        }
+    }, totalAnimationTime);
     
     updateRouteButtons(circuitId);
     updateCircuitStatus(circuitId, 'completed');

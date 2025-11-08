@@ -1914,8 +1914,8 @@ body.dark-mode .subscriber-name {
 
 /* Report Button */
 .report-button {
-    background: rgba(224, 120, 86, 0.15);
-    border: 1.5px solid rgba(224, 120, 86, 0.4);
+    background: transparent;
+    border: none;
     padding: 0.5rem;
     border-radius: 8px;
     cursor: pointer;
@@ -1924,7 +1924,7 @@ body.dark-mode .subscriber-name {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--red-accent);
+    color: var(--text-color);
     width: 38px;
     height: 38px;
 }
@@ -1932,12 +1932,11 @@ body.dark-mode .subscriber-name {
 .report-button .icon {
     width: 20px;
     height: 20px;
-    stroke: var(--red-accent);
+    stroke: currentColor;
 }
 
 .report-button:hover {
-    background: rgba(224, 120, 86, 0.25);
-    border-color: var(--red-accent);
+    background: rgba(74, 144, 226, 0.1);
     transform: scale(1.1);
 }
 

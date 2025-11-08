@@ -54,6 +54,7 @@ let isAuthenticated = false;
 let userRole = null; // 'delivery' or 'admin'
 let routeMessages = []; // Store route messages for admin panel
 let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
+let isLoadingCircuit = false; // Prevent concurrent circuit loads
 
 // Circuit file mapping for lazy loading
 const circuitFiles = {
@@ -1118,6 +1119,11 @@ function populateCircuitSelector() {
     const search = document.getElementById('circuitSearch');
     const optionsContainer = document.getElementById('circuitOptions');
     
+    if (!customSelect || !display || !dropdown || !search || !optionsContainer) {
+        console.error('Circuit selector elements not found');
+        return;
+    }
+    
     const circuits = Object.keys(circuitFiles).sort(sortCircuits);
     
     // Render circuit options
@@ -1183,13 +1189,29 @@ function populateCircuitSelector() {
     }
     
     async function selectCircuit(circuit) {
+        // Prevent concurrent circuit loads
+        if (isLoadingCircuit) {
+            console.log('Circuit load already in progress, ignoring click');
+            return;
+        }
+        
+        isLoadingCircuit = true;
         const displayText = display.querySelector('.circuit-display-text');
         displayText.textContent = circuitNames[circuit] || circuit;
         dropdown.style.display = 'none';
         customSelect.classList.remove('open');
-        await loadCircuit(circuit);
-        search.value = '';
-        circuitSearchMemory = '';
+        
+        try {
+            await loadCircuit(circuit);
+            search.value = '';
+            circuitSearchMemory = '';
+        } catch (error) {
+            console.error('Error loading circuit:', error);
+            // Reset display on error
+            displayText.textContent = 'Valitse piiri';
+        } finally {
+            isLoadingCircuit = false;
+        }
     }
     
     // Toggle dropdown
@@ -1281,34 +1303,54 @@ async function loadCircuitData(circuitId) {
 async function loadCircuit(circuitId) {
     currentCircuit = circuitId;
     
-    // Load circuit data on demand
-    const subscribers = await loadCircuitData(circuitId);
-    
-    document.getElementById('deliveryContent').style.display = 'block';
-    
-    renderCoverSheet(circuitId, subscribers);
-    renderSubscriberList(circuitId, subscribers);
-    updateRouteButtons(circuitId);
-    
-    // Hide subscriber list initially - it will be shown when route starts
-    const subscriberList = document.getElementById('subscriberList');
-    const startKey = `route_start_${circuitId}`;
-    const routeStarted = localStorage.getItem(startKey);
-    
-    if (!routeStarted) {
-        // Route not started yet - hide the list
-        subscriberList.style.display = 'none';
-    } else {
-        // Route already started - show the list
-        subscriberList.style.display = 'block';
+    try {
+        // Load circuit data on demand
+        const subscribers = await loadCircuitData(circuitId);
+        
+        const deliveryContent = document.getElementById('deliveryContent');
+        if (!deliveryContent) {
+            console.error('deliveryContent element not found');
+            return;
+        }
+        
+        deliveryContent.style.display = 'block';
+        
+        renderCoverSheet(circuitId, subscribers);
+        renderSubscriberList(circuitId, subscribers);
+        updateRouteButtons(circuitId);
+        
+        // Hide subscriber list initially - it will be shown when route starts
+        const subscriberList = document.getElementById('subscriberList');
+        if (!subscriberList) {
+            console.error('subscriberList element not found');
+            return;
+        }
+        
+        const startKey = `route_start_${circuitId}`;
+        const routeStarted = localStorage.getItem(startKey);
+        
+        if (!routeStarted) {
+            // Route not started yet - hide the list
+            subscriberList.style.display = 'none';
+        } else {
+            // Route already started - show the list
+            subscriberList.style.display = 'block';
+        }
+        
+        // Restore filter states
+        const hideStf = localStorage.getItem('hideStf') === 'true';
+        const hideDelivered = localStorage.getItem('hideDelivered') === 'true';
+        const hideStfFilter = document.getElementById('hideStfFilter');
+        const hideDeliveredFilter = document.getElementById('hideDeliveredFilter');
+        
+        if (hideStfFilter) hideStfFilter.checked = hideStf;
+        if (hideDeliveredFilter) hideDeliveredFilter.checked = hideDelivered;
+        
+        applyFilters();
+    } catch (error) {
+        console.error('Error in loadCircuit:', error);
+        throw error; // Re-throw to be caught by selectCircuit
     }
-    
-    // Restore filter states
-    const hideStf = localStorage.getItem('hideStf') === 'true';
-    const hideDelivered = localStorage.getItem('hideDelivered') === 'true';
-    document.getElementById('hideStfFilter').checked = hideStf;
-    document.getElementById('hideDeliveredFilter').checked = hideDelivered;
-    applyFilters();
 }
 
 // Cover Sheet

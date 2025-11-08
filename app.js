@@ -1848,8 +1848,14 @@ function saveCheckboxState(circuitId, address, checked) {
 // Route Timing
 function startRoute(circuitId) {
     const now = new Date();
-    const key = `route_start_${circuitId}`;
-    localStorage.setItem(key, now.toISOString());
+    const startKey = `route_start_${circuitId}`;
+    const completeKey = `route_complete_${circuitId}`;
+    
+    // Clear any existing completion data when restarting route
+    localStorage.removeItem(completeKey);
+    
+    // Set new start time
+    localStorage.setItem(startKey, now.toISOString());
     
     // Show the subscriber list with cascading animation
     showSubscriberListWithAnimation();

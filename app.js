@@ -893,7 +893,7 @@ function populateCircuitSelector() {
     const search = document.getElementById('circuitSearch');
     const optionsContainer = document.getElementById('circuitOptions');
     
-    const circuits = Object.keys(allData).sort(sortCircuits);
+    const circuits = Object.keys(circuitFiles).sort(sortCircuits);
     
     // Render circuit options
     function renderCircuitOptions(filterText = '') {

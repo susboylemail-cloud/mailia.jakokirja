@@ -1,21 +1,21 @@
-Katu,Osoitenumero,Porras/Huom,Asunto,Tilaaja,Tilaukset
-PUUMALANTIE,771,,,Silvon Pelti- Ja Kiint,UV
-KOHTRANNANTIE,30,,,Väänänen Maija,UV2
-POHJALANKILANTIE,67,,,Niko Kurki,STF
-LAMPILANTIE,10,,,Jaatinen Maarit,UV
-PUROMÄENTIE,5,,,<sama> Lampinen Keijo,ES
-ALAKYLÄNTIE,34,,,Samu Mastomäki,STF
-INKILÄNSAARENTIE,105,,,Jakelukeskeytys tuotteilla,STF
-ALAKYLÄNTIE,94,,,Launiainen Toivo,UV; MALA
-ALAKYLÄNTIE,70,,,Heino Erkki,ES
-YHDYSTIE,10,,,Kemppinen Reijo,ES
-YHDYSTIE,21,B,,Saukkola Leena,ES
-PUUMALANTIE,967,lii,1,Muhli Sointu,UV; ES
-PIIKAMÄENTIE,3,,,Lindholm Sakari,UV
-PAUNIINTIE,20,,,Inkinen Heikki,UV
-PIIKAMÄENTIE,40,,,Kari Seppälä,STF
-PIIKAMÄENTIE,43,,,Lempiäinen Birgitta,HSPS
-PIIKAMÄENTIE,30,,,Vertanen Kauko,ES
-PIIKAMÄENTIE,24,,,Tiimonen Kosti,UV
-VANHA PUUMALANTIE,38,,,Jaakola Pirjo,STF
-VANHA PUUMALANTIE,79,,,Pellinen Jouko,ES
+"Sivu";"Katu";"Osoite";"Nimi";"Merkinnät"
+"Sivu 1";"PUUMALANTIE";"PUUMALANTIE 771";"Silvon Pelti- Ja Kiint";"UV"
+"Sivu 1";"KOHTRANNANTIE";"KOHTRANNANTIE 30";"Väänänen Maija";"UV2"
+"Sivu 1";"POHJALANKILANTIE";"POHJALANKILANTIE 67";"Niko Kurki";"STF"
+"Sivu 1";"LAMPILANTIE";"LAMPILANTIE 10";"Jaatinen Maarit";"UV"
+"Sivu 1";"PUROMÄENTIE";"PUROMÄENTIE 5";"<sama> Lampinen Keijo";"ES"
+"Sivu 1";"ALAKYLÄNTIE";"ALAKYLÄNTIE 34";"Samu Mastomäki";"STF"
+"Sivu 1";"INKILÄNSAARENTIE";"INKILÄNSAARENTIE 105";"Jakelukeskeytys tuotteilla";"STF"
+"Sivu 1";"ALAKYLÄNTIE";"ALAKYLÄNTIE 94";"Launiainen Toivo";"UV MALA"
+"Sivu 1";"ALAKYLÄNTIE";"ALAKYLÄNTIE 70";"Heino Erkki";"ES"
+"Sivu 1";"YHDYSTIE";"YHDYSTIE 10";"Kemppinen Reijo";"ES"
+"Sivu 1";"YHDYSTIE";"YHDYSTIE 21 B";"Saukkola Leena";"ES"
+"Sivu 1";"PUUMALANTIE";"PUUMALANTIE 967 lii 1";"Muhli Sointu";"UV ES"
+"Sivu 1";"PIIKAMÄENTIE";"PIIKAMÄENTIE 3";"Lindholm Sakari";"UV"
+"Sivu 1";"PAUNIINTIE";"PAUNIINTIE 20";"Inkinen Heikki";"UV"
+"Sivu 1";"PIIKAMÄENTIE";"PIIKAMÄENTIE 40";"Kari Seppälä";"STF"
+"Sivu 1";"PIIKAMÄENTIE";"PIIKAMÄENTIE 43";"Lempiäinen Birgitta";"HSPS"
+"Sivu 1";"PIIKAMÄENTIE";"PIIKAMÄENTIE 30";"Vertanen Kauko";"ES"
+"Sivu 1";"PIIKAMÄENTIE";"PIIKAMÄENTIE 24";"Tiimonen Kosti";"UV"
+"Sivu 1";"VANHA PUUMALANTIE";"VANHA PUUMALANTIE 38";"Jaakola Pirjo";"STF"
+"Sivu 1";"VANHA PUUMALANTIE";"VANHA PUUMALANTIE 79";"Pellinen Jouko";"ES"

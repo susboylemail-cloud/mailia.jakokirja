@@ -125,10 +125,43 @@ body {
     pointer-events: none;
 }
 
+/* Pulsing Glow Behind Phone - Light Bulb Effect */
+.phone-glow-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(
+        circle,
+        rgba(74, 144, 226, 0.4) 0%,
+        rgba(74, 144, 226, 0.2) 30%,
+        rgba(74, 144, 226, 0.1) 50%,
+        transparent 70%
+    );
+    border-radius: 50%;
+    animation: glowPulse 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        opacity: 0.6;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
 /* Floating Phone Container with Blue Ambient Glow */
 .phone-container {
     position: relative;
     perspective: 1000px;
+    z-index: 1;
     /* Removed floating animation */
     filter: drop-shadow(0 0 60px rgba(74, 144, 226, 0.4)) 
             drop-shadow(0 0 30px rgba(74, 144, 226, 0.3));
@@ -139,8 +172,8 @@ body {
 /* Phone Device */
 .phone-device {
     position: relative;
-    width: 320px;
-    height: 650px;
+    width: 350px;
+    height: 710px;
     transform-style: preserve-3d;
     /* Removed rotation animation */
 }
@@ -235,17 +268,80 @@ body {
     height: 16px;
 }
 
-/* Phone Notch */
-.phone-notch {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 140px;
-    height: 28px;
-    background: #1a1a1a;
-    border-radius: 0 0 20px 20px;
-    z-index: 10;
+/* iPhone-style Notification - Compact & Dark Theme - Middle Position */
+.iphone-notification {
+    position: relative;
+    width: calc(100% - 2rem);
+    margin: 0 auto 1.5rem;
+    background: rgba(30, 40, 54, 0.75);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    padding: 0.5rem 0.6rem;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(74, 144, 226, 0.2);
+    animation: notificationSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation-delay: 0.5s;
+    animation-fill-mode: both;
+}
+
+@keyframes notificationSlideIn {
+    0% {
+        transform: translateY(-30px) scale(0.95);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
+}
+
+.notification-icon {
+    width: 14px;
+    height: 14px;
+    stroke: #6bb6ff;
+    flex-shrink: 0;
+}
+
+.notification-app {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    flex-grow: 1;
+}
+
+.notification-time {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.notification-content {
+    padding-left: 0.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.notification-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+}
+
+.notification-message {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.4;
+    letter-spacing: 0.01em;
 }
 
 /* Login Form on Phone Screen */
@@ -256,7 +352,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
     margin-top: auto;
     margin-bottom: auto;
 }
@@ -268,7 +364,7 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     text-align: center;
     letter-spacing: 0.05em;
     filter: drop-shadow(0 2px 10px rgba(74, 144, 226, 0.3));
@@ -381,6 +477,66 @@ body {
         0 6px 20px rgba(74, 144, 226, 0.5),
         0 3px 8px rgba(0, 0, 0, 0.3);
     background: linear-gradient(135deg, #6BBEF3 0%, #5DADE2 50%, #357ABD 100%);
+}
+
+/* Remember Me Toggle - Small and Non-intrusive */
+.remember-me-container {
+    width: 100%;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.remember-me-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.2s ease;
+    user-select: none;
+}
+
+.remember-me-label:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.remember-me-checkbox {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.remember-me-checkbox:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.remember-me-checkbox:checked {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.remember-me-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.remember-me-text {
+    line-height: 1.2;
 }
 
 .phone-login-button:active {
@@ -799,6 +955,30 @@ body.dark-mode header {
     height: 24px;
 }
 
+/* Help Button */
+.help-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.help-button:hover {
+    transform: scale(1.1);
+}
+
+.help-button .icon {
+    width: 24px;
+    height: 24px;
+}
+
+
 /* Settings Container */
 .settings-container {
     position: relative;
@@ -1211,6 +1391,18 @@ body.dark-mode .route-time {
 
 body.dark-mode .building-header {
     color: var(--text-color);         /* Off-White in dark mode */
+}
+
+/* Cascading animation for subscriber cards */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .subscriber-card {

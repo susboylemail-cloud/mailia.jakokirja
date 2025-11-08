@@ -1,97 +1,97 @@
-Katu,Osoitenumero,Porras/Huom,Asunto,Tilaaja,Tilaukset
-TORITIE,1,as,1,Viuhkonen Pirjo,UV; ES
-TORITIE,1,as,4,Marjatta Poittinen,UV
-NÄLLISUONTIE,3,lii,2,<kulma-kahvila> Hännin,UV
-NÄLLIKUJA,1,lii,1,<kirjasto> Ruokolahden,UVES; HS
-NÄLLIKUJA,8,,,Friari Raimo,ES
-NÄLLIKUJA,2,as,1,Jäppinen Jukka,UV
-METSOLANTIE,7,,,Ruokolahden Koulu,UV; ES
-ILVEKSENPOLKU,6,,,Mikko Tella,STF
-ILVEKSENPOLKU,4,,,Tella Kimmo,UV
-ILVEKSENPOLKU,3,,,Juvonen Jyrki,HS
-ILVEKSENPOLKU,2,,,Kari Kallio,STF
-SUDENPOLKU,4,B,,Räty Mauri,STF
-SUDENPOLKU,3,B,,Pasi Hietanen,STF
-SUDENPOLKU,7,,,Satu-johanna Bom,STF
-SUDENPOLKU,8,,,Siitonen Jouko,ES
-MAJAVATIE,3,,,Jussi Lehikoinen,STF
-KARHUNPOLKU,3,,,Tiilikainen Teuvo,ES
-RANTAHARJUNTIE,4,A,3,Kainulainen Leo,UV
-RANTAHARJUNTIE,14,A,2,Havia Airi,ES; SH
-RANTAHARJUNTIE,12,as,2,Kalpio Eila,UV; ES
-RANTAHARJUNTIE,12,as,7,Ahtiainen Aarne,ES
-RANTAHARJUNTIE,15,,,Jarkko Nevalainen,STF
-RANTAHARJUNTIE,19,,,Kaukinen Helena,UV; HS; STF
-RANTAHARJUNTIE,16,B,5,Tero Päivänranta,STF
-KALLIOKUJA,2,as,1,Sihvonen Eino,STF
-KALLIOKUJA,2,as,5,Heiskanen Marjaana,ES
-KALLIOKUJA,1,as,2,Kauppinen Martti,STF
-KALLIOKUJA,1,as,5,Inkinen Leila,ES
-KALLIOKUJA,1,as,10,Kylliäinen Minna,ES
-KALLIOKUJA,3,as,3,Tontti Kirsti,ES
-KALLIOKUJA,5,as,9,Haakana Pekka,UV
-HARJUKUJA,1,as,6,Liukka Einari,UV
-HARJUKUJA,2,as,3,Anu Valtonen,STF
-HARJUKUJA,2,as,6,Lankinen Merja,ES
-HARJUKUJA,3,as,4,Tiippana Sari,ES
-HARJUKUJA,3,as,6,Pakarinen Marja-liisa,HS
-HARJUKUJA,4,as,7,Härkönen Vappu,STF
-HARJUKUOPANTIE,3,as,12,Vänttinen Tarja,UV
-HARJUKUOPANTIE,3,as,13,Hannonen Seija,UV
-HARJUKUOPANTIE,5,as,1,Hämäläinen Kaija,UV
-HARJUKUOPANTIE,5,as,6,Harakka Maili,UV
-HARJUKUOPANTIE,6,as,4,Tikkanen Aino Marja,ES
-KIVENHAKKAAJANKUJA,3,A,1,Sihvonen Tapio,UV; ES
-KIVENHAKKAAJANKUJA,3,B,5,Sikiö Liisa,UV
-KIVENHAKKAAJANKUJA,3,B,8,Ravattinen Osmo,STF
-RASILANTIE,48,,,Koho Heikkinen Senja,ES
-RASILANTIE,58,as,1,Huhtanen Eeva-liisa,ES; HS
-RASILANTIE,58,as,2,Hellen Rauli,STF
-RASILANTIE,58,as,4,Monto Eila,UV
-RASILANTIE,58,as,5,Hikipää Aira,UV
-RASILANTIE,58,as,7,Husu Pentti,UV
-RASILANTIE,58,as,8,Jyrkinen Eeva,UV
-RASILANTIE,58,as,11,Wallin Pekka,UV; ES
-METSÄPOLKU,3,,,Hirvonen Risto,UV
-METSÄPOLKU,6,,,Tikkanen Raimo,STF
-METSÄPOLKU,2,A,1,Ovaska Maire,STF
-METSÄPOLKU,2,A,5,Hämäläinen Aapo,UV
-METSÄPOLKU,2,lii,1,<lähitapiola> Lähitapi,UV
-LIISANPOLKU,3,,,Antti Saari,STF
-LIISANPOLKU,7,,,Tykkyläinen Matti,STF
-LIISANPOLKU,4,A,20,Suikkari Pentti,HS
-LIISANPOLKU,4,A,18,Lifländer Kerttu,UV
-LIISANPOLKU,4,A,9,Piiroinen Annikki,UV
-LIISANPOLKU,4,A,12,Norkia Rauno,UV; STF
-LIISANPOLKU,4,A,4,Lehikoinen Mauri,STF
-LIISANPOLKU,4,A,7,Pulkkinen Pentti,ES
-LIISANPOLKU,4,A,2,Hellman Maria,UV
-LIISANPOLKU,4,B,3,Järvi Jorma,UV; HS
-LIISANPOLKU,4,B,19,Paakki Seppo,UV
-LIISANPOLKU,4,B,20,Sikiö Seija,UV; HS
-LIISANPOLKU,4,B,16,Mitrunen Kirsti,UV; HS
-LIISANPOLKU,4,B,14,Toiviainen Martti,HS
-LIISANPOLKU,4,B,18,Nenonen Eeva,UV
-LIISANPOLKU,4,B,11,Kolehmainen Reino,STF
-LIISANPOLKU,4,B,9,Liukka Raili,UV
-LIISANPOLKU,4,B,13,Tella Tuomas,HS
-LIISANPOLKU,4,B,12,Lempiäinen Raimo,UV
-LIISANPOLKU,4,B,6,Heikki Kaljunen,HS
-LIISANPOLKU,4,B,7,Tammisto Leena,HS
-LIISANPOLKU,4,C,1,Pajari Pirjo,ES2; UV
-LIISANPOLKU,4,C,2,Kaarta Sirkka,UV
-LIISANPOLKU,4,C,3,Laitinen Tuula,UV
-LIISANPOLKU,4,C,14,Kallio Leo,UV; ES; STF
-LIISANPOLKU,4,C,10,Rinkinen Virpi,HS
-LIISANPOLKU,4,C,9,Lajunen Oili,ES
-LIISANPOLKU,4,C,7,Pajari Pirjo,UV
-LIISANPOLKU,2,lii,3,<kirkkoherranvirasto>,UV; ES
-VIRASTOTIE,3,A,,<kunnantalo> Ruokolahd,UV
-VIRASTOTIE,3,C,1,<ei Ole> Ruokolahden K,ES
-VIRASTOTIE,4,E,3,Suikkanen Milma,ES
-VIRASTOTIE,4,C,3,Ollikainen Raija,UV
-VIRASTOTIE,4,G,3,Siisiäinen Tauno,UV; HS
-PANKKITIE,4,B,8,Savolainen Juhani,UV
-PANKKITIE,4,B,9,Nenonen Ansa,UV
-PANKKITIE,2,B,15,Tella Airi,UV
-PANKKITIE,2,B,21,Liikkanen Kaarina,STF
+"Sivu";"Katu";"Osoite";"Nimi";"Merkinnät"
+"Sivu 1";"TORITIE";"TORITIE 1 as 1";"Viuhkonen Pirjo";"UV ES"
+"Sivu 1";"TORITIE";"TORITIE 1 as 4";"Marjatta Poittinen";"UV"
+"Sivu 1";"NÄLLISUONTIE";"NÄLLISUONTIE 3 lii 2";"<kulma-kahvila> Hännin";"UV"
+"Sivu 1";"NÄLLIKUJA";"NÄLLIKUJA 1 lii 1";"<kirjasto> Ruokolahden";"UVES HS"
+"Sivu 1";"NÄLLIKUJA";"NÄLLIKUJA 8";"Friari Raimo";"ES"
+"Sivu 1";"NÄLLIKUJA";"NÄLLIKUJA 2 as 1";"Jäppinen Jukka";"UV"
+"Sivu 1";"METSOLANTIE";"METSOLANTIE 7";"Ruokolahden Koulu";"UV ES"
+"Sivu 1";"ILVEKSENPOLKU";"ILVEKSENPOLKU 6";"Mikko Tella";"STF"
+"Sivu 1";"ILVEKSENPOLKU";"ILVEKSENPOLKU 4";"Tella Kimmo";"UV"
+"Sivu 1";"ILVEKSENPOLKU";"ILVEKSENPOLKU 3";"Juvonen Jyrki";"HS"
+"Sivu 1";"ILVEKSENPOLKU";"ILVEKSENPOLKU 2";"Kari Kallio";"STF"
+"Sivu 1";"SUDENPOLKU";"SUDENPOLKU 4 B";"Räty Mauri";"STF"
+"Sivu 1";"SUDENPOLKU";"SUDENPOLKU 3 B";"Pasi Hietanen";"STF"
+"Sivu 1";"SUDENPOLKU";"SUDENPOLKU 7";"Satu-johanna Bom";"STF"
+"Sivu 1";"SUDENPOLKU";"SUDENPOLKU 8";"Siitonen Jouko";"ES"
+"Sivu 1";"MAJAVATIE";"MAJAVATIE 3";"Jussi Lehikoinen";"STF"
+"Sivu 1";"KARHUNPOLKU";"KARHUNPOLKU 3";"Tiilikainen Teuvo";"ES"
+"Sivu 1";"RANTAHARJUNTIE";"RANTAHARJUNTIE 4 A 3";"Kainulainen Leo";"UV"
+"Sivu 1";"RANTAHARJUNTIE";"RANTAHARJUNTIE 14 A 2";"Havia Airi";"ES SH"
+"Sivu 1";"RANTAHARJUNTIE";"RANTAHARJUNTIE 12 as 2";"Kalpio Eila";"UV ES"
+"Sivu 1";"RANTAHARJUNTIE";"RANTAHARJUNTIE 12 as 7";"Ahtiainen Aarne";"ES"
+"Sivu 1";"RANTAHARJUNTIE";"RANTAHARJUNTIE 15";"Jarkko Nevalainen";"STF"
+"Sivu 1";"RANTAHARJUNTIE";"RANTAHARJUNTIE 19";"Kaukinen Helena";"UV HS STF"
+"Sivu 1";"RANTAHARJUNTIE";"RANTAHARJUNTIE 16 B 5";"Tero Päivänranta";"STF"
+"Sivu 1";"KALLIOKUJA";"KALLIOKUJA 2 as 1";"Sihvonen Eino";"STF"
+"Sivu 1";"KALLIOKUJA";"KALLIOKUJA 2 as 5";"Heiskanen Marjaana";"ES"
+"Sivu 1";"KALLIOKUJA";"KALLIOKUJA 1 as 2";"Kauppinen Martti";"STF"
+"Sivu 1";"KALLIOKUJA";"KALLIOKUJA 1 as 5";"Inkinen Leila";"ES"
+"Sivu 1";"KALLIOKUJA";"KALLIOKUJA 1 as 10";"Kylliäinen Minna";"ES"
+"Sivu 1";"KALLIOKUJA";"KALLIOKUJA 3 as 3";"Tontti Kirsti";"ES"
+"Sivu 1";"KALLIOKUJA";"KALLIOKUJA 5 as 9";"Haakana Pekka";"UV"
+"Sivu 1";"HARJUKUJA";"HARJUKUJA 1 as 6";"Liukka Einari";"UV"
+"Sivu 1";"HARJUKUJA";"HARJUKUJA 2 as 3";"Anu Valtonen";"STF"
+"Sivu 1";"HARJUKUJA";"HARJUKUJA 2 as 6";"Lankinen Merja";"ES"
+"Sivu 1";"HARJUKUJA";"HARJUKUJA 3 as 4";"Tiippana Sari";"ES"
+"Sivu 1";"HARJUKUJA";"HARJUKUJA 3 as 6";"Pakarinen Marja-liisa";"HS"
+"Sivu 1";"HARJUKUJA";"HARJUKUJA 4 as 7";"Härkönen Vappu";"STF"
+"Sivu 1";"HARJUKUOPANTIE";"HARJUKUOPANTIE 3 as 12";"Vänttinen Tarja";"UV"
+"Sivu 1";"HARJUKUOPANTIE";"HARJUKUOPANTIE 3 as 13";"Hannonen Seija";"UV"
+"Sivu 1";"HARJUKUOPANTIE";"HARJUKUOPANTIE 5 as 1";"Hämäläinen Kaija";"UV"
+"Sivu 1";"HARJUKUOPANTIE";"HARJUKUOPANTIE 5 as 6";"Harakka Maili";"UV"
+"Sivu 1";"HARJUKUOPANTIE";"HARJUKUOPANTIE 6 as 4";"Tikkanen Aino Marja";"ES"
+"Sivu 1";"KIVENHAKKAAJANKUJA";"KIVENHAKKAAJANKUJA 3 A 1";"Sihvonen Tapio";"UV ES"
+"Sivu 1";"KIVENHAKKAAJANKUJA";"KIVENHAKKAAJANKUJA 3 B 5";"Sikiö Liisa";"UV"
+"Sivu 1";"KIVENHAKKAAJANKUJA";"KIVENHAKKAAJANKUJA 3 B 8";"Ravattinen Osmo";"STF"
+"Sivu 1";"RASILANTIE";"RASILANTIE 48";"Koho Heikkinen Senja";"ES"
+"Sivu 1";"RASILANTIE";"RASILANTIE 58 as 1";"Huhtanen Eeva-liisa";"ES HS"
+"Sivu 1";"RASILANTIE";"RASILANTIE 58 as 2";"Hellen Rauli";"STF"
+"Sivu 1";"RASILANTIE";"RASILANTIE 58 as 4";"Monto Eila";"UV"
+"Sivu 1";"RASILANTIE";"RASILANTIE 58 as 5";"Hikipää Aira";"UV"
+"Sivu 1";"RASILANTIE";"RASILANTIE 58 as 7";"Husu Pentti";"UV"
+"Sivu 1";"RASILANTIE";"RASILANTIE 58 as 8";"Jyrkinen Eeva";"UV"
+"Sivu 1";"RASILANTIE";"RASILANTIE 58 as 11";"Wallin Pekka";"UV ES"
+"Sivu 1";"METSÄPOLKU";"METSÄPOLKU 3";"Hirvonen Risto";"UV"
+"Sivu 1";"METSÄPOLKU";"METSÄPOLKU 6";"Tikkanen Raimo";"STF"
+"Sivu 1";"METSÄPOLKU";"METSÄPOLKU 2 A 1";"Ovaska Maire";"STF"
+"Sivu 1";"METSÄPOLKU";"METSÄPOLKU 2 A 5";"Hämäläinen Aapo";"UV"
+"Sivu 1";"METSÄPOLKU";"METSÄPOLKU 2 lii 1";"<lähitapiola> Lähitapi";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 3";"Antti Saari";"STF"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 7";"Tykkyläinen Matti";"STF"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 A 20";"Suikkari Pentti";"HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 A 18";"Lifländer Kerttu";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 A 9";"Piiroinen Annikki";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 A 12";"Norkia Rauno";"UV STF"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 A 4";"Lehikoinen Mauri";"STF"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 A 7";"Pulkkinen Pentti";"ES"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 A 2";"Hellman Maria";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 3";"Järvi Jorma";"UV HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 19";"Paakki Seppo";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 20";"Sikiö Seija";"UV HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 16";"Mitrunen Kirsti";"UV HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 14";"Toiviainen Martti";"HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 18";"Nenonen Eeva";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 11";"Kolehmainen Reino";"STF"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 9";"Liukka Raili";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 13";"Tella Tuomas";"HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 12";"Lempiäinen Raimo";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 6";"Heikki Kaljunen";"HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 B 7";"Tammisto Leena";"HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 C 1";"Pajari Pirjo";"ES2 UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 C 2";"Kaarta Sirkka";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 C 3";"Laitinen Tuula";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 C 14";"Kallio Leo";"UV ES STF"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 C 10";"Rinkinen Virpi";"HS"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 C 9";"Lajunen Oili";"ES"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 4 C 7";"Pajari Pirjo";"UV"
+"Sivu 1";"LIISANPOLKU";"LIISANPOLKU 2 lii 3";"<kirkkoherranvirasto>";"UV ES"
+"Sivu 1";"VIRASTOTIE";"VIRASTOTIE 3 A";"<kunnantalo> Ruokolahd";"UV"
+"Sivu 1";"VIRASTOTIE";"VIRASTOTIE 3 C 1";"<ei Ole> Ruokolahden K";"ES"
+"Sivu 1";"VIRASTOTIE";"VIRASTOTIE 4 E 3";"Suikkanen Milma";"ES"
+"Sivu 1";"VIRASTOTIE";"VIRASTOTIE 4 C 3";"Ollikainen Raija";"UV"
+"Sivu 1";"VIRASTOTIE";"VIRASTOTIE 4 G 3";"Siisiäinen Tauno";"UV HS"
+"Sivu 1";"PANKKITIE";"PANKKITIE 4 B 8";"Savolainen Juhani";"UV"
+"Sivu 1";"PANKKITIE";"PANKKITIE 4 B 9";"Nenonen Ansa";"UV"
+"Sivu 1";"PANKKITIE";"PANKKITIE 2 B 15";"Tella Airi";"UV"
+"Sivu 1";"PANKKITIE";"PANKKITIE 2 B 21";"Liikkanen Kaarina";"STF"

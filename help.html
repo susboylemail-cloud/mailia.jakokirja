@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mailia - Käyttöohjeet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .help-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        
+        .help-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .help-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin: 0;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        
+        .back-button:hover {
+            background: #5DADE2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        }
+        
+        .back-button .icon {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .help-section {
+            margin-bottom: 2rem;
+        }
+        
+        .help-section h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+        
+        .help-section p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+            color: var(--text-color);
+        }
+        
+        .help-section ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .help-section li {
+            margin-bottom: 0.75rem;
+            line-height: 1.8;
+            color: var(--text-color);
+        }
+        
+        .help-section strong {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .help-container {
+                padding: 1.5rem;
+            }
+            
+            .help-title {
+                font-size: 1.5rem;
+            }
+            
+            .help-section h2 {
+                font-size: 1.2rem;
+            }
+            
+            .back-button {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+    <script>
+        function goBack() {
+            // Check if we came from the app (has session)
+            const hasSession = sessionStorage.getItem('mailiaAuth');
+            if (hasSession && window.history.length > 1) {
+                // User is authenticated and came from app, go back
+                window.history.back();
+            } else {
+                // Not authenticated or direct access, redirect to index
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</head>
+<body class="dark-mode">
+    <header>
+        <div class="header-content">
+            <h1 class="logo">Jakokirjan ohjeet</h1>
+        </div>
+    </header>
+
+    <main>
+        <div class="help-container">
+            <div class="help-header">
+                <h1 class="help-title">Mobiilisovelluksen Käyttöohjeet</h1>
+                <a href="#" class="back-button" onclick="goBack(); return false;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Takaisin
+                </a>
+            </div>
+
+            <div class="help-section">
+                <h2>1. Valmistelut ja Reitin Valinta</h2>
+                <p>Ennen kuin aloitat varsinaisen jakelun, voit valmistella reitin ja tarkistaa tiedot:</p>
+                <ul>
+                    <li><strong>Lehtimäärät:</strong> Tarkista jaettavien lehtien kokonaismäärät suoraan kansilehdeltä.</li>
+                    <li><strong>Reitin (Piirin) Valinta:</strong>
+                        <ul>
+                            <li>Voit etsiä piirejä hakutoiminnolla.</li>
+                            <li>Jos jaat usein samoja piirejä, voit merkitä ne "tähdellä" (suosikiksi) pudotusvalikosta. Tähditetyt piirit näkyvät jatkossa listan kärjessä.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="help-section">
+                <h2>2. Jakelun Suorittaminen</h2>
+                <p>Nämä toiminnot liittyvät varsinaiseen reitin ajamiseen ja jakeluun:</p>
+                <ul>
+                    <li><strong>Reitin aloitus:</strong> Paina "Aloita reitti", kun olet valmis aloittamaan jakelun. Tästä toiminnosta lähtee automaattisesti kuittaus päivystäjälle.</li>
+                    <li><strong>Jakelun kuittaus (2 tapaa):</strong>
+                        <ul>
+                            <li><strong>Pyyhkäisy (oletus):</strong> Pyyhkäise jaetun tilauksen kohdalta oikealle. Tilaus piilotetaan tällöin näkymästä.</li>
+                            <li><strong>Kuittausruudut:</strong> Voit vaihtoehtoisesti ottaa asetuksista käyttöön "Kuittausruudut". Tämän jälkeen voit kuitata tilauksen jaetuksi napauttamalla sen vieressä olevaa ruutua.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Navigointi:</strong> Käytä navigointinappulaa, jos tarvitset ajo-ohjeita. Se siirtää valitun tilauksen osoitteen suoraan navigaattoriin (Google Maps).</li>
+                </ul>
+            </div>
+
+            <div class="help-section">
+                <h2>3. Ongelmatilanteet ja Poikkeamat</h2>
+                <p>Jos kohtaat ongelmia reitin varrella:</p>
+                <ul>
+                    <li><strong>Jakeluhäiriö:</strong> Ilmoita jakeluhäiriö (esim. laatikko täynnä, pääsy estetty) painamalla huutomerkki-kuvaketta tilauksen kohdalla.</li>
+                    <li><strong>Yhteys päivystäjälle:</strong> Yläpalkissa on pikatoiminto, josta voit soittaa suoraan päivystäjälle.</li>
+                </ul>
+            </div>
+
+            <div class="help-section">
+                <h2>4. Reitin Päättäminen</h2>
+                <p>Kun olet jakanut kaikki reitin tilaukset:</p>
+                <ul>
+                    <li><strong>Reitti valmis:</strong> Paina "Reitti valmis" -toimintoa.</li>
+                    <li>Tämä lähettää päivystäjälle kuittauksen reitin valmistumisesta ja palauttaa sinut takaisin reittivalikkoon.</li>
+                </ul>
+            </div>
+
+            <div class="help-section">
+                <h2>5. Sovelluksen Asetukset ja Mukauttaminen</h2>
+                <p>Voit muokata sovelluksen toimintaa ja ulkoasua yläpalkin kautta:</p>
+                <ul>
+                    <li><strong>Ulkoasu:</strong> Säädä sovellukselle vaalea tai tumma tila (dark mode) yläpalkista.</li>
+                    <li><strong>Asetukset (Yleiset):</strong> Yläpalkista löytyvän asetukset-valikon takaa voit säätää tarkemmin sovelluksen toimintaa:
+                        <ul>
+                            <li><strong>Piilota STF-tilaajat:</strong> Halutessasi voit suodattaa STF-tuotteiden tilaajat pois näkyvistä.</li>
+                            <li><strong>Ota käyttöön kuittausruudut:</strong> Vaihtaa kuittaustavan pyyhkäisystä napautukseen (kuten kohdassa 2 mainittu).</li>
+                            <li><strong>Piilota kuitatut tilaukset:</strong> Voit määrittää, piilotetaanko kuitatut tilaukset automaattisesti listalta.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize dark mode based on saved preference
+        document.addEventListener('DOMContentLoaded', () => {
+            const darkMode = localStorage.getItem('darkMode');
+            const isDark = darkMode === null ? true : darkMode === 'true';
+            
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        });
+    </script>
+</body>
+</html>

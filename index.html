@@ -12,6 +12,9 @@
 <body class="dark-mode">
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
+        <!-- Pulsing Glow Behind Phone -->
+        <div class="phone-glow-pulse"></div>
+        
         <!-- Floating Smartphone Animation -->
         <div class="phone-container">
             <div class="phone-device">
@@ -31,11 +34,6 @@
                                     <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
                                     <circle cx="12" cy="20" r="1"></circle>
                                 </svg>
-                                <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect>
-                                    <path d="M23 13v2a2 2 0 0 1-2 2h-2"></path>
-                                    <polyline points="11 6 7 6 7 11"></polyline>
-                                </svg>
                                 <span class="status-battery" id="statusBattery">
                                     <svg class="status-icon battery-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect>
@@ -48,6 +46,22 @@
                         <!-- Login Form on Phone Screen -->
                         <div class="phone-login-form">
                             <div class="phone-logo">Mailia</div>
+                            
+                            <!-- iPhone-style Notification - Middle Position -->
+                            <div class="iphone-notification">
+                                <div class="notification-header">
+                                    <svg class="notification-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                    <span class="notification-app">JUURI NYT:</span>
+                                    <span class="notification-time" id="notificationTime">nyt</span>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Jakeluyhtiö päätti lopettaa paperisodan</div>
+                                    <div class="notification-message">Nyt jakelun ohella pelastetaan puita!</div>
+                                </div>
+                            </div>
+                            
                             <form id="loginForm" class="login-form">
                                 <div class="input-group">
                                     <label for="username" class="input-label">
@@ -65,13 +79,17 @@
                                         </button>
                                     </label>
                                 </div>
+                                <div class="remember-me-container">
+                                    <label class="remember-me-label">
+                                        <input type="checkbox" id="rememberMe" class="remember-me-checkbox">
+                                        <span class="remember-me-text">Muista minut tällä laitteella</span>
+                                    </label>
+                                </div>
                                 <div id="loginError" class="login-error" style="display: none;"></div>
                                 <button type="submit" class="phone-login-button">Kirjaudu sisään</button>
                             </form>
                         </div>
                     </div>
-                    <!-- Phone Notch -->
-                    <div class="phone-notch"></div>
                 </div>
             </div>
         </div>
@@ -101,6 +119,13 @@
                         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                 </button>
+                <a href="help.html" class="help-button icon-button" aria-label="Käyttöohjeet">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </a>
                 <div class="settings-container">
                     <button id="settingsBtn" class="settings-button icon-button" aria-label="Asetukset">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -118,7 +143,7 @@
                         </label>
                         <label>
                             <input type="checkbox" id="hideDeliveredFilter">
-                            Piilota jaetut tilaukset
+                            Piilota kuitatut tilaukset
                         </label>
                     </div>
                 </div>
@@ -136,7 +161,7 @@
     <div class="tab-container">
         <button class="tab-button admin-only" data-tab="delivery" style="display: none;">Jakelu</button>
         <button class="tab-button admin-only" data-tab="tracker" style="display: none;">Seuranta</button>
-        <button class="tab-button admin-only" data-tab="messages" style="display: none;">Reittiviestit</button>
+        <button class="tab-button admin-only" data-tab="messages" style="display: none;">Piirien viestit</button>
     </div>
 
     <!-- Circuit selector - always visible -->
@@ -186,7 +211,7 @@
         <!-- Route Messages Tab (Admin Only) -->
         <div id="messagesTab" class="tab-content">
             <div class="messages-header">
-                <h2>Reittiviestit</h2>
+                <h2>Piirien viestit</h2>
                 <button id="clearMessagesBtn" class="danger-button">Tyhjennä viestit</button>
             </div>
             <div id="routeMessages" class="route-messages"></div>

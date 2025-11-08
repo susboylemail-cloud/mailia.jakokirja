@@ -859,23 +859,35 @@ function extractBuildingAddress(address) {
     // Extract street name, number, and apartment letter
     // Examples: "ENSONTIE 33 lii 1" -> "ENSONTIE 33 LII"
     //           "ENSONTIE 45 A 4" -> "ENSONTIE 45 A"
+    //           "PIHATIE 3 C 15" -> "PIHATIE 3 C"
     const parts = address.split(' ');
     let building = '';
+    let foundNumber = false;
     
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         
-        // Add street name
-        if (i === 0 || !/^\d/.test(part)) {
+        // Add street name (anything that doesn't start with a digit)
+        if (!foundNumber && !/^\d/.test(part)) {
             building += (building ? ' ' : '') + part;
         }
-        // Add number
-        else if (/^\d+$/.test(part)) {
+        // Add the first number we encounter (house number)
+        else if (!foundNumber && /^\d+$/.test(part)) {
             building += ' ' + part;
+            foundNumber = true;
         }
-        // Add apartment letter (single letter or letters like "lii", "as")
-        else if (/^[A-Za-z]{1,3}$/.test(part)) {
+        // After we've found the house number, only add single letters (apartment letter like A, B, C)
+        else if (foundNumber && /^[A-Za-z]$/.test(part)) {
             building += ' ' + part.toUpperCase();
+            break; // Stop after apartment letter
+        }
+        // If we find a multi-letter code after the number (like "lii", "as"), include it and stop
+        else if (foundNumber && /^[A-Za-z]{2,3}$/.test(part)) {
+            building += ' ' + part.toUpperCase();
+            break;
+        }
+        // If we find another number after the house number, we're in the apartment number - stop
+        else if (foundNumber && /^\d/.test(part)) {
             break;
         }
     }

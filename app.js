@@ -300,6 +300,66 @@ async function initializeWeatherWidget() {
 }
 
 // Phone theme toggle functionality
+// Stamp animation logic
+let isStampAnimating = false;
+
+function performStamp() {
+    if (isStampAnimating) return;
+    
+    isStampAnimating = true;
+    const stamp = document.getElementById('mailiaStamp');
+    const phoneLogin = document.querySelector('.phone-login-form');
+    
+    if (!stamp || !phoneLogin) return;
+    
+    // Reset stamp
+    stamp.classList.remove('stamping', 'stamped');
+    
+    // Remove any existing impact effects
+    const existingImpact = phoneLogin.querySelector('.impact-effect');
+    if (existingImpact) {
+        existingImpact.remove();
+    }
+    
+    // Start stamping animation
+    setTimeout(() => {
+        stamp.classList.add('stamping');
+        
+        // Add impact effect when stamp hits
+        setTimeout(() => {
+            const impact = document.createElement('div');
+            impact.className = 'impact-effect';
+            stamp.appendChild(impact);
+            
+            // Screen shake effect
+            playStampSound();
+            
+            // Remove impact effect after animation
+            setTimeout(() => {
+                impact.remove();
+            }, 600);
+        }, 500);
+        
+        // Mark as stamped after animation completes
+        setTimeout(() => {
+            stamp.classList.remove('stamping');
+            stamp.classList.add('stamped');
+            isStampAnimating = false;
+        }, 800);
+    }, 100);
+}
+
+// Visual feedback - screen shake
+function playStampSound() {
+    const phoneDevice = document.querySelector('.phone-device');
+    if (phoneDevice) {
+        phoneDevice.style.animation = 'phoneShake 0.2s';
+        setTimeout(() => {
+            phoneDevice.style.animation = '';
+        }, 200);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Load saved credentials if available
     loadSavedCredentials();
@@ -327,6 +387,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize weather widget on phone screen
     initializeWeatherWidget();
+    
+    // Trigger stamp animation after a short delay
+    setTimeout(() => {
+        performStamp();
+    }, 1000);
 });
 
 // Authentication

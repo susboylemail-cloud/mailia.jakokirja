@@ -856,10 +856,10 @@ function parseNewFormatCSVLine(line) {
 }
 
 function extractBuildingAddress(address) {
-    // Extract street name, number, and apartment letter
-    // Examples: "ENSONTIE 33 lii 1" -> "ENSONTIE 33 LII"
-    //           "ENSONTIE 45 A 4" -> "ENSONTIE 45 A"
-    //           "PIHATIE 3 C 15" -> "PIHATIE 3 C"
+    // Extract only street name and building number (no staircase/apartment)
+    // Examples: "ENSONTIE 33 lii 1" -> "ENSONTIE 33"
+    //           "ENSONTIE 45 A 4" -> "ENSONTIE 45"
+    //           "PIHATIE 3 C 15" -> "PIHATIE 3"
     const parts = address.split(' ');
     let building = '';
     let foundNumber = false;
@@ -871,24 +871,11 @@ function extractBuildingAddress(address) {
         if (!foundNumber && !/^\d/.test(part)) {
             building += (building ? ' ' : '') + part;
         }
-        // Add the first number we encounter (house number)
+        // Add the first number we encounter (house number) and stop
         else if (!foundNumber && /^\d+$/.test(part)) {
             building += ' ' + part;
             foundNumber = true;
-        }
-        // After we've found the house number, only add single letters (apartment letter like A, B, C)
-        else if (foundNumber && /^[A-Za-z]$/.test(part)) {
-            building += ' ' + part.toUpperCase();
-            break; // Stop after apartment letter
-        }
-        // If we find a multi-letter code after the number (like "lii", "as"), include it and stop
-        else if (foundNumber && /^[A-Za-z]{2,3}$/.test(part)) {
-            building += ' ' + part.toUpperCase();
-            break;
-        }
-        // If we find another number after the house number, we're in the apartment number - stop
-        else if (foundNumber && /^\d/.test(part)) {
-            break;
+            break; // Stop after house number - don't include staircase or apartment
         }
     }
     
@@ -896,11 +883,12 @@ function extractBuildingAddress(address) {
 }
 
 function extractApartmentSpecification(fullAddress, buildingAddress) {
-    // Extract the apartment/house specification by removing the building part
+    // Extract the staircase + apartment specification by removing the building part
     // Examples: 
-    //   "PIHATIE 3 C 15", "PIHATIE 3 C" -> "15"
-    //   "KOULUTIE 5 C 20", "KOULUTIE 5 C" -> "20"
+    //   "PIHATIE 3 C 15", "PIHATIE 3" -> "C15"
+    //   "KOULUTIE 5 C 20", "KOULUTIE 5" -> "C20"
     //   "PAJUPOLKU 6", "PAJUPOLKU 6" -> "" (no apartment)
+    //   "ASEMATIE 14 as 2", "ASEMATIE 14" -> "as 2"
     
     if (!buildingAddress || fullAddress === buildingAddress) {
         return ''; // No apartment specification
@@ -908,6 +896,19 @@ function extractApartmentSpecification(fullAddress, buildingAddress) {
     
     // Remove the building address from the full address to get the apartment spec
     let spec = fullAddress.replace(buildingAddress, '').trim();
+    
+    // Concatenate the parts without spaces for cleaner display (e.g., "C 15" -> "C15")
+    // But preserve multi-character codes like "as 2", "lii 1"
+    const parts = spec.split(' ');
+    if (parts.length === 2) {
+        const first = parts[0];
+        const second = parts[1];
+        // If first part is a single letter, concatenate with number
+        if (/^[A-Za-z]$/.test(first) && /^\d+$/.test(second)) {
+            spec = first.toUpperCase() + second;
+        }
+    }
+    
     return spec;
 }
 

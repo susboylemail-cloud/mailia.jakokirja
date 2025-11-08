@@ -424,13 +424,13 @@ body {
 }
 
 .phone-logo-img {
-    max-width: 180px;
+    max-width: 198px;
     height: auto;
-    margin: 0 auto;
+    margin: 20px auto 0;
     display: block;
-    /* Blend logo with background and enhance navy/red colors */
-    mix-blend-mode: multiply;
-    filter: brightness(1.1) contrast(1.3) saturate(1.2);
+    /* Remove blend mode to make logo appear as phone wallpaper */
+    opacity: 0.85;
+    filter: brightness(1.3) contrast(1.5) saturate(1.4);
 }
 
 /* Input Groups and Labels for Better Touch Targets */

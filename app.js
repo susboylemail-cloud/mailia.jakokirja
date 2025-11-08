@@ -736,15 +736,13 @@ function parseOldFormatCSVLine(line) {
     
     if (fields.length >= 5 && fields[0].includes('Sivu')) {
         // Format: "Sivu","Katu","Osoite","Nimi","Merkinnät" (KP2 format)
-        // In this format, fields[2] is "Osoite" which already contains the full address
-        // So we use it directly without prepending the street name
-        streetName = fields[1].trim();  // Keep for buildingAddress extraction
-        address = fields[2].trim();  // Use "Osoite" directly (already complete)
+        // In this format, fields[1] is "Katu" (street name) and fields[2] is "Osoite" (house number)
+        // We need to combine them to create the full address
+        streetName = fields[1].trim();
+        houseNumber = fields[2].trim();
+        address = `${streetName} ${houseNumber}`.trim();  // Combine street + number
         name = fields[3].trim();
         productsStr = fields[4].trim();
-        
-        // For validation, extract houseNumber from address
-        houseNumber = address;
     } else if (fields.length >= 6) {
         // Format: Katu,Numero,Huom,Asunto,Nimi,Tilaukset (standard format)
         streetName = fields[0].trim();

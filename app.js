@@ -934,6 +934,19 @@ function loadCircuit(circuitId) {
     renderSubscriberList(circuitId, subscribers);
     updateRouteButtons(circuitId);
     
+    // Hide subscriber list initially - it will be shown when route starts
+    const subscriberList = document.getElementById('subscriberList');
+    const startKey = `route_start_${circuitId}`;
+    const routeStarted = localStorage.getItem(startKey);
+    
+    if (!routeStarted) {
+        // Route not started yet - hide the list
+        subscriberList.style.display = 'none';
+    } else {
+        // Route already started - show the list
+        subscriberList.style.display = 'block';
+    }
+    
     // Restore filter states
     const hideStf = localStorage.getItem('hideStf') === 'true';
     const hideDelivered = localStorage.getItem('hideDelivered') === 'true';
@@ -1710,8 +1723,35 @@ function startRoute(circuitId) {
     const key = `route_start_${circuitId}`;
     localStorage.setItem(key, now.toISOString());
     
+    // Show the subscriber list with cascading animation
+    showSubscriberListWithAnimation();
+    
     updateRouteButtons(circuitId);
     updateCircuitStatus(circuitId, 'in-progress');
+}
+
+function showSubscriberListWithAnimation() {
+    const subscriberList = document.getElementById('subscriberList');
+    
+    // Make the list visible
+    subscriberList.style.display = 'block';
+    
+    // Get all subscriber cards
+    const cards = subscriberList.querySelectorAll('.subscriber-card');
+    
+    // Add cascading animation to each card
+    cards.forEach((card, index) => {
+        // Initially hide cards
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        // Animate in with staggered delay
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50); // 50ms delay between each card
+    });
 }
 
 function completeRoute(circuitId) {

@@ -1237,6 +1237,18 @@ body.dark-mode .building-header {
     color: var(--text-color);         /* Off-White in dark mode */
 }
 
+/* Cascading animation for subscriber cards */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .subscriber-card {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);

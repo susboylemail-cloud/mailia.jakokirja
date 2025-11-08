@@ -1353,31 +1353,34 @@ function renderSubscriberList(circuitId, subscribers) {
         const buildingGroup = document.createElement('div');
         buildingGroup.className = 'building-group';
         
-        const header = document.createElement('div');
-        header.className = 'building-header';
-        
-        // Create building name span
-        const buildingName = document.createElement('span');
-        buildingName.className = 'building-name';
-        buildingName.textContent = buildingObj.name;
-        header.appendChild(buildingName);
-        
-        // Add delivery count badge if multiple deliveries
         const deliveryCount = buildingObj.subscribers.length;
-        if (deliveryCount > 1) {
+        const hasMultipleDeliveries = deliveryCount > 1;
+        
+        // Only show building header if there are multiple deliveries to the same building
+        if (hasMultipleDeliveries) {
+            const header = document.createElement('div');
+            header.className = 'building-header';
+            
+            // Create building name span
+            const buildingName = document.createElement('span');
+            buildingName.className = 'building-name';
+            buildingName.textContent = buildingObj.name;
+            header.appendChild(buildingName);
+            
+            // Add delivery count badge
             const countBadge = document.createElement('span');
             countBadge.className = 'building-delivery-count';
             countBadge.textContent = `${deliveryCount} jakelua`;
             header.appendChild(countBadge);
+            
+            buildingGroup.appendChild(header);
         }
-        
-        buildingGroup.appendChild(header);
         
         const buildingSubscribers = buildingObj.subscribers;
         buildingSubscribers.forEach((sub, subIndex) => {
             const card = createSubscriberCard(circuitId, sub, buildingIndex, subIndex, 
                 buildingIndex === buildings.length - 1 && subIndex === buildingSubscribers.length - 1,
-                buildings, buildingIndex, subIndex);
+                buildings, buildingIndex, subIndex, hasMultipleDeliveries);
             buildingGroup.appendChild(card);
         });
         
@@ -1385,7 +1388,7 @@ function renderSubscriberList(circuitId, subscribers) {
     });
 }
 
-function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildings, currentBuildingIndex, currentSubIndex) {
+function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildings, currentBuildingIndex, currentSubIndex, hasMultipleDeliveries) {
     const card = document.createElement('div');
     card.className = 'subscriber-card';
     card.dataset.products = subscriber.products.join(',');
@@ -1412,13 +1415,22 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const info = document.createElement('div');
     info.className = 'subscriber-info';
     
-    // Display apartment/house specification (not full address to avoid duplication)
-    const apartmentSpec = extractApartmentSpecification(subscriber.address, subscriber.buildingAddress);
-    if (apartmentSpec) {
-        const apartment = document.createElement('div');
-        apartment.className = 'subscriber-apartment';
-        apartment.textContent = apartmentSpec;
-        info.appendChild(apartment);
+    // If this is a single-subscriber building, show full address
+    // If multiple subscribers share the building, show only apartment specification
+    if (hasMultipleDeliveries) {
+        const apartmentSpec = extractApartmentSpecification(subscriber.address, subscriber.buildingAddress);
+        if (apartmentSpec) {
+            const apartment = document.createElement('div');
+            apartment.className = 'subscriber-apartment';
+            apartment.textContent = apartmentSpec;
+            info.appendChild(apartment);
+        }
+    } else {
+        // Show full address for single-subscriber buildings
+        const address = document.createElement('div');
+        address.className = 'subscriber-address';
+        address.textContent = subscriber.address;
+        info.appendChild(address);
     }
     
     const name = document.createElement('div');

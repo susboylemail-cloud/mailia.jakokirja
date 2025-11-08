@@ -1378,21 +1378,39 @@ function renderSubscriberList(circuitId, subscribers) {
         }
         
         const buildingSubscribers = buildingObj.subscribers;
+        let previousStaircase = null;
+        
         buildingSubscribers.forEach((sub, subIndex) => {
+            // Extract the staircase letter from the apartment specification
+            const apartmentSpec = extractApartmentSpecification(sub.address, sub.buildingAddress);
+            const currentStaircase = apartmentSpec ? apartmentSpec.charAt(0).toUpperCase() : null;
+            
+            // Check if this is a new staircase (and not the first card)
+            const isNewStaircase = hasMultipleDeliveries && subIndex > 0 && 
+                                   currentStaircase && previousStaircase && 
+                                   currentStaircase !== previousStaircase;
+            
             const card = createSubscriberCard(circuitId, sub, buildingIndex, subIndex, 
                 buildingIndex === buildings.length - 1 && subIndex === buildingSubscribers.length - 1,
-                buildings, buildingIndex, subIndex, hasMultipleDeliveries);
+                buildings, buildingIndex, subIndex, hasMultipleDeliveries, isNewStaircase);
             buildingGroup.appendChild(card);
+            
+            previousStaircase = currentStaircase;
         });
         
         listContainer.appendChild(buildingGroup);
     });
 }
 
-function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildings, currentBuildingIndex, currentSubIndex, hasMultipleDeliveries) {
+function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildings, currentBuildingIndex, currentSubIndex, hasMultipleDeliveries, isNewStaircase) {
     const card = document.createElement('div');
     card.className = 'subscriber-card';
     card.dataset.products = subscriber.products.join(',');
+    
+    // Add spacing class for new staircase
+    if (isNewStaircase) {
+        card.classList.add('new-staircase');
+    }
     
     // Apply checkbox visibility class based on user preference
     if (showCheckboxes) {

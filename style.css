@@ -1441,6 +1441,11 @@ body.dark-mode .building-header {
     touch-action: pan-y; /* Allow vertical scrolling while handling horizontal swipes */
 }
 
+/* Add spacing for new staircase within same building */
+.subscriber-card.new-staircase {
+    margin-top: 0.75rem;
+}
+
 .subscriber-card:active {
     cursor: grabbing;
 }

@@ -283,7 +283,7 @@ body {
     opacity: 0.7;
 }
 
-/* Dynamic Island Animation */
+/* Dynamic Island Animation - Simplified */
 .dynamic-island {
     position: absolute;
     top: 5px;
@@ -294,29 +294,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-}
-
-/* Dashed Path Line */
-.dynamic-island::before {
-    content: '';
-    position: absolute;
-    left: -20px;
-    top: 50%;
-    width: 50px;
-    height: 0;
-    border-top: 1.5px dashed rgba(74, 144, 226, 0.4);
-    transform: translateY(-50%);
-    animation: pathFade 5s ease-in-out infinite;
-}
-
-@keyframes pathFade {
-    0%, 20%, 80%, 100% {
-        opacity: 0;
-    }
-    30%, 70% {
-        opacity: 1;
-    }
 }
 
 .mail-letter {
@@ -325,67 +302,48 @@ body {
     stroke: #4a90e2;
     fill: none;
     stroke-width: 1.8;
-    animation: mailDelivery 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: letterFloat 4s ease-in-out infinite;
     transform-origin: center;
     filter: drop-shadow(0 0 3px rgba(74, 144, 226, 0.5));
 }
 
 .mailbox {
-    width: 15px;
-    height: 15px;
-    stroke: #6bb6ff;
-    fill: none;
-    stroke-width: 1.8;
-    opacity: 0.85;
+    display: none;
 }
 
-@keyframes mailDelivery {
-    0%, 100% {
-        transform: translateX(-28px) translateY(0) rotate(0deg) scale(1);
+@keyframes letterFloat {
+    0% {
+        transform: translateX(-40px) translateY(0) rotate(-5deg);
+        opacity: 0;
+    }
+    10% {
         opacity: 1;
     }
-    15% {
-        transform: translateX(-22px) translateY(-2px) rotate(-5deg) scale(0.98);
+    50% {
+        transform: translateX(0) translateY(-2px) rotate(0deg);
         opacity: 1;
     }
-    30% {
-        transform: translateX(-14px) translateY(-4px) rotate(-12deg) scale(0.92);
-        opacity: 0.9;
+    90% {
+        opacity: 1;
     }
-    45% {
-        transform: translateX(-5px) translateY(-5px) rotate(-18deg) scale(0.8);
-        opacity: 0.75;
-    }
-    60% {
-        transform: translateX(3px) translateY(-3px) rotate(-22deg) scale(0.6);
-        opacity: 0.55;
-    }
-    70% {
-        transform: translateX(8px) translateY(0) rotate(-26deg) scale(0.4);
-        opacity: 0.35;
-    }
-    78% {
-        transform: translateX(11px) translateY(2px) rotate(-30deg) scale(0.2);
-        opacity: 0.15;
-    }
-    82%, 98% {
-        transform: translateX(13px) translateY(3px) rotate(-32deg) scale(0);
+    100% {
+        transform: translateX(40px) translateY(0) rotate(5deg);
         opacity: 0;
     }
 }
 
-/* iPhone-style Notification */
+/* iPhone-style Notification - Compact & Dark Theme */
 .iphone-notification {
     position: relative;
     width: calc(100% - 2rem);
-    margin: 0 auto 1rem;
-    background: rgba(255, 255, 255, 0.95);
+    margin: 0 auto 0.75rem;
+    background: rgba(30, 40, 54, 0.75);
     backdrop-filter: blur(20px);
-    border-radius: 16px;
-    padding: 0.75rem;
+    border-radius: 12px;
+    padding: 0.5rem 0.6rem;
     box-shadow: 
-        0 10px 30px rgba(0, 0, 0, 0.3),
-        0 0 1px rgba(0, 0, 0, 0.1);
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(74, 144, 226, 0.2);
     animation: notificationSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     animation-delay: 0.5s;
     animation-fill-mode: both;
@@ -393,7 +351,7 @@ body {
 
 @keyframes notificationSlideIn {
     0% {
-        transform: translateY(-100px) scale(0.9);
+        transform: translateY(-80px) scale(0.95);
         opacity: 0;
     }
     100% {
@@ -405,44 +363,44 @@ body {
 .notification-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
 }
 
 .notification-icon {
-    width: 16px;
-    height: 16px;
-    stroke: #4a90e2;
+    width: 14px;
+    height: 14px;
+    stroke: #6bb6ff;
     flex-shrink: 0;
 }
 
 .notification-app {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: rgba(255, 255, 255, 0.9);
     flex-grow: 1;
 }
 
 .notification-time {
-    font-size: 0.7rem;
-    color: #666;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .notification-content {
-    padding-left: 0.25rem;
+    padding-left: 0.2rem;
 }
 
 .notification-title {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: #1a1a1a;
-    margin-bottom: 0.25rem;
-    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 0.15rem;
+    line-height: 1.25;
 }
 
 .notification-message {
-    font-size: 0.8rem;
-    color: #444;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.75);
     line-height: 1.4;
 }
 

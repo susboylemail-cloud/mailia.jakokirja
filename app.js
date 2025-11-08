@@ -134,8 +134,13 @@ function loadSavedCredentials() {
 function initializeLogin() {
     const loginForm = document.getElementById('loginForm');
     const passwordInput = document.getElementById('password');
+    const usernameInput = document.getElementById('username');
     const loginButton = document.querySelector('.login-button');
     const passwordToggle = document.getElementById('passwordToggle');
+    const rememberMeCheckbox = document.getElementById('rememberMe');
+    
+    // Load saved credentials if remember me was checked
+    loadSavedCredentials();
     
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
@@ -244,6 +249,7 @@ function handleLogin(event) {
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+    const rememberMe = document.getElementById('rememberMe')?.checked || false;
     const errorDiv = document.getElementById('loginError');
     
     let authenticated = false;
@@ -261,6 +267,13 @@ function handleLogin(event) {
     }
     
     if (authenticated) {
+        // Handle remember me
+        if (rememberMe) {
+            saveCredentials(username, password);
+        } else {
+            clearSavedCredentials();
+        }
+        
         // Successful login
         sessionStorage.setItem('mailiaAuth', 'authenticated');
         sessionStorage.setItem('mailiaRole', role);
@@ -282,6 +295,53 @@ function handleLogin(event) {
         errorDiv.textContent = 'Virheellinen käyttäjätunnus tai salasana';
         errorDiv.style.display = 'block';
         document.getElementById('password').value = '';
+    }
+}
+
+// Save credentials to localStorage
+function saveCredentials(username, password) {
+    // WARNING: Storing passwords in localStorage is insecure
+    // This is for convenience in a client-side-only demo application
+    // In production, use secure token-based authentication
+    try {
+        localStorage.setItem('mailiaRememberMe', JSON.stringify({
+            username: username,
+            password: password  // Stored in plain text - NOT SECURE
+        }));
+    } catch (e) {
+        console.error('Failed to save credentials:', e);
+    }
+}
+
+// Load saved credentials
+function loadSavedCredentials() {
+    try {
+        const saved = localStorage.getItem('mailiaRememberMe');
+        if (saved) {
+            const creds = JSON.parse(saved);
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const rememberMeCheckbox = document.getElementById('rememberMe');
+            
+            if (usernameInput && passwordInput && creds.username && creds.password) {
+                usernameInput.value = creds.username;
+                passwordInput.value = creds.password;
+                if (rememberMeCheckbox) {
+                    rememberMeCheckbox.checked = true;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load credentials:', e);
+    }
+}
+
+// Clear saved credentials
+function clearSavedCredentials() {
+    try {
+        localStorage.removeItem('mailiaRememberMe');
+    } catch (e) {
+        console.error('Failed to clear credentials:', e);
     }
 }
 

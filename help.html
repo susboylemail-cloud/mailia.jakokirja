@@ -25,7 +25,8 @@
             margin-bottom: 2rem;
             padding-bottom: 1.5rem;
             border-bottom: 2px solid var(--border-color);
-            gap: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
         
         .help-title {
@@ -34,23 +35,25 @@
             color: var(--text-color);
             margin: 0;
             flex: 1;
+            min-width: 200px;
         }
         
         .back-button {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
-            padding: 0.5rem 1rem;
+            gap: 0.3rem;
+            padding: 0.4rem 0.8rem;
             background: var(--primary-blue);
             color: white;
             border: none;
-            border-radius: 20px;
-            font-size: 0.875rem;
+            border-radius: 18px;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             text-decoration: none;
             flex-shrink: 0;
+            white-space: nowrap;
         }
         
         .back-button:hover {
@@ -60,8 +63,8 @@
         }
         
         .back-button .icon {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
         }
         
         .help-section {

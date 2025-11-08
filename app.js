@@ -3,6 +3,36 @@
 // Animation constants
 const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
 
+// Custom confirm dialog to match app theme
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        const dialog = document.getElementById('customConfirmDialog');
+        const messageEl = document.getElementById('customConfirmMessage');
+        const okBtn = document.getElementById('customConfirmOk');
+        const cancelBtn = document.getElementById('customConfirmCancel');
+        
+        messageEl.textContent = message;
+        dialog.style.display = 'flex';
+        
+        const handleOk = () => {
+            dialog.style.display = 'none';
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(true);
+        };
+        
+        const handleCancel = () => {
+            dialog.style.display = 'none';
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(false);
+        };
+        
+        okBtn.addEventListener('click', handleOk);
+        cancelBtn.addEventListener('click', handleCancel);
+    });
+}
+
 // Authentication credentials
 // WARNING: This is client-side only implementation for demonstration purposes
 // In production, implement proper server-side authentication
@@ -410,8 +440,8 @@ function promptSaveLoginInfo(username, password) {
     // WARNING: Storing passwords in localStorage is insecure
     // This is for convenience in a client-side-only demo application
     // In production, use secure token-based authentication
-    setTimeout(() => {
-        if (confirm('Haluatko tallentaa kirjautumistiedot?')) {
+    setTimeout(async () => {
+        if (await customConfirm('Haluatko tallentaa kirjautumistiedot?')) {
             localStorage.setItem('mailiaSavedCredentials', JSON.stringify({
                 username: username,
                 password: password  // Stored in plain text - NOT SECURE
@@ -697,6 +727,14 @@ function parseCircuitCSV(text, filename) {
     return subscribers;
 }
 
+// Helper function to clean up angle bracket markings from text
+function cleanAngleBrackets(text) {
+    if (!text) return text;
+    // Remove any text within angle brackets (including nested ones)
+    // This handles cases like "<2 Ilm>", "<suikkanen Tapio>", "<ovi <pudota >>"
+    return text.replace(/<[^>]*>/g, '').trim();
+}
+
 function parseOldFormatCSVLine(line) {
     // Parse CSV line with proper quote handling
     // Detect delimiter: semicolon or comma
@@ -736,11 +774,20 @@ function parseOldFormatCSVLine(line) {
     
     if (fields.length >= 5 && fields[0].includes('Sivu')) {
         // Format: "Sivu","Katu","Osoite","Nimi","Merkinnät" (KP2 format)
-        // In this format, fields[1] is "Katu" (street name) and fields[2] is "Osoite" (house number)
-        // We need to combine them to create the full address
+        // In this format, fields[1] is "Katu" (street name) and fields[2] is "Osoite" (address)
+        // Some CSVs have full address in "Osoite", others just have the number
         streetName = fields[1].trim();
         houseNumber = fields[2].trim();
-        address = `${streetName} ${houseNumber}`.trim();  // Combine street + number
+        
+        // Check if "Osoite" already contains the street name (like in KP44)
+        if (houseNumber.toUpperCase().startsWith(streetName.toUpperCase())) {
+            // "Osoite" contains full address, use it as-is
+            address = houseNumber;
+        } else {
+            // "Osoite" is just the number/details, combine with street name
+            address = `${streetName} ${houseNumber}`.trim();
+        }
+        
         name = fields[3].trim();
         productsStr = fields[4].trim();
     } else if (fields.length >= 6) {
@@ -761,6 +808,9 @@ function parseOldFormatCSVLine(line) {
     } else {
         return null;
     }
+    
+    // Clean up angle bracket markings from name (e.g., "<2 Ilm> Sihvonen Timo" -> "Sihvonen Timo")
+    name = cleanAngleBrackets(name);
     
     // Skip if no address
     if (!address) return null;
@@ -847,31 +897,60 @@ function parseNewFormatCSVLine(line) {
 }
 
 function extractBuildingAddress(address) {
-    // Extract street name, number, and apartment letter
-    // Examples: "ENSONTIE 33 lii 1" -> "ENSONTIE 33 LII"
-    //           "ENSONTIE 45 A 4" -> "ENSONTIE 45 A"
+    // Extract only street name and building number (no staircase/apartment)
+    // Examples: "ENSONTIE 33 lii 1" -> "ENSONTIE 33"
+    //           "ENSONTIE 45 A 4" -> "ENSONTIE 45"
+    //           "PIHATIE 3 C 15" -> "PIHATIE 3"
     const parts = address.split(' ');
     let building = '';
+    let foundNumber = false;
     
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         
-        // Add street name
-        if (i === 0 || !/^\d/.test(part)) {
+        // Add street name (anything that doesn't start with a digit)
+        if (!foundNumber && !/^\d/.test(part)) {
             building += (building ? ' ' : '') + part;
         }
-        // Add number
-        else if (/^\d+$/.test(part)) {
+        // Add the first number we encounter (house number) and stop
+        else if (!foundNumber && /^\d+$/.test(part)) {
             building += ' ' + part;
-        }
-        // Add apartment letter (single letter or letters like "lii", "as")
-        else if (/^[A-Za-z]{1,3}$/.test(part)) {
-            building += ' ' + part.toUpperCase();
-            break;
+            foundNumber = true;
+            break; // Stop after house number - don't include staircase or apartment
         }
     }
     
     return building || address;
+}
+
+function extractApartmentSpecification(fullAddress, buildingAddress) {
+    // Extract the staircase + apartment specification by removing the building part
+    // Examples: 
+    //   "PIHATIE 3 C 15", "PIHATIE 3" -> "C15"
+    //   "KOULUTIE 5 C 20", "KOULUTIE 5" -> "C20"
+    //   "PAJUPOLKU 6", "PAJUPOLKU 6" -> "" (no apartment)
+    //   "ASEMATIE 14 as 2", "ASEMATIE 14" -> "as 2"
+    
+    if (!buildingAddress || fullAddress === buildingAddress) {
+        return ''; // No apartment specification
+    }
+    
+    // Remove the building address from the full address to get the apartment spec
+    let spec = fullAddress.replace(buildingAddress, '').trim();
+    
+    // Concatenate the parts without spaces for cleaner display (e.g., "C 15" -> "C15")
+    // But preserve multi-character codes like "as 2", "lii 1"
+    const parts = spec.split(' ');
+    if (parts.length === 2) {
+        const first = parts[0];
+        const second = parts[1];
+        // If first part is a single letter, concatenate with number
+        if (/^[A-Za-z]$/.test(first) && /^\d+$/.test(second)) {
+            spec = first.toUpperCase() + second;
+        }
+    }
+    
+    return spec;
 }
 
 // Circuit Selector
@@ -1316,27 +1395,63 @@ function renderSubscriberList(circuitId, subscribers) {
         const buildingGroup = document.createElement('div');
         buildingGroup.className = 'building-group';
         
-        const header = document.createElement('div');
-        header.className = 'building-header';
-        header.textContent = buildingObj.name;
-        buildingGroup.appendChild(header);
+        const deliveryCount = buildingObj.subscribers.length;
+        const hasMultipleDeliveries = deliveryCount > 1;
+        
+        // Only show building header if there are multiple deliveries to the same building
+        if (hasMultipleDeliveries) {
+            const header = document.createElement('div');
+            header.className = 'building-header';
+            
+            // Create building name span
+            const buildingName = document.createElement('span');
+            buildingName.className = 'building-name';
+            buildingName.textContent = buildingObj.name;
+            header.appendChild(buildingName);
+            
+            // Add delivery count badge
+            const countBadge = document.createElement('span');
+            countBadge.className = 'building-delivery-count';
+            countBadge.textContent = `${deliveryCount} jakelua`;
+            header.appendChild(countBadge);
+            
+            buildingGroup.appendChild(header);
+        }
         
         const buildingSubscribers = buildingObj.subscribers;
+        let previousStaircase = null;
+        
         buildingSubscribers.forEach((sub, subIndex) => {
+            // Extract the staircase letter from the apartment specification
+            const apartmentSpec = extractApartmentSpecification(sub.address, sub.buildingAddress);
+            const currentStaircase = apartmentSpec ? apartmentSpec.charAt(0).toUpperCase() : null;
+            
+            // Check if this is a new staircase (and not the first card)
+            const isNewStaircase = hasMultipleDeliveries && subIndex > 0 && 
+                                   currentStaircase && previousStaircase && 
+                                   currentStaircase !== previousStaircase;
+            
             const card = createSubscriberCard(circuitId, sub, buildingIndex, subIndex, 
                 buildingIndex === buildings.length - 1 && subIndex === buildingSubscribers.length - 1,
-                buildings, buildingIndex, subIndex);
+                buildings, buildingIndex, subIndex, hasMultipleDeliveries, isNewStaircase);
             buildingGroup.appendChild(card);
+            
+            previousStaircase = currentStaircase;
         });
         
         listContainer.appendChild(buildingGroup);
     });
 }
 
-function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildings, currentBuildingIndex, currentSubIndex) {
+function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildings, currentBuildingIndex, currentSubIndex, hasMultipleDeliveries, isNewStaircase) {
     const card = document.createElement('div');
     card.className = 'subscriber-card';
     card.dataset.products = subscriber.products.join(',');
+    
+    // Add spacing class for new staircase
+    if (isNewStaircase) {
+        card.classList.add('new-staircase');
+    }
     
     // Apply checkbox visibility class based on user preference
     if (showCheckboxes) {
@@ -1359,6 +1474,24 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     // Subscriber info
     const info = document.createElement('div');
     info.className = 'subscriber-info';
+    
+    // If this is a single-subscriber building, show full address
+    // If multiple subscribers share the building, show only apartment specification
+    if (hasMultipleDeliveries) {
+        const apartmentSpec = extractApartmentSpecification(subscriber.address, subscriber.buildingAddress);
+        if (apartmentSpec) {
+            const apartment = document.createElement('div');
+            apartment.className = 'subscriber-apartment';
+            apartment.textContent = apartmentSpec;
+            info.appendChild(apartment);
+        }
+    } else {
+        // Show full address for single-subscriber buildings
+        const address = document.createElement('div');
+        address.className = 'subscriber-address';
+        address.textContent = subscriber.address;
+        info.appendChild(address);
+    }
     
     const name = document.createElement('div');
     name.className = 'subscriber-name';
@@ -1516,7 +1649,7 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
         
         if (isDragging && isValidSwipe && deltaX > 0) {
             // Mark as delivered with animation
-            card.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.transform = 'translateX(100%)';
             card.style.opacity = '0';
             
@@ -1529,10 +1662,10 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
                 card.style.transition = '';
                 card.style.transform = '';
                 card.style.opacity = '';
-            }, 300);
+            }, 250);
         } else {
             // Reset card position with animation
-            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.transform = '';
             card.style.opacity = '';
         }
@@ -1584,7 +1717,7 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
         const isValidSwipe = (deltaX > swipeThreshold) || (velocity > velocityThreshold && deltaX > 50);
         
         if (isDragging && isValidSwipe && deltaX > 0) {
-            card.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            card.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.transform = 'translateX(100%)';
             card.style.opacity = '0';
             
@@ -1596,9 +1729,9 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
                 card.style.transition = '';
                 card.style.transform = '';
                 card.style.opacity = '';
-            }, 300);
+            }, 250);
         } else {
-            card.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+            card.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.transform = '';
             card.style.opacity = '';
         }
@@ -1642,7 +1775,7 @@ function reportUndelivered(circuitId, subscriber) {
     
     const dialogBox = document.createElement('div');
     dialogBox.style.cssText = `
-        background: white;
+        background: var(--background-color);
         padding: 2rem;
         border-radius: 12px;
         max-width: 400px;
@@ -1651,21 +1784,20 @@ function reportUndelivered(circuitId, subscriber) {
     `;
     
     dialogBox.innerHTML = `
-        <h3 style="margin-top: 0; color: var(--navy); font-size: 1.25rem;">Jakeluhäiriön ilmoitus</h3>
-        <p style="margin-bottom: 1.5rem; color: var(--navy);">Valitse syy:</p>
-        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid #D1D5D8; border-radius: 8px; font-size: 1rem; margin-bottom: 1rem;">
-            <option value="">-- Valitse syy --</option>
+        <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem;">Jakeluhäiriön ilmoitus</h3>
+        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--background-color); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none;">
+            <option value="">Valitse syy</option>
             <option value="Ei pääsyä">Ei pääsyä</option>
-            <option value="Avainongelma">Avainongelma</option>
+            <option value="Avaimongelma">Avainongelma</option>
             <option value="Lehtipuute">Lehtipuute</option>
             <option value="Muu">Muu</option>
         </select>
         <div id="customReasonContainer" style="display: none; margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: var(--navy);">Tarkenna:</label>
-            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid #D1D5D8; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Tarkenna:</label>
+            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; resize: vertical; background: var(--background-color); color: var(--text-color);"></textarea>
         </div>
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid #D1D5D8; background: white; color: var(--navy); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
+            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid var(--border-color); background: var(--background-color); color: var(--text-color); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
             <button id="submitBtn" style="padding: 0.75rem 1.5rem; border: none; background: var(--primary-blue); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Lähetä</button>
         </div>
     `;
@@ -1849,10 +1981,15 @@ function saveCheckboxState(circuitId, address, checked) {
 function startRoute(circuitId) {
     const now = new Date();
     const startKey = `route_start_${circuitId}`;
+    const endKey = `route_end_${circuitId}`;
     const completeKey = `route_complete_${circuitId}`;
+    
+    // Check if route was previously completed
+    const wasCompleted = localStorage.getItem(endKey) !== null;
     
     // Clear any existing completion data when restarting route
     localStorage.removeItem(completeKey);
+    localStorage.removeItem(endKey);  // Also clear end time to fully reset route
     
     // Set new start time
     localStorage.setItem(startKey, now.toISOString());
@@ -1860,8 +1997,17 @@ function startRoute(circuitId) {
     // Show the subscriber list with cascading animation
     showSubscriberListWithAnimation();
     
+    // Update UI to reflect in-progress state
     updateRouteButtons(circuitId);
     updateCircuitStatus(circuitId, 'in-progress');
+    
+    // If route was previously completed, ensure complete button is visible
+    if (wasCompleted) {
+        const completeBtn = document.getElementById('completeRouteBtn');
+        const endTimeDisplay = document.getElementById('routeEndTime');
+        if (completeBtn) completeBtn.style.display = 'block';
+        if (endTimeDisplay) endTimeDisplay.style.display = 'none';
+    }
 }
 
 function showSubscriberListWithAnimation() {
@@ -1881,20 +2027,59 @@ function showSubscriberListWithAnimation() {
         
         // Animate in with staggered delay
         setTimeout(() => {
-            card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+            card.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
-        }, index * 50); // 50ms delay between each card
+        }, index * 40); // 40ms delay between each card for faster reveal
     });
 }
 
 function completeRoute(circuitId) {
     const now = new Date();
     const key = `route_end_${circuitId}`;
+    
+    // Show success animation immediately - centered on viewport
+    const loader = document.getElementById('routeCompleteLoader');
+    if (loader) {
+        loader.style.display = 'flex';
+        // Ensure it's on top and centered regardless of scroll position
+        loader.style.position = 'fixed';
+        loader.style.top = '0';
+        loader.style.left = '0';
+        loader.style.width = '100%';
+        loader.style.height = '100%';
+    }
+    
+    // Save completion time
     localStorage.setItem(key, now.toISOString());
     
     // Hide subscriber cards with cascading animation
     hideSubscriberListWithAnimation();
+    
+    // Calculate total animation time for hiding cards
+    const subscriberList = document.getElementById('subscriberList');
+    const cards = subscriberList.querySelectorAll('.subscriber-card');
+    const totalAnimationTime = cards.length * 40 + 400; // Match hideSubscriberListWithAnimation timing
+    
+    // Keep success animation visible for 1.5 seconds total, then fade out
+    const displayDuration = Math.max(1500, totalAnimationTime);
+    
+    setTimeout(() => {
+        if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.4s ease-out';
+            setTimeout(() => {
+                loader.style.display = 'none';
+                loader.style.opacity = '';
+                loader.style.transition = '';
+                loader.style.position = '';
+                loader.style.top = '';
+                loader.style.left = '';
+                loader.style.width = '';
+                loader.style.height = '';
+            }, 400);
+        }
+    }, displayDuration);
     
     updateRouteButtons(circuitId);
     updateCircuitStatus(circuitId, 'completed');
@@ -1911,10 +2096,10 @@ function hideSubscriberListWithAnimation() {
         const reverseIndex = totalCards - index - 1;
         
         setTimeout(() => {
-            card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+            card.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';
-        }, reverseIndex * 50); // 50ms delay between each card
+        }, reverseIndex * 40); // 40ms delay between each card for faster hiding
     });
     
     // Hide the subscriber list after all animations complete
@@ -1926,7 +2111,7 @@ function hideSubscriberListWithAnimation() {
             card.style.transform = '';
             card.style.transition = '';
         });
-    }, totalCards * 50 + 500); // Wait for all animations plus transition duration
+    }, totalCards * 40 + 400); // Wait for all animations plus transition duration
 }
 
 function updateRouteButtons(circuitId) {
@@ -2058,8 +2243,8 @@ function renderRouteMessages() {
     // Add clear button handler
     const clearBtn = document.getElementById('clearMessagesBtn');
     if (clearBtn) {
-        clearBtn.onclick = () => {
-            if (confirm('Haluatko varmasti tyhjentää kaikki viestit?')) {
+        clearBtn.onclick = async () => {
+            if (await customConfirm('Haluatko varmasti tyhjentää kaikki viestit?')) {
                 localStorage.removeItem('mailiaRouteMessages');
                 renderRouteMessages();
             }
@@ -2110,6 +2295,67 @@ async function createCircuitItem(circuitId) {
     name.className = 'circuit-name';
     name.textContent = circuitNames[circuitId] || circuitId;
     header.appendChild(name);
+    
+    // Add 3-dot menu for reset functionality
+    const menuContainer = document.createElement('div');
+    menuContainer.className = 'circuit-menu-container';
+    
+    const menuButton = document.createElement('button');
+    menuButton.className = 'circuit-menu-button';
+    menuButton.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+        </svg>
+    `;
+    menuButton.setAttribute('aria-label', 'Valinnat');
+    
+    const menuDropdown = document.createElement('div');
+    menuDropdown.className = 'circuit-menu-dropdown';
+    menuDropdown.innerHTML = `
+        <div class="circuit-menu-item reset-route" data-circuit="${circuitId}">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Nollaa reitin tila
+        </div>
+    `;
+    
+    menuContainer.appendChild(menuButton);
+    menuContainer.appendChild(menuDropdown);
+    header.appendChild(menuContainer);
+    
+    // Toggle menu on button click
+    menuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close other menus
+        document.querySelectorAll('.circuit-menu-dropdown.show').forEach(dropdown => {
+            if (dropdown !== menuDropdown) {
+                dropdown.classList.remove('show');
+            }
+        });
+        menuDropdown.classList.toggle('show');
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!menuContainer.contains(e.target)) {
+            menuDropdown.classList.remove('show');
+        }
+    });
+    
+    // Reset route handler
+    const resetItem = menuDropdown.querySelector('.reset-route');
+    resetItem.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`)) {
+            resetRouteStatus(circuitId);
+            menuDropdown.classList.remove('show');
+        }
+    });
     
     content.appendChild(header);
     
@@ -2214,6 +2460,32 @@ function updateCircuitStatus(circuitId, status) {
     // Update status and re-render tracker if on tracker tab
     if (document.getElementById('trackerTab').classList.contains('active')) {
         renderCircuitTracker();
+    }
+}
+
+// Reset route status manually
+function resetRouteStatus(circuitId) {
+    const startKey = `route_start_${circuitId}`;
+    const endKey = `route_end_${circuitId}`;
+    
+    // Clear route timing data
+    localStorage.removeItem(startKey);
+    localStorage.removeItem(endKey);
+    
+    // Clear all checkbox states for this circuit
+    const checkboxKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith(`checkbox_${circuitId}_`)
+    );
+    checkboxKeys.forEach(key => localStorage.removeItem(key));
+    
+    // Re-render the tracker to show updated status
+    renderCircuitTracker();
+    
+    // If this is the current circuit in delivery tab, update the buttons
+    if (currentCircuit === circuitId) {
+        updateRouteButtons(circuitId);
+        // Re-render the subscriber list to reset checkboxes
+        loadCircuit(circuitId);
     }
 }
 

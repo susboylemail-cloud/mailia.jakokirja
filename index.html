@@ -45,7 +45,9 @@
                         </div>
                         <!-- Login Form on Phone Screen -->
                         <div class="phone-login-form">
-                            <div class="phone-logo">Mailia</div>
+                            <div class="phone-logo">
+                                <img src="Gemini_Generated_Image_iu9snhiu9snhiu9s.png" alt="Mailia" class="phone-logo-img">
+                            </div>
                             
                             <!-- iPhone-style Notification - Middle Position -->
                             <div class="iphone-notification">
@@ -119,7 +121,7 @@
                         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                 </button>
-                <a href="help.html" class="help-button icon-button" aria-label="Käyttöohjeet">
+                <a href="help.html" class="help-button icon-button" aria-label="käyttöohjeet">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
@@ -168,11 +170,10 @@
     <div class="circuit-selector-container">
         <div class="custom-circuit-select" id="customCircuitSelect">
             <div class="circuit-select-display" id="circuitSelectDisplay">
-                <span>Valitse piiri</span>
                 <span class="dropdown-arrow">▼</span>
             </div>
             <div class="circuit-select-dropdown" id="circuitSelectDropdown" style="display: none;">
-                <input type="text" class="circuit-search" id="circuitSearch" placeholder="Etsi piiri...">
+                <input type="text" class="circuit-search" id="circuitSearch" placeholder="Valitse piiri">
                 <div class="circuit-options" id="circuitOptions"></div>
             </div>
         </div>
@@ -198,6 +199,35 @@
                 <div class="route-complete-container" style="display: none;">
                     <button id="completeRouteBtn" class="route-button complete">Reitti valmis</button>
                     <div id="routeEndTime" class="route-time"></div>
+                </div>
+                
+                <!-- Loading Animation for Route Completion -->
+                <div id="routeCompleteLoader" class="route-complete-loader" style="display: none;">
+                    <div class="success-animation">
+                        <div class="envelope-icon">
+                            <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+                                <path class="envelope-body" d="M5 10 L50 45 L95 10 L95 70 L5 70 Z" fill="var(--primary-blue)" stroke="var(--primary-blue)" stroke-width="2"/>
+                                <path class="envelope-flap" d="M5 10 L50 45 L95 10" fill="none" stroke="var(--primary-blue)" stroke-width="2"/>
+                            </svg>
+                            <div class="checkmark-circle">
+                                <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="26" cy="26" r="25" fill="#28a745"/>
+                                    <path class="checkmark" d="M14 27 L22 35 L38 17" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Custom Confirm Dialog -->
+                <div id="customConfirmDialog" class="custom-dialog" style="display: none;">
+                    <div class="custom-dialog-content">
+                        <div class="custom-dialog-message" id="customConfirmMessage"></div>
+                        <div class="custom-dialog-buttons">
+                            <button id="customConfirmCancel" class="custom-dialog-btn cancel-btn">Peruuta</button>
+                            <button id="customConfirmOk" class="custom-dialog-btn confirm-btn">OK</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

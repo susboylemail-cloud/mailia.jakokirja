@@ -1561,24 +1561,6 @@ body.dark-mode .route-time {
     }
 }
 
-.success-text {
-    color: var(--primary-blue);
-    font-size: 1.3rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    animation: textFadeIn 0.4s ease-out 0.7s both;
-}
-
-@keyframes textFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
 /* Filter Container */
 .filter-container {

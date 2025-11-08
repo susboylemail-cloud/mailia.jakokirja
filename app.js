@@ -697,6 +697,14 @@ function parseCircuitCSV(text, filename) {
     return subscribers;
 }
 
+// Helper function to clean up angle bracket markings from text
+function cleanAngleBrackets(text) {
+    if (!text) return text;
+    // Remove any text within angle brackets (including nested ones)
+    // This handles cases like "<2 Ilm>", "<suikkanen Tapio>", "<ovi <pudota >>"
+    return text.replace(/<[^>]*>/g, '').trim();
+}
+
 function parseOldFormatCSVLine(line) {
     // Parse CSV line with proper quote handling
     // Detect delimiter: semicolon or comma
@@ -770,6 +778,9 @@ function parseOldFormatCSVLine(line) {
     } else {
         return null;
     }
+    
+    // Clean up angle bracket markings from name (e.g., "<2 Ilm> Sihvonen Timo" -> "Sihvonen Timo")
+    name = cleanAngleBrackets(name);
     
     // Skip if no address
     if (!address) return null;

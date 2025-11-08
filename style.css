@@ -125,10 +125,43 @@ body {
     pointer-events: none;
 }
 
+/* Pulsing Glow Behind Phone - Light Bulb Effect */
+.phone-glow-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(
+        circle,
+        rgba(74, 144, 226, 0.4) 0%,
+        rgba(74, 144, 226, 0.2) 30%,
+        rgba(74, 144, 226, 0.1) 50%,
+        transparent 70%
+    );
+    border-radius: 50%;
+    animation: glowPulse 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        opacity: 0.6;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
 /* Floating Phone Container with Blue Ambient Glow */
 .phone-container {
     position: relative;
     perspective: 1000px;
+    z-index: 1;
     /* Removed floating animation */
     filter: drop-shadow(0 0 60px rgba(74, 144, 226, 0.4)) 
             drop-shadow(0 0 30px rgba(74, 144, 226, 0.3));
@@ -246,6 +279,65 @@ body {
     background: #1a1a1a;
     border-radius: 0 0 20px 20px;
     z-index: 10;
+    overflow: visible;
+}
+
+/* Dynamic Island Animation */
+.dynamic-island {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mail-letter {
+    width: 14px;
+    height: 14px;
+    stroke: #4a90e2;
+    fill: none;
+    animation: mailDelivery 4s ease-in-out infinite;
+    transform-origin: center;
+}
+
+.mailbox {
+    width: 16px;
+    height: 16px;
+    stroke: #6bb6ff;
+    fill: none;
+    opacity: 0.9;
+}
+
+@keyframes mailDelivery {
+    0%, 100% {
+        transform: translateX(-30px) translateY(0) rotate(0deg) scale(1);
+        opacity: 1;
+    }
+    25% {
+        transform: translateX(-15px) translateY(-3px) rotate(-10deg) scale(0.9);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateX(0) translateY(-5px) rotate(-20deg) scale(0.7);
+        opacity: 0.6;
+    }
+    60% {
+        transform: translateX(8px) translateY(-2px) rotate(-25deg) scale(0.5);
+        opacity: 0.4;
+    }
+    70% {
+        transform: translateX(12px) translateY(2px) rotate(-30deg) scale(0.3);
+        opacity: 0.2;
+    }
+    75%, 95% {
+        transform: translateX(15px) translateY(5px) rotate(-35deg) scale(0);
+        opacity: 0;
+    }
 }
 
 /* Login Form on Phone Screen */

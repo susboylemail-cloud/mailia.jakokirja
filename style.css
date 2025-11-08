@@ -279,6 +279,44 @@ body {
     justify-content: center;
 }
 
+/* Falling Letters Background Animation */
+.falling-letters {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.falling-letters .letter {
+    position: absolute;
+    top: -50px;
+    font-size: 1.5rem;
+    opacity: 0.12;
+    animation: fall 15s linear infinite;
+    filter: blur(0.5px);
+}
+
+@keyframes fall {
+    0% {
+        top: -50px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.12;
+    }
+    90% {
+        opacity: 0.12;
+    }
+    100% {
+        top: 100%;
+        opacity: 0;
+    }
+}
+
 /* Phone Status Bar */
 .phone-status-bar {
     position: absolute;
@@ -288,6 +326,14 @@ body {
     height: 44px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem;
+    padding-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.75rem;
+    font-weight: 500;
+    z-index: 100;
+}
     align-items: center;
     padding: 0 1.5rem;
     padding-top: 0.5rem;
@@ -345,11 +391,18 @@ body {
 
 @keyframes notificationSlideIn {
     0% {
-        transform: translateY(-30px) scale(0.95);
+        transform: translateY(-100px);
         opacity: 0;
     }
+    60% {
+        transform: translateY(5px);
+        opacity: 1;
+    }
+    80% {
+        transform: translateY(-2px);
+    }
     100% {
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
         opacity: 1;
     }
 }
@@ -413,6 +466,8 @@ body {
     gap: 1rem;
     margin-top: auto;
     margin-bottom: auto;
+    position: relative;
+    z-index: 10;
 }
 
 .phone-logo {
@@ -432,7 +487,6 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.02em;
-    transform: rotate(3deg);
 }
 
 /* Input Groups and Labels for Better Touch Targets */

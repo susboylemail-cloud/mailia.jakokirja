@@ -701,7 +701,6 @@ function parseOldFormatCSVLine(line) {
         name,
         buildingAddress: extractBuildingAddress(address)
     };
-}
     
     return null;
 }

@@ -799,6 +799,30 @@ body.dark-mode header {
     height: 24px;
 }
 
+/* Help Button */
+.help-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.help-button:hover {
+    transform: scale(1.1);
+}
+
+.help-button .icon {
+    width: 24px;
+    height: 24px;
+}
+
+
 /* Settings Container */
 .settings-container {
     position: relative;

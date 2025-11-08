@@ -1233,7 +1233,8 @@ function populateCircuitSelector() {
     }
     
     async function selectCircuit(circuit) {
-        display.querySelector('span').textContent = circuitNames[circuit] || circuit;
+        const displayText = display.querySelector('.circuit-display-text');
+        displayText.textContent = circuitNames[circuit] || circuit;
         dropdown.style.display = 'none';
         customSelect.classList.remove('open');
         await loadCircuit(circuit);

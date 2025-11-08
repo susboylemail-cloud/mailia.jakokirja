@@ -169,15 +169,36 @@ function initializeWeatherWidget() {
     const weatherWidget = document.getElementById('weatherWidget');
     if (!weatherWidget) return;
     
-    // Simulated weather data - in production, this would fetch from a weather API
+    // iOS-style weather icon SVGs
+    const weatherIcons = {
+        sunny: `<circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`,
+        partlyCloudy: `<circle cx="12" cy="12" r="4"></circle>
+                       <path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3"></path>
+                       <path d="M20 17H8.5a3.5 3.5 0 1 1 0-7c.96 0 1.82.41 2.42 1.06"></path>`,
+        cloudy: `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`,
+        rainy: `<line x1="16" y1="13" x2="16" y2="21"></line>
+                <line x1="8" y1="13" x2="8" y2="21"></line>
+                <line x1="12" y1="15" x2="12" y2="23"></line>
+                <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>`
+    };
+    
+    // Simulated weather data
     const weatherConditions = [
-        { icon: '☀️', temp: 22, condition: 'sunny' },
-        { icon: '⛅', temp: 18, condition: 'partly-cloudy' },
-        { icon: '☁️', temp: 15, condition: 'cloudy' },
-        { icon: '🌧️', temp: 12, condition: 'rainy' }
+        { icon: 'sunny', temp: 22, condition: 'sunny' },
+        { icon: 'partlyCloudy', temp: 18, condition: 'partly-cloudy' },
+        { icon: 'cloudy', temp: 15, condition: 'cloudy' },
+        { icon: 'rainy', temp: 12, condition: 'rainy' }
     ];
     
-    // Get current weather based on time of day (simple simulation)
+    // Get current weather based on time of day
     const hour = new Date().getHours();
     let weatherIndex = 0; // Default to sunny
     
@@ -192,11 +213,11 @@ function initializeWeatherWidget() {
     }
     
     const weather = weatherConditions[weatherIndex];
-    const iconSpan = weatherWidget.querySelector('.weather-icon');
+    const iconSvg = weatherWidget.querySelector('.weather-icon');
     const tempSpan = weatherWidget.querySelector('.weather-temp');
     
-    if (iconSpan && tempSpan) {
-        iconSpan.textContent = weather.icon;
+    if (iconSvg && tempSpan) {
+        iconSvg.innerHTML = weatherIcons[weather.icon];
         tempSpan.textContent = `${weather.temp}°C`;
     }
 }

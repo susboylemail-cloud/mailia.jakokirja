@@ -1759,8 +1759,40 @@ function completeRoute(circuitId) {
     const key = `route_end_${circuitId}`;
     localStorage.setItem(key, now.toISOString());
     
+    // Hide subscriber cards with cascading animation
+    hideSubscriberListWithAnimation();
+    
     updateRouteButtons(circuitId);
     updateCircuitStatus(circuitId, 'completed');
+}
+
+function hideSubscriberListWithAnimation() {
+    const subscriberList = document.getElementById('subscriberList');
+    const cards = subscriberList.querySelectorAll('.subscriber-card');
+    
+    // Reverse cascade - animate cards out from last to first
+    const totalCards = cards.length;
+    cards.forEach((card, index) => {
+        // Calculate reverse index for bottom-to-top animation
+        const reverseIndex = totalCards - index - 1;
+        
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+        }, reverseIndex * 50); // 50ms delay between each card
+    });
+    
+    // Hide the subscriber list after all animations complete
+    setTimeout(() => {
+        subscriberList.style.display = 'none';
+        // Reset card styles for next time
+        cards.forEach(card => {
+            card.style.opacity = '';
+            card.style.transform = '';
+            card.style.transition = '';
+        });
+    }, totalCards * 50 + 500); // Wait for all animations plus transition duration
 }
 
 function updateRouteButtons(circuitId) {

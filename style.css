@@ -537,33 +537,6 @@ body {
     white-space: nowrap;
 }
 
-/* Date Widget - Pill Shape */
-.date-widget {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.95);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.date-widget:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-.date-text {
-    line-height: 1;
-    white-space: nowrap;
-}
-
 /* Input Groups and Labels for Better Touch Targets */
 .input-group {
     width: 100%;

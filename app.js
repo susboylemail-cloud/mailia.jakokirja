@@ -627,23 +627,23 @@ function updateCheckboxVisibility() {
 
 
 async function showMainApp() {
-    // Start the page-turn transition animation
+    // Start the phone rise up transition animation
     const loginScreen = document.getElementById('loginScreen');
     const mainApp = document.getElementById('mainApp');
     
-    // Add page-turn transition class
+    // Add rise up transition class
     loginScreen.classList.add('zoom-transition');
     
-    // Show main app with simple fade-in after page turn completes
+    // Show main app and start slide-up animation from bottom
     setTimeout(() => {
         mainApp.style.display = 'block';
         mainApp.classList.add('zoom-in');
-    }, 1200);
+    }, 300);
     
     // Hide login screen completely after animation
     setTimeout(() => {
         loginScreen.style.display = 'none';
-    }, 2400);
+    }, 1500);
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();

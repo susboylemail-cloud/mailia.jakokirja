@@ -737,21 +737,14 @@ body {
     }
 }
 
-/* Page Turn Transition Animation */
-@keyframes pageTurn {
+/* Phone Rise Up Transition Animation */
+@keyframes phoneRiseUp {
     0% {
-        transform: perspective(1200px) rotateY(0deg);
-        transform-origin: left center;
+        transform: translateY(0) scale(1);
         opacity: 1;
     }
-    50% {
-        transform: perspective(1200px) rotateY(-90deg);
-        transform-origin: left center;
-        opacity: 0.8;
-    }
     100% {
-        transform: perspective(1200px) rotateY(-180deg);
-        transform-origin: left center;
+        transform: translateY(-120%) scale(0.8);
         opacity: 0;
     }
 }
@@ -766,7 +759,7 @@ body {
 }
 
 .login-screen.zoom-transition .phone-device {
-    animation: pageTurn 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: phoneRiseUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .login-screen.zoom-transition .phone-container {
@@ -774,25 +767,28 @@ body {
 }
 
 .login-screen.zoom-transition {
-    animation: fadeOutBackground 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeOutBackground 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 #mainApp {
     opacity: 0;
+    transform: translateY(100%);
 }
 
 #mainApp.zoom-in {
     opacity: 1;
-    animation: fadeInApp 0.6s ease-out forwards;
-    animation-delay: 1.2s;
+    animation: slideUpFromBottom 1.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.3s;
 }
 
-@keyframes fadeInApp {
+@keyframes slideUpFromBottom {
     0% {
         opacity: 0;
+        transform: translateY(100%);
     }
     100% {
         opacity: 1;
+        transform: translateY(0);
     }
 }
 

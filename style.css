@@ -443,7 +443,7 @@ body {
     padding-left: 0.5rem;
 }
 
-/* Logo Text - Accent Blue with Wallpaper Effect */
+/* Logo Text - White with Subtle Blue Hue */
 .phone-logo {
     position: relative;
     width: auto;
@@ -451,24 +451,22 @@ body {
     opacity: 0;
     flex: 0 0 auto;
     animation: logoFadeIn 1.5s ease-out 0.5s forwards;
-    /* Add subtle blue hue behind logo */
-    filter: drop-shadow(0 0 20px rgba(93, 173, 226, 0.5)) 
-            drop-shadow(0 0 10px rgba(93, 173, 226, 0.4))
-            drop-shadow(0 0 30px rgba(93, 173, 226, 0.2));
+    /* Add subtle blue hue behind logo - reduced intensity */
+    filter: drop-shadow(0 0 8px rgba(93, 173, 226, 0.2)) 
+            drop-shadow(0 0 15px rgba(93, 173, 226, 0.15));
 }
 
 .phone-logo-text {
     font-size: 2rem;
     font-weight: 700;
-    color: #5DADE2;
+    color: rgba(255, 255, 255, 0.95);
     text-shadow: 
-        0 0 15px rgba(93, 173, 226, 0.8),
-        0 0 30px rgba(93, 173, 226, 0.5),
+        0 0 8px rgba(93, 173, 226, 0.3),
         0 2px 4px rgba(0, 0, 0, 0.3);
     letter-spacing: 0.05em;
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     /* Make it blend like a wallpaper element */
-    opacity: 0.9;
+    opacity: 0.95;
 }
 
 .phone-logo-img {

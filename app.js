@@ -3,6 +3,36 @@
 // Animation constants
 const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
 
+// Custom confirm dialog to match app theme
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        const dialog = document.getElementById('customConfirmDialog');
+        const messageEl = document.getElementById('customConfirmMessage');
+        const okBtn = document.getElementById('customConfirmOk');
+        const cancelBtn = document.getElementById('customConfirmCancel');
+        
+        messageEl.textContent = message;
+        dialog.style.display = 'flex';
+        
+        const handleOk = () => {
+            dialog.style.display = 'none';
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(true);
+        };
+        
+        const handleCancel = () => {
+            dialog.style.display = 'none';
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(false);
+        };
+        
+        okBtn.addEventListener('click', handleOk);
+        cancelBtn.addEventListener('click', handleCancel);
+    });
+}
+
 // Authentication credentials
 // WARNING: This is client-side only implementation for demonstration purposes
 // In production, implement proper server-side authentication
@@ -410,8 +440,8 @@ function promptSaveLoginInfo(username, password) {
     // WARNING: Storing passwords in localStorage is insecure
     // This is for convenience in a client-side-only demo application
     // In production, use secure token-based authentication
-    setTimeout(() => {
-        if (confirm('Haluatko tallentaa kirjautumistiedot?')) {
+    setTimeout(async () => {
+        if (await customConfirm('Haluatko tallentaa kirjautumistiedot?')) {
             localStorage.setItem('mailiaSavedCredentials', JSON.stringify({
                 username: username,
                 password: password  // Stored in plain text - NOT SECURE
@@ -1745,7 +1775,7 @@ function reportUndelivered(circuitId, subscriber) {
     
     const dialogBox = document.createElement('div');
     dialogBox.style.cssText = `
-        background: white;
+        background: var(--background-color);
         padding: 2rem;
         border-radius: 12px;
         max-width: 400px;
@@ -1754,21 +1784,20 @@ function reportUndelivered(circuitId, subscriber) {
     `;
     
     dialogBox.innerHTML = `
-        <h3 style="margin-top: 0; color: var(--navy); font-size: 1.25rem;">Jakeluhäiriön ilmoitus</h3>
-        <p style="margin-bottom: 1.5rem; color: var(--navy);">Valitse syy:</p>
-        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid #D1D5D8; border-radius: 8px; font-size: 1rem; margin-bottom: 1rem;">
-            <option value="">-- Valitse syy --</option>
+        <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem;">Jakeluhäiriön ilmoitus</h3>
+        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--background-color); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none;">
+            <option value="">Valitse syy</option>
             <option value="Ei pääsyä">Ei pääsyä</option>
-            <option value="Avainongelma">Avainongelma</option>
+            <option value="Avaimongelma">Avainongelma</option>
             <option value="Lehtipuute">Lehtipuute</option>
             <option value="Muu">Muu</option>
         </select>
         <div id="customReasonContainer" style="display: none; margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: var(--navy);">Tarkenna:</label>
-            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid #D1D5D8; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Tarkenna:</label>
+            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; resize: vertical; background: var(--background-color); color: var(--text-color);"></textarea>
         </div>
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid #D1D5D8; background: white; color: var(--navy); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
+            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid var(--border-color); background: var(--background-color); color: var(--text-color); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
             <button id="submitBtn" style="padding: 0.75rem 1.5rem; border: none; background: var(--primary-blue); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Lähetä</button>
         </div>
     `;
@@ -2214,8 +2243,8 @@ function renderRouteMessages() {
     // Add clear button handler
     const clearBtn = document.getElementById('clearMessagesBtn');
     if (clearBtn) {
-        clearBtn.onclick = () => {
-            if (confirm('Haluatko varmasti tyhjentää kaikki viestit?')) {
+        clearBtn.onclick = async () => {
+            if (await customConfirm('Haluatko varmasti tyhjentää kaikki viestit?')) {
                 localStorage.removeItem('mailiaRouteMessages');
                 renderRouteMessages();
             }
@@ -2320,9 +2349,9 @@ async function createCircuitItem(circuitId) {
     
     // Reset route handler
     const resetItem = menuDropdown.querySelector('.reset-route');
-    resetItem.addEventListener('click', (e) => {
+    resetItem.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (confirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`)) {
+        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`)) {
             resetRouteStatus(circuitId);
             menuDropdown.classList.remove('show');
         }

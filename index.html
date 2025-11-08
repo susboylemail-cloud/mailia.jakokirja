@@ -119,7 +119,7 @@
                         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                 </button>
-                <a href="help.html" class="help-button icon-button" aria-label="Käyttöohjeet">
+                <a href="help.html" class="help-button icon-button" aria-label="käyttöohjeet">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
@@ -168,11 +168,10 @@
     <div class="circuit-selector-container">
         <div class="custom-circuit-select" id="customCircuitSelect">
             <div class="circuit-select-display" id="circuitSelectDisplay">
-                <span>Valitse piiri</span>
                 <span class="dropdown-arrow">▼</span>
             </div>
             <div class="circuit-select-dropdown" id="circuitSelectDropdown" style="display: none;">
-                <input type="text" class="circuit-search" id="circuitSearch" placeholder="Etsi piiri...">
+                <input type="text" class="circuit-search" id="circuitSearch" placeholder="Valitse piiri">
                 <div class="circuit-options" id="circuitOptions"></div>
             </div>
         </div>
@@ -214,6 +213,17 @@
                                     <path class="checkmark" d="M14 27 L22 35 L38 17" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
                                 </svg>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Custom Confirm Dialog -->
+                <div id="customConfirmDialog" class="custom-dialog" style="display: none;">
+                    <div class="custom-dialog-content">
+                        <div class="custom-dialog-message" id="customConfirmMessage"></div>
+                        <div class="custom-dialog-buttons">
+                            <button id="customConfirmCancel" class="custom-dialog-btn cancel-btn">Peruuta</button>
+                            <button id="customConfirmOk" class="custom-dialog-btn confirm-btn">OK</button>
                         </div>
                     </div>
                 </div>

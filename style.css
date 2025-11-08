@@ -1387,6 +1387,23 @@ body.dark-mode .route-time {
     font-size: 1.05rem;
     color: var(--text-color);         /* Use primary text color */
     letter-spacing: -0.01em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.building-name {
+    flex: 1;
+}
+
+.building-delivery-count {
+    background: var(--primary-blue);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 body.dark-mode .building-header {
@@ -1661,6 +1678,7 @@ body.dark-mode .subscriber-name {
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 0.5rem;
+    justify-content: space-between;
 }
 
 .circuit-name {
@@ -1668,6 +1686,85 @@ body.dark-mode .subscriber-name {
     font-size: 1.1rem;
     color: var(--text-color);
     flex: 1;
+}
+
+/* Circuit Menu (3-dot menu) */
+.circuit-menu-container {
+    position: relative;
+}
+
+.circuit-menu-button {
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+    color: var(--text-color);
+}
+
+.circuit-menu-button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .circuit-menu-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.circuit-menu-button .icon {
+    width: 18px;
+    height: 18px;
+}
+
+.circuit-menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--shadow);
+    min-width: 200px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.circuit-menu-dropdown.show {
+    display: block;
+}
+
+.circuit-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.circuit-menu-item:hover {
+    background: rgba(74, 144, 226, 0.1);
+}
+
+.circuit-menu-item.reset-route {
+    color: var(--red-accent);
+}
+
+.circuit-menu-item.reset-route:hover {
+    background: rgba(224, 120, 86, 0.1);
+}
+
+.circuit-menu-item .icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
 .circuit-status {

@@ -736,11 +736,20 @@ function parseOldFormatCSVLine(line) {
     
     if (fields.length >= 5 && fields[0].includes('Sivu')) {
         // Format: "Sivu","Katu","Osoite","Nimi","Merkinnät" (KP2 format)
-        // In this format, fields[1] is "Katu" (street name) and fields[2] is "Osoite" (house number)
-        // We need to combine them to create the full address
+        // In this format, fields[1] is "Katu" (street name) and fields[2] is "Osoite" (address)
+        // Some CSVs have full address in "Osoite", others just have the number
         streetName = fields[1].trim();
         houseNumber = fields[2].trim();
-        address = `${streetName} ${houseNumber}`.trim();  // Combine street + number
+        
+        // Check if "Osoite" already contains the street name (like in KP44)
+        if (houseNumber.toUpperCase().startsWith(streetName.toUpperCase())) {
+            // "Osoite" contains full address, use it as-is
+            address = houseNumber;
+        } else {
+            // "Osoite" is just the number/details, combine with street name
+            address = `${streetName} ${houseNumber}`.trim();
+        }
+        
         name = fields[3].trim();
         productsStr = fields[4].trim();
     } else if (fields.length >= 6) {
@@ -1318,7 +1327,22 @@ function renderSubscriberList(circuitId, subscribers) {
         
         const header = document.createElement('div');
         header.className = 'building-header';
-        header.textContent = buildingObj.name;
+        
+        // Create building name span
+        const buildingName = document.createElement('span');
+        buildingName.className = 'building-name';
+        buildingName.textContent = buildingObj.name;
+        header.appendChild(buildingName);
+        
+        // Add delivery count badge if multiple deliveries
+        const deliveryCount = buildingObj.subscribers.length;
+        if (deliveryCount > 1) {
+            const countBadge = document.createElement('span');
+            countBadge.className = 'building-delivery-count';
+            countBadge.textContent = `${deliveryCount} jakelua`;
+            header.appendChild(countBadge);
+        }
+        
         buildingGroup.appendChild(header);
         
         const buildingSubscribers = buildingObj.subscribers;
@@ -2111,6 +2135,67 @@ async function createCircuitItem(circuitId) {
     name.textContent = circuitNames[circuitId] || circuitId;
     header.appendChild(name);
     
+    // Add 3-dot menu for reset functionality
+    const menuContainer = document.createElement('div');
+    menuContainer.className = 'circuit-menu-container';
+    
+    const menuButton = document.createElement('button');
+    menuButton.className = 'circuit-menu-button';
+    menuButton.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+        </svg>
+    `;
+    menuButton.setAttribute('aria-label', 'Valinnat');
+    
+    const menuDropdown = document.createElement('div');
+    menuDropdown.className = 'circuit-menu-dropdown';
+    menuDropdown.innerHTML = `
+        <div class="circuit-menu-item reset-route" data-circuit="${circuitId}">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Nollaa reitin tila
+        </div>
+    `;
+    
+    menuContainer.appendChild(menuButton);
+    menuContainer.appendChild(menuDropdown);
+    header.appendChild(menuContainer);
+    
+    // Toggle menu on button click
+    menuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close other menus
+        document.querySelectorAll('.circuit-menu-dropdown.show').forEach(dropdown => {
+            if (dropdown !== menuDropdown) {
+                dropdown.classList.remove('show');
+            }
+        });
+        menuDropdown.classList.toggle('show');
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!menuContainer.contains(e.target)) {
+            menuDropdown.classList.remove('show');
+        }
+    });
+    
+    // Reset route handler
+    const resetItem = menuDropdown.querySelector('.reset-route');
+    resetItem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`)) {
+            resetRouteStatus(circuitId);
+            menuDropdown.classList.remove('show');
+        }
+    });
+    
     content.appendChild(header);
     
     const statusText = document.createElement('div');
@@ -2214,6 +2299,32 @@ function updateCircuitStatus(circuitId, status) {
     // Update status and re-render tracker if on tracker tab
     if (document.getElementById('trackerTab').classList.contains('active')) {
         renderCircuitTracker();
+    }
+}
+
+// Reset route status manually
+function resetRouteStatus(circuitId) {
+    const startKey = `route_start_${circuitId}`;
+    const endKey = `route_end_${circuitId}`;
+    
+    // Clear route timing data
+    localStorage.removeItem(startKey);
+    localStorage.removeItem(endKey);
+    
+    // Clear all checkbox states for this circuit
+    const checkboxKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith(`checkbox_${circuitId}_`)
+    );
+    checkboxKeys.forEach(key => localStorage.removeItem(key));
+    
+    // Re-render the tracker to show updated status
+    renderCircuitTracker();
+    
+    // If this is the current circuit in delivery tab, update the buttons
+    if (currentCircuit === circuitId) {
+        updateRouteButtons(circuitId);
+        // Re-render the subscriber list to reset checkboxes
+        loadCircuit(circuitId);
     }
 }
 

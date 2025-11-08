@@ -172,8 +172,8 @@ body {
 /* Phone Device */
 .phone-device {
     position: relative;
-    width: 320px;
-    height: 650px;
+    width: 350px;
+    height: 710px;
     transform-style: preserve-3d;
     /* Removed rotation animation */
 }
@@ -482,7 +482,7 @@ body {
 /* Remember Me Toggle - Small and Non-intrusive */
 .remember-me-container {
     width: 100%;
-    margin-top: -0.5rem;
+    margin-top: 0.75rem;
     margin-bottom: 0.5rem;
 }
 

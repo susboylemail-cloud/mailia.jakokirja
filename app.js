@@ -18,12 +18,66 @@ const CREDENTIALS = {
 };
 
 // Global state
-let allData = [];
+let allData = {};  // Changed to object for easier circuit lookup
 let currentCircuit = null;
 let isAuthenticated = false;
 let userRole = null; // 'delivery' or 'admin'
 let routeMessages = []; // Store route messages for admin panel
 let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
+
+// Circuit file mapping for lazy loading
+const circuitFiles = {
+    'KP2': 'KP2 DATA.csv',
+    'KP3': 'KP3 DATA.csv',
+    'KP4': 'KP4 DATA.csv',
+    'KP7': 'KP7 DATA.csv',
+    'KP9': 'KP9 DATA.csv',
+    'KP10': 'KP10 DATA.csv',
+    'KP11': 'KP11 DATA.csv',
+    'KP12': 'KP12 DATA.csv',
+    'KP13': 'kp13.csv',
+    'KP15': 'KP15 DATA.csv',
+    'KP16': 'KP16 DATA.csv',
+    'KP16B': 'KP16B DATA.csv',
+    'KP18': 'KP18 DATA.csv',
+    'KP19': 'KP19 DATA.csv',
+    'KP21B': 'KP21B DATA.csv',
+    'KP22': 'KP22 DATA.csv',
+    'KP24': 'KP24 DATA.csv',
+    'KP25': 'KP25 DATA.csv',
+    'KP26': 'KP26 DATA.csv',
+    'KP27': 'KP27 DATA.csv',
+    'KP28': 'K28 DATA.csv',
+    'KP31': 'KP31 DATA.csv',
+    'KP32A': 'KP32A DATA.csv',
+    'KP32B': 'KP32B DATA.csv',
+    'KP33': 'KP33 DATA.csv',
+    'KP34': 'KP34 DATA.csv',
+    'KP36': 'KP36 DATA.csv',
+    'KP37': 'KP37 DATA.csv',
+    'KP38': 'KP38 DATA.csv',
+    'KP39': 'KP39 DATA.csv',
+    'KP40': 'KP40 DATA.csv',
+    'KP41': 'KP41 DATA.csv',
+    'KP42': 'KP42 DATA.csv',
+    'KP43B': 'KP43B DATA.csv',
+    'KP44': 'kp44.csv',
+    'KP46': 'KP46 DATA.csv',
+    'KP47': 'KP47 DATA.csv',
+    'KP48': 'KP48 DATA.csv',
+    'KP49': 'KP49 DATA.csv',
+    'KP51': 'KP51 DATA.csv',
+    'KP53': 'KP53 DATA.csv',
+    'KP54': 'KP54 DATA.csv',
+    'KP55A': 'KP55A DATA.csv',
+    'KP55B': 'KP55B DATA.csv',
+    'KPR1': 'kp r1.csv',
+    'KPR2': 'KP R2 DATA.csv',
+    'KPR3': 'KP R3 DATA.csv',
+    'KPR4': 'KP R4 DATA.csv',
+    'KPR5': 'kpr5.csv',
+    'KPR6': 'kpr6.csv'
+};
 
 // Circuit names mapping
 const circuitNames = {
@@ -576,44 +630,13 @@ function initializeTabs() {
 }
 
 // Data Loading and Parsing
+// No longer needed - circuits are loaded on demand
+// Keeping function stub for compatibility
 async function loadData() {
-    try {
-        // List of all circuit CSV files
-        const circuitFiles = [
-            'K28 DATA.csv', 'KP R2 DATA.csv', 'KP R3 DATA.csv', 'KP R4 DATA.csv',
-            'KP2 DATA.csv', 'KP3 DATA.csv', 'KP4 DATA.csv', 'KP7 DATA.csv', 'KP9 DATA.csv',
-            'KP10 DATA.csv', 'KP11 DATA.csv', 'KP12 DATA.csv', 'kp13.csv', 'KP15 DATA.csv',
-            'KP16 DATA.csv', 'KP16B DATA.csv', 'KP18 DATA.csv', 'KP19 DATA.csv',
-            'KP21B DATA.csv', 'KP22 DATA.csv', 'KP24 DATA.csv', 'KP25 DATA.csv',
-            'KP26 DATA.csv', 'KP27 DATA.csv', 'KP31 DATA.csv', 'KP32A DATA.csv',
-            'KP32B DATA.csv', 'KP33 DATA.csv', 'KP34 DATA.csv', 'KP36 DATA.csv',
-            'KP37 DATA.csv', 'KP38 DATA.csv', 'KP39 DATA.csv', 'KP40 DATA.csv',
-            'KP41 DATA.csv', 'KP42 DATA.csv', 'KP43B DATA.csv', 'kp44.csv', 'KP46 DATA.csv',
-            'KP47 DATA.csv', 'KP48 DATA.csv', 'KP49 DATA.csv', 'KP51 DATA.csv',
-            'KP53 DATA.csv', 'KP54 DATA.csv', 'KP55A DATA.csv', 'KP55B DATA.csv',
-            'kp r1.csv', 'kpr5.csv', 'kpr6.csv'
-        ];
-        
-        allData = {};
-        
-        // Load each circuit's CSV file
-        for (const filename of circuitFiles) {
-            try {
-                const response = await fetch(filename);
-                if (!response.ok) continue;
-                const text = await response.text();
-                const circuitId = extractCircuitId(filename);
-                allData[circuitId] = parseCircuitCSV(text, filename);
-            } catch (err) {
-                console.warn(`Could not load ${filename}:`, err);
-            }
-        }
-        
-        console.log(`Loaded ${Object.keys(allData).length} circuits`);
-    } catch (error) {
-        console.error('Error loading data:', error);
-        alert('Virhe tietojen lataamisessa. Varmista, että CSV-tiedostot ovat saatavilla.');
-    }
+    // Data is now loaded lazily when circuit is selected
+    // This improves initial page load time significantly
+    allData = {};
+    console.log('Using lazy loading - circuits will load on demand');
 }
 
 function extractCircuitId(filename) {
@@ -706,12 +729,19 @@ function parseOldFormatCSVLine(line) {
     // Handle different CSV formats
     let streetName, houseNumber, name, productsStr;
     
+    let address;
+    
     if (fields.length >= 5 && fields[0].includes('Sivu')) {
         // Format: "Sivu","Katu","Osoite","Nimi","Merkinnät" (KP2 format)
-        streetName = fields[1].trim();
-        houseNumber = fields[2].trim();
+        // In this format, fields[2] is "Osoite" which already contains the full address
+        // So we use it directly without prepending the street name
+        streetName = fields[1].trim();  // Keep for buildingAddress extraction
+        address = fields[2].trim();  // Use "Osoite" directly (already complete)
         name = fields[3].trim();
         productsStr = fields[4].trim();
+        
+        // For validation, extract houseNumber from address
+        houseNumber = address;
     } else if (fields.length >= 6) {
         // Format: Katu,Numero,Huom,Asunto,Nimi,Tilaukset (standard format)
         streetName = fields[0].trim();
@@ -724,14 +754,15 @@ function parseOldFormatCSVLine(line) {
         if (apartment) {
             houseNumber += ' ' + apartment;
         }
+        
+        // Build full address
+        address = `${streetName} ${houseNumber}`.trim();
     } else {
         return null;
     }
     
-    // Skip if no street or house number
-    if (!streetName || !houseNumber) return null;
-    
-    const address = `${streetName} ${houseNumber}`.trim();
+    // Skip if no address
+    if (!address) return null;
     
     // Parse products - handle semicolons, commas, spaces, and UVES
     // First, replace UVES with "UV ES" to split it
@@ -984,9 +1015,45 @@ function sortCircuits(a, b) {
 }
 
 // Load Circuit
-function loadCircuit(circuitId) {
+// Load circuit data on demand (lazy loading with caching)
+async function loadCircuitData(circuitId) {
+    // Check if already loaded in cache
+    if (allData[circuitId]) {
+        return allData[circuitId];
+    }
+    
+    // Get filename for this circuit
+    const filename = circuitFiles[circuitId];
+    if (!filename) {
+        console.warn(`No file mapping found for circuit: ${circuitId}`);
+        return [];
+    }
+    
+    try {
+        const response = await fetch(filename);
+        if (!response.ok) {
+            console.warn(`Could not load ${filename}`);
+            return [];
+        }
+        const text = await response.text();
+        const data = parseCircuitCSV(text, filename);
+        
+        // Cache the loaded data
+        allData[circuitId] = data;
+        console.log(`Loaded circuit ${circuitId} (${data.length} subscribers)`);
+        
+        return data;
+    } catch (err) {
+        console.warn(`Error loading ${filename}:`, err);
+        return [];
+    }
+}
+
+async function loadCircuit(circuitId) {
     currentCircuit = circuitId;
-    const subscribers = allData[circuitId] || [];
+    
+    // Load circuit data on demand
+    const subscribers = await loadCircuitData(circuitId);
     
     document.getElementById('deliveryContent').style.display = 'block';
     
@@ -1998,19 +2065,20 @@ function initializeCircuitTracker() {
     renderCircuitTracker();
 }
 
-function renderCircuitTracker() {
+async function renderCircuitTracker() {
     const tracker = document.getElementById('circuitTracker');
     tracker.innerHTML = '';
     
-    const circuits = Object.keys(allData).sort(sortCircuits);
+    // Use circuitNames instead of allData since we're lazy loading
+    const circuits = Object.keys(circuitNames).sort(sortCircuits);
     
-    circuits.forEach(circuitId => {
-        const item = createCircuitItem(circuitId);
+    for (const circuitId of circuits) {
+        const item = await createCircuitItem(circuitId);
         tracker.appendChild(item);
-    });
+    }
 }
 
-function createCircuitItem(circuitId) {
+async function createCircuitItem(circuitId) {
     const item = document.createElement('div');
     item.className = 'circuit-item';
     
@@ -2045,7 +2113,7 @@ function createCircuitItem(circuitId) {
     
     // Add progress bar for in-progress circuits
     if (status === 'in-progress') {
-        const progressBar = createCircuitProgressBar(circuitId);
+        const progressBar = await createCircuitProgressBar(circuitId);
         if (progressBar) {
             content.appendChild(progressBar);
         }
@@ -2056,8 +2124,9 @@ function createCircuitItem(circuitId) {
     return item;
 }
 
-function createCircuitProgressBar(circuitId) {
-    const data = allData[circuitId];
+async function createCircuitProgressBar(circuitId) {
+    // Load circuit data if not already loaded
+    const data = await loadCircuitData(circuitId);
     if (!data || data.length === 0) return null;
     
     // Filter out subscribers with only STF products

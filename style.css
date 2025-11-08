@@ -141,9 +141,10 @@ body {
         transparent 70%
     );
     border-radius: 50%;
-    animation: glowPulse 3s ease-in-out infinite, hueShift 12s ease-in-out infinite;
+    animation: glowPulse 2s ease-in-out infinite, hueShift 8s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
+    will-change: transform, opacity, background;
 }
 
 @keyframes glowPulse {
@@ -541,6 +542,8 @@ body {
     width: 100%;
     margin-top: 0.75rem;
     margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: center;
 }
 
 .remember-me-label {

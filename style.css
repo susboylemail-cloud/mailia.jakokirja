@@ -433,7 +433,8 @@ body {
 }
 
 .phone-logo {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
+    margin-top: 2rem;
     text-align: center;
     display: flex;
     justify-content: center;
@@ -449,7 +450,7 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.02em;
-    animation: fadeIn 1.5s ease-out forwards, glimmer 3s ease-in-out 2s infinite;
+    animation: fadeIn 3s ease-out forwards, glimmer 8s ease-in-out 3s infinite;
 }
 
 /* Fade In Animation */
@@ -462,7 +463,7 @@ body {
     }
 }
 
-/* Glimmer Animation */
+/* Glimmer Animation - synchronized with background hueShift */
 @keyframes glimmer {
     0%, 100% {
         filter: brightness(1);
@@ -707,21 +708,8 @@ body {
     }
 }
 
-@keyframes pageSlideIn {
-    0% {
-        transform: perspective(1200px) rotateY(90deg);
-        transform-origin: right center;
-        opacity: 0;
-    }
-    100% {
-        transform: perspective(1200px) rotateY(0deg);
-        transform-origin: right center;
-        opacity: 1;
-    }
-}
-
 .login-screen.zoom-transition .phone-device {
-    animation: pageTurn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: pageTurn 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .login-screen.zoom-transition .phone-container {
@@ -729,7 +717,7 @@ body {
 }
 
 .login-screen.zoom-transition {
-    animation: fadeOutBackground 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeOutBackground 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 #mainApp {
@@ -737,9 +725,18 @@ body {
 }
 
 #mainApp.zoom-in {
-    animation: pageSlideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 0.3s;
     opacity: 1;
+    animation: fadeInApp 0.6s ease-out forwards;
+    animation-delay: 1.2s;
+}
+
+@keyframes fadeInApp {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 /* Hide old login elements */

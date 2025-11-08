@@ -486,16 +486,16 @@ async function showMainApp() {
     // Add page-turn transition class
     loginScreen.classList.add('zoom-transition');
     
-    // Show main app with page slide-in after a shorter delay
+    // Show main app with simple fade-in after page turn completes
     setTimeout(() => {
         mainApp.style.display = 'block';
         mainApp.classList.add('zoom-in');
-    }, 300);
+    }, 1200);
     
     // Hide login screen completely after animation
     setTimeout(() => {
         loginScreen.style.display = 'none';
-    }, 1100);
+    }, 2400);
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();

@@ -442,132 +442,53 @@ body {
     gap: 0.75rem;
 }
 
-/* Circular Stamp Logo - Old School Refined Design */
-.stamp-logo {
-    width: 90px;
-    height: 90px;
+/* Logo Image - Blends into Phone Background */
+.phone-logo {
     position: relative;
+    width: 140px;
+    height: auto;
     opacity: 0;
     flex: 0 0 auto;
+    animation: logoFadeIn 1.5s ease-out 0.5s forwards;
 }
 
-.stamp-logo.stamping {
-    animation: stampDown 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-}
-
-.stamp-logo.stamped {
+.phone-logo-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* Blend into phone background */
+    mix-blend-mode: screen;
     opacity: 0.85;
+    /* Smooth edges for better integration */
+    filter: brightness(1.1) contrast(0.95);
+    /* Remove any harsh edges */
+    -webkit-mask-image: linear-gradient(to bottom, 
+        rgba(0,0,0,0) 0%, 
+        rgba(0,0,0,0.8) 10%, 
+        rgba(0,0,0,1) 20%, 
+        rgba(0,0,0,1) 80%, 
+        rgba(0,0,0,0.8) 90%, 
+        rgba(0,0,0,0) 100%
+    );
+    mask-image: linear-gradient(to bottom, 
+        rgba(0,0,0,0) 0%, 
+        rgba(0,0,0,0.8) 10%, 
+        rgba(0,0,0,1) 20%, 
+        rgba(0,0,0,1) 80%, 
+        rgba(0,0,0,0.8) 90%, 
+        rgba(0,0,0,0) 100%
+    );
 }
 
-.stamp-border {
-    width: 100%;
-    height: 100%;
-    border: 4px dashed #8B0000;
-    border-radius: 50%;
-    position: relative;
-    box-shadow: 
-        inset 0 0 0 2px rgba(139, 0, 0, 0.4),
-        0 0 15px rgba(139, 0, 0, 0.2);
-    /* Drip effect using pseudo-element overlays */
-    background: 
-        radial-gradient(ellipse 3px 8px at 20% 15%, #8B0000 0%, transparent 50%),
-        radial-gradient(ellipse 2px 6px at 75% 25%, rgba(139, 0, 0, 0.7) 0%, transparent 50%),
-        radial-gradient(ellipse 3px 7px at 45% 80%, rgba(139, 0, 0, 0.6) 0%, transparent 50%),
-        radial-gradient(ellipse 2px 5px at 85% 70%, rgba(139, 0, 0, 0.5) 0%, transparent 50%);
-}
-
-.stamp-border::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    right: -8px;
-    bottom: -8px;
-    border: 2.5px dashed rgba(139, 0, 0, 0.35);
-    border-radius: 50%;
-}
-
-.stamp-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-5deg);
-    text-align: center;
-    width: 100%;
-}
-
-.stamp-text {
-    font-size: 1.15rem;
-    font-weight: 900;
-    color: #8B0000;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    text-shadow: 
-        1px 1px 0 rgba(139, 0, 0, 0.3),
-        0 0 8px rgba(139, 0, 0, 0.2);
-    font-family: 'Courier New', monospace;
-    line-height: 1;
-    padding: 0 0.2rem;
-}
-
-/* Stamp Animation - Drop, Compress, Bounce, Settle */
-@keyframes stampDown {
+/* Logo Fade In Animation */
+@keyframes logoFadeIn {
     0% {
-        transform: translateY(-150px) rotate(-20deg) scale(1.3);
         opacity: 0;
+        transform: translateY(-10px);
     }
-    50% {
-        transform: translateY(-10px) rotate(-10deg) scale(1.1);
-        opacity: 0.6;
-    }
-    65% {
-        transform: translateY(3px) rotate(-2deg) scale(0.92);
-        opacity: 0.9;
-    }
-    75% {
-        transform: translateY(-2px) rotate(1deg) scale(1.03);
+    100% {
         opacity: 1;
-    }
-    85% {
-        transform: translateY(1px) rotate(-0.5deg) scale(0.98);
-    }
-    95% {
-        transform: translateY(0) rotate(0.2deg) scale(1.01);
-        opacity: 0.9;
-    }
-    100% {
-        transform: translateY(0) rotate(0deg) scale(1);
-        opacity: 0.85;
-    }
-}
-
-/* Impact Splatter Effect */
-.impact-effect {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(139, 0, 0, 0.25) 0%, transparent 60%);
-    animation: inkSplatter 0.5s ease-out forwards;
-    pointer-events: none;
-    z-index: -1;
-}
-
-@keyframes inkSplatter {
-    0% {
-        transform: translate(-50%, -50%) scale(0.7);
-        opacity: 0;
-    }
-    40% {
-        transform: translate(-50%, -50%) scale(1.15);
-        opacity: 0.4;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0;
+        transform: translateY(0);
     }
 }
 

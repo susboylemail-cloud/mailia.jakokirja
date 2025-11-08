@@ -329,64 +329,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeWeatherWidget();
     
     // Initialize stamp animation
-    initializeStampAnimation();
+    initializeLogoAnimation();
 });
 
-// Stamp Animation
-function initializeStampAnimation() {
-    const stamp = document.getElementById('mailiaStamp');
-    if (!stamp) return;
-    
-    // Trigger stamp animation after 1 second
-    setTimeout(() => {
-        performStamp();
-    }, 1000);
+// Logo Animation - Simple fade in (no stamp animation needed)
+function initializeLogoAnimation() {
+    // Logo fades in automatically via CSS animation
+    // No JavaScript needed for the logo
 }
-
-function performStamp() {
-    const stamp = document.getElementById('mailiaStamp');
-    if (!stamp) return;
-    
-    // Start stamping animation
-    stamp.classList.add('stamping');
-    
-    // Add impact effect when stamp hits (at 450ms)
-    setTimeout(() => {
-        const impact = document.createElement('div');
-        impact.className = 'impact-effect';
-        stamp.appendChild(impact);
-        
-        // Add subtle phone shake
-        const phoneDevice = document.querySelector('.phone-device');
-        if (phoneDevice) {
-            phoneDevice.style.animation = 'phoneShake 0.2s';
-            setTimeout(() => {
-                phoneDevice.style.animation = '';
-            }, 200);
-        }
-        
-        // Remove impact effect after animation
-        setTimeout(() => {
-            impact.remove();
-        }, 500);
-    }, 450);
-    
-    // Mark as stamped after animation completes
-    setTimeout(() => {
-        stamp.classList.add('stamped');
-    }, 700);
-}
-
-// Phone shake animation for stamp impact
-const shakeStyle = document.createElement('style');
-shakeStyle.textContent = `
-    @keyframes phoneShake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-1.5px); }
-        75% { transform: translateX(1.5px); }
-    }
-`;
-document.head.appendChild(shakeStyle);
 
 // Authentication
 function checkAuthentication() {

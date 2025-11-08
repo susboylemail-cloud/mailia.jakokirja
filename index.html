@@ -46,6 +46,22 @@
                         <!-- Login Form on Phone Screen -->
                         <div class="phone-login-form">
                             <div class="phone-logo">Mailia</div>
+                            
+                            <!-- iPhone-style Notification - Middle Position -->
+                            <div class="iphone-notification">
+                                <div class="notification-header">
+                                    <svg class="notification-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                    <span class="notification-app">Uutiset</span>
+                                    <span class="notification-time">nyt</span>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Jakeluyhtiö päätti lopettaa paperisodan</div>
+                                    <div class="notification-message">Nyt jakelun ohella pelastetaan puita</div>
+                                </div>
+                            </div>
+                            
                             <form id="loginForm" class="login-form">
                                 <div class="input-group">
                                     <label for="username" class="input-label">
@@ -66,23 +82,6 @@
                                 <div id="loginError" class="login-error" style="display: none;"></div>
                                 <button type="submit" class="phone-login-button">Kirjaudu sisään</button>
                             </form>
-                            
-                            <!-- iPhone-style Notification - Bottom Position -->
-                            <div class="iphone-notification">
-                                <div class="notification-header">
-                                    <svg class="notification-icon-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <line x1="12" y1="8" x2="12" y2="12"/>
-                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                    </svg>
-                                    <span class="notification-app">Uutiset</span>
-                                    <span class="notification-time">nyt</span>
-                                </div>
-                                <div class="notification-content">
-                                    <div class="notification-title">Jakeluyhtiö päätti lopettaa paperisodan</div>
-                                    <div class="notification-message">Nyt jakelun ohella pelastetaan puita</div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

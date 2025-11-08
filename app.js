@@ -164,6 +164,45 @@ const circuitNames = {
 };
 
 // Initialize the app
+// Date widget functionality
+function initializeDateWidget() {
+    const dateWidget = document.getElementById('dateWidget');
+    if (!dateWidget) return;
+    
+    const dateText = dateWidget.querySelector('.date-text');
+    if (!dateText) return;
+    
+    // Format the current date
+    function updateDate() {
+        const now = new Date();
+        const options = { weekday: 'short', month: 'short', day: 'numeric' };
+        const formattedDate = now.toLocaleDateString('fi-FI', options);
+        dateText.textContent = formattedDate;
+    }
+    
+    updateDate();
+    
+    // Toggle dark mode on click
+    dateWidget.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        
+        // Save preference
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('mailiaDarkMode', isDark ? 'true' : 'false');
+    });
+    
+    // Update date at midnight
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const msUntilMidnight = tomorrow - now;
+    
+    setTimeout(() => {
+        updateDate();
+        // Then update every 24 hours
+        setInterval(updateDate, 24 * 60 * 60 * 1000);
+    }, msUntilMidnight);
+}
+
 // Weather widget functionality
 async function initializeWeatherWidget() {
     const weatherWidget = document.getElementById('weatherWidget');
@@ -300,19 +339,6 @@ async function initializeWeatherWidget() {
 }
 
 // Phone theme toggle functionality
-function initializePhoneThemeToggle() {
-    const themeToggle = document.getElementById('phoneThemeToggle');
-    if (!themeToggle) return;
-    
-    themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        
-        // Save preference
-        const isDark = document.body.classList.contains('dark-mode');
-        localStorage.setItem('mailiaDarkMode', isDark ? 'true' : 'false');
-    });
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     // Load saved credentials if available
     loadSavedCredentials();
@@ -341,8 +367,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize weather widget on phone screen
     initializeWeatherWidget();
     
-    // Initialize phone theme toggle
-    initializePhoneThemeToggle();
+    // Initialize date widget (replaces theme toggle)
+    initializeDateWidget();
 });
 
 // Authentication

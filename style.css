@@ -459,7 +459,47 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.02em;
-    animation: fadeIn 3s ease-out forwards;
+    display: inline-block;
+}
+
+.phone-logo-text .letter {
+    display: inline-block;
+    opacity: 0;
+    animation: inkAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards, 
+               glimmer 8s ease-in-out 2s infinite;
+}
+
+/* Ink appearing on paper animation */
+@keyframes inkAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+        filter: blur(2px);
+    }
+    60% {
+        opacity: 0.7;
+        filter: blur(1px);
+    }
+    80% {
+        opacity: 0.95;
+        transform: scale(1.02);
+        filter: blur(0.5px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0px);
+    }
+}
+
+/* Glimmer Animation - synchronized with background hueShift */
+@keyframes glimmer {
+    0%, 100% {
+        filter: brightness(1) blur(0px);
+    }
+    50% {
+        filter: brightness(1.2) blur(0px);
+    }
 }
 
 .phone-widgets {
@@ -497,64 +537,31 @@ body {
     white-space: nowrap;
 }
 
-/* Theme Toggle Button */
-.theme-toggle {
+/* Date Widget - Pill Shape */
+.date-widget {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 50px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    padding: 0;
-    color: rgba(255, 255, 255, 0.9);
-    position: relative;
 }
 
-.theme-toggle:hover {
+.date-widget:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
 }
 
-.theme-icon {
-    width: 18px;
-    height: 18px;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    position: absolute;
-}
-
-.theme-sun {
-    opacity: 1;
-    transform: rotate(0deg);
-}
-
-.theme-moon {
-    opacity: 0;
-    transform: rotate(90deg);
-}
-
-body.dark-mode .phone-screen .theme-toggle .theme-sun {
-    opacity: 0;
-    transform: rotate(-90deg);
-}
-
-body.dark-mode .phone-screen .theme-toggle .theme-moon {
-    opacity: 1;
-    transform: rotate(0deg);
-}
-
-/* Fade In Animation */
-@keyframes fadeIn {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
+.date-text {
+    line-height: 1;
+    white-space: nowrap;
 }
 
 /* Input Groups and Labels for Better Touch Targets */

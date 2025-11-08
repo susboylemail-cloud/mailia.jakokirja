@@ -130,14 +130,14 @@ body {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    height: 400px;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    width: 280px;
+    height: 280px;
     background: radial-gradient(
         circle,
-        rgba(74, 144, 226, 0.4) 0%,
-        rgba(74, 144, 226, 0.2) 30%,
-        rgba(74, 144, 226, 0.1) 50%,
+        rgba(74, 144, 226, 0.3) 0%,
+        rgba(74, 144, 226, 0.15) 30%,
+        rgba(74, 144, 226, 0.08) 50%,
         transparent 70%
     );
     border-radius: 50%;
@@ -149,12 +149,12 @@ body {
 
 @keyframes glowPulse {
     0%, 100% {
-        opacity: 0.6;
-        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+        transform: translate(-50%, -50%) rotate(-15deg) scale(1);
     }
     50% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 0.8;
+        transform: translate(-50%, -50%) rotate(-15deg) scale(1.05);
     }
 }
 
@@ -162,54 +162,54 @@ body {
     0% {
         background: radial-gradient(
             circle,
-            rgba(74, 144, 226, 0.4) 0%,    /* primary-blue */
-            rgba(74, 144, 226, 0.2) 30%,
-            rgba(74, 144, 226, 0.1) 50%,
+            rgba(74, 144, 226, 0.3) 0%,    /* primary-blue */
+            rgba(74, 144, 226, 0.15) 30%,
+            rgba(74, 144, 226, 0.08) 50%,
             transparent 70%
         );
     }
     20% {
         background: radial-gradient(
             circle,
-            rgba(93, 173, 226, 0.4) 0%,    /* accent-blue */
-            rgba(93, 173, 226, 0.2) 30%,
-            rgba(93, 173, 226, 0.1) 50%,
+            rgba(93, 173, 226, 0.3) 0%,    /* accent-blue */
+            rgba(93, 173, 226, 0.15) 30%,
+            rgba(93, 173, 226, 0.08) 50%,
             transparent 70%
         );
     }
     40% {
         background: radial-gradient(
             circle,
-            rgba(88, 214, 141, 0.4) 0%,    /* primary-green */
-            rgba(88, 214, 141, 0.2) 30%,
-            rgba(88, 214, 141, 0.1) 50%,
+            rgba(88, 214, 141, 0.3) 0%,    /* primary-green */
+            rgba(88, 214, 141, 0.15) 30%,
+            rgba(88, 214, 141, 0.08) 50%,
             transparent 70%
         );
     }
     60% {
         background: radial-gradient(
             circle,
-            rgba(249, 168, 37, 0.4) 0%,    /* yellow-accent */
-            rgba(249, 168, 37, 0.2) 30%,
-            rgba(249, 168, 37, 0.1) 50%,
+            rgba(249, 168, 37, 0.3) 0%,    /* yellow-accent */
+            rgba(249, 168, 37, 0.15) 30%,
+            rgba(249, 168, 37, 0.08) 50%,
             transparent 70%
         );
     }
     80% {
         background: radial-gradient(
             circle,
-            rgba(255, 107, 53, 0.4) 0%,    /* orange-accent */
-            rgba(255, 107, 53, 0.2) 30%,
-            rgba(255, 107, 53, 0.1) 50%,
+            rgba(255, 107, 53, 0.3) 0%,    /* orange-accent */
+            rgba(255, 107, 53, 0.15) 30%,
+            rgba(255, 107, 53, 0.08) 50%,
             transparent 70%
         );
     }
     100% {
         background: radial-gradient(
             circle,
-            rgba(74, 144, 226, 0.4) 0%,    /* back to primary-blue */
-            rgba(74, 144, 226, 0.2) 30%,
-            rgba(74, 144, 226, 0.1) 50%,
+            rgba(74, 144, 226, 0.3) 0%,    /* back to primary-blue */
+            rgba(74, 144, 226, 0.15) 30%,
+            rgba(74, 144, 226, 0.08) 50%,
             transparent 70%
         );
     }
@@ -425,15 +425,13 @@ body {
 
 .phone-logo-text {
     font-size: 3.5rem;
-    font-weight: 700;
+    font-weight: 600;
     margin: 0;
     background: linear-gradient(135deg, #E07856 0%, #DC3545 50%, #C82333 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: 0 4px 20px rgba(224, 120, 86, 0.4);
     letter-spacing: -0.02em;
-    filter: drop-shadow(0 4px 12px rgba(224, 120, 86, 0.5));
 }
 
 /* Input Groups and Labels for Better Touch Targets */

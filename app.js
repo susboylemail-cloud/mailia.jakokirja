@@ -55,6 +55,7 @@ let userRole = null; // 'delivery' or 'admin'
 let routeMessages = []; // Store route messages for admin panel
 let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
 let isLoadingCircuit = false; // Prevent concurrent circuit loads
+let isRenderingTracker = false; // Prevent concurrent tracker renders
 
 // Circuit file mapping for lazy loading
 const circuitFiles = {
@@ -2450,15 +2451,34 @@ function initializeCircuitTracker() {
 }
 
 async function renderCircuitTracker() {
-    const tracker = document.getElementById('circuitTracker');
-    tracker.innerHTML = '';
+    // Prevent concurrent renders
+    if (isRenderingTracker) {
+        console.log('Circuit tracker render already in progress, ignoring request');
+        return;
+    }
     
-    // Use circuitNames instead of allData since we're lazy loading
-    const circuits = Object.keys(circuitNames).sort(sortCircuits);
+    isRenderingTracker = true;
     
-    for (const circuitId of circuits) {
-        const item = await createCircuitItem(circuitId);
-        tracker.appendChild(item);
+    try {
+        const tracker = document.getElementById('circuitTracker');
+        if (!tracker) {
+            console.error('circuitTracker element not found');
+            return;
+        }
+        
+        tracker.innerHTML = '';
+        
+        // Use circuitNames instead of allData since we're lazy loading
+        const circuits = Object.keys(circuitNames).sort(sortCircuits);
+        
+        for (const circuitId of circuits) {
+            const item = await createCircuitItem(circuitId);
+            tracker.appendChild(item);
+        }
+    } catch (error) {
+        console.error('Error rendering circuit tracker:', error);
+    } finally {
+        isRenderingTracker = false;
     }
 }
 

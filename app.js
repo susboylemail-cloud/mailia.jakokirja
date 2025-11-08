@@ -1998,10 +1998,16 @@ function completeRoute(circuitId) {
     const now = new Date();
     const key = `route_end_${circuitId}`;
     
-    // Show loading overlay
+    // Show success animation immediately - centered on viewport
     const loader = document.getElementById('routeCompleteLoader');
     if (loader) {
         loader.style.display = 'flex';
+        // Ensure it's on top and centered regardless of scroll position
+        loader.style.position = 'fixed';
+        loader.style.top = '0';
+        loader.style.left = '0';
+        loader.style.width = '100%';
+        loader.style.height = '100%';
     }
     
     // Save completion time
@@ -2015,18 +2021,25 @@ function completeRoute(circuitId) {
     const cards = subscriberList.querySelectorAll('.subscriber-card');
     const totalAnimationTime = cards.length * 40 + 400; // Match hideSubscriberListWithAnimation timing
     
-    // Hide loader after animations complete
+    // Keep success animation visible for 1.5 seconds total, then fade out
+    const displayDuration = Math.max(1500, totalAnimationTime);
+    
     setTimeout(() => {
         if (loader) {
             loader.style.opacity = '0';
-            loader.style.transition = 'opacity 0.3s ease-out';
+            loader.style.transition = 'opacity 0.4s ease-out';
             setTimeout(() => {
                 loader.style.display = 'none';
                 loader.style.opacity = '';
                 loader.style.transition = '';
-            }, 300);
+                loader.style.position = '';
+                loader.style.top = '';
+                loader.style.left = '';
+                loader.style.width = '';
+                loader.style.height = '';
+            }, 400);
         }
-    }, totalAnimationTime);
+    }, displayDuration);
     
     updateRouteButtons(circuitId);
     updateCircuitStatus(circuitId, 'completed');

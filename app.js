@@ -895,6 +895,22 @@ function extractBuildingAddress(address) {
     return building || address;
 }
 
+function extractApartmentSpecification(fullAddress, buildingAddress) {
+    // Extract the apartment/house specification by removing the building part
+    // Examples: 
+    //   "PIHATIE 3 C 15", "PIHATIE 3 C" -> "15"
+    //   "KOULUTIE 5 C 20", "KOULUTIE 5 C" -> "20"
+    //   "PAJUPOLKU 6", "PAJUPOLKU 6" -> "" (no apartment)
+    
+    if (!buildingAddress || fullAddress === buildingAddress) {
+        return ''; // No apartment specification
+    }
+    
+    // Remove the building address from the full address to get the apartment spec
+    let spec = fullAddress.replace(buildingAddress, '').trim();
+    return spec;
+}
+
 // Circuit Selector
 let circuitSearchMemory = '';
 let favoriteCircuits = [];
@@ -1396,11 +1412,14 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const info = document.createElement('div');
     info.className = 'subscriber-info';
     
-    // Display full address
-    const address = document.createElement('div');
-    address.className = 'subscriber-address';
-    address.textContent = subscriber.address;
-    info.appendChild(address);
+    // Display apartment/house specification (not full address to avoid duplication)
+    const apartmentSpec = extractApartmentSpecification(subscriber.address, subscriber.buildingAddress);
+    if (apartmentSpec) {
+        const apartment = document.createElement('div');
+        apartment.className = 'subscriber-apartment';
+        apartment.textContent = apartmentSpec;
+        info.appendChild(apartment);
+    }
     
     const name = document.createElement('div');
     name.className = 'subscriber-name';

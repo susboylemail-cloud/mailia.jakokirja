@@ -1482,6 +1482,13 @@ body.dark-mode .building-header {
     color: var(--text-color);
 }
 
+.subscriber-apartment {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-color);
+}
+
 .subscriber-name {
     font-size: 1.125rem; /* 25% increase from 0.9rem */
     font-weight: 600;

@@ -300,66 +300,6 @@ async function initializeWeatherWidget() {
 }
 
 // Phone theme toggle functionality
-// Stamp animation logic
-let isStampAnimating = false;
-
-function performStamp() {
-    if (isStampAnimating) return;
-    
-    isStampAnimating = true;
-    const stamp = document.getElementById('mailiaStamp');
-    const phoneLogin = document.querySelector('.phone-login-form');
-    
-    if (!stamp || !phoneLogin) return;
-    
-    // Reset stamp
-    stamp.classList.remove('stamping', 'stamped');
-    
-    // Remove any existing impact effects
-    const existingImpact = phoneLogin.querySelector('.impact-effect');
-    if (existingImpact) {
-        existingImpact.remove();
-    }
-    
-    // Start stamping animation
-    setTimeout(() => {
-        stamp.classList.add('stamping');
-        
-        // Add impact effect when stamp hits
-        setTimeout(() => {
-            const impact = document.createElement('div');
-            impact.className = 'impact-effect';
-            stamp.appendChild(impact);
-            
-            // Screen shake effect
-            playStampSound();
-            
-            // Remove impact effect after animation
-            setTimeout(() => {
-                impact.remove();
-            }, 600);
-        }, 500);
-        
-        // Mark as stamped after animation completes
-        setTimeout(() => {
-            stamp.classList.remove('stamping');
-            stamp.classList.add('stamped');
-            isStampAnimating = false;
-        }, 800);
-    }, 100);
-}
-
-// Visual feedback - screen shake
-function playStampSound() {
-    const phoneDevice = document.querySelector('.phone-device');
-    if (phoneDevice) {
-        phoneDevice.style.animation = 'phoneShake 0.2s';
-        setTimeout(() => {
-            phoneDevice.style.animation = '';
-        }, 200);
-    }
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     // Load saved credentials if available
     loadSavedCredentials();
@@ -388,11 +328,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize weather widget on phone screen
     initializeWeatherWidget();
     
-    // Trigger stamp animation after a short delay
+    // Initialize stamp animation
+    initializeStampAnimation();
+});
+
+// Stamp Animation
+function initializeStampAnimation() {
+    const stamp = document.getElementById('mailiaStamp');
+    if (!stamp) return;
+    
+    // Trigger stamp animation after 1 second
     setTimeout(() => {
         performStamp();
     }, 1000);
-});
+}
+
+function performStamp() {
+    const stamp = document.getElementById('mailiaStamp');
+    if (!stamp) return;
+    
+    // Start stamping animation
+    stamp.classList.add('stamping');
+    
+    // Add impact effect when stamp hits (at 450ms)
+    setTimeout(() => {
+        const impact = document.createElement('div');
+        impact.className = 'impact-effect';
+        stamp.appendChild(impact);
+        
+        // Add subtle phone shake
+        const phoneDevice = document.querySelector('.phone-device');
+        if (phoneDevice) {
+            phoneDevice.style.animation = 'phoneShake 0.2s';
+            setTimeout(() => {
+                phoneDevice.style.animation = '';
+            }, 200);
+        }
+        
+        // Remove impact effect after animation
+        setTimeout(() => {
+            impact.remove();
+        }, 500);
+    }, 450);
+    
+    // Mark as stamped after animation completes
+    setTimeout(() => {
+        stamp.classList.add('stamped');
+    }, 700);
+}
+
+// Phone shake animation for stamp impact
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `
+    @keyframes phoneShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-1.5px); }
+        75% { transform: translateX(1.5px); }
+    }
+`;
+document.head.appendChild(shakeStyle);
 
 // Authentication
 function checkAuthentication() {

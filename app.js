@@ -1944,6 +1944,9 @@ function startRoute(circuitId) {
     const endKey = `route_end_${circuitId}`;
     const completeKey = `route_complete_${circuitId}`;
     
+    // Check if route was previously completed
+    const wasCompleted = localStorage.getItem(endKey) !== null;
+    
     // Clear any existing completion data when restarting route
     localStorage.removeItem(completeKey);
     localStorage.removeItem(endKey);  // Also clear end time to fully reset route
@@ -1954,8 +1957,17 @@ function startRoute(circuitId) {
     // Show the subscriber list with cascading animation
     showSubscriberListWithAnimation();
     
+    // Update UI to reflect in-progress state
     updateRouteButtons(circuitId);
     updateCircuitStatus(circuitId, 'in-progress');
+    
+    // If route was previously completed, ensure complete button is visible
+    if (wasCompleted) {
+        const completeBtn = document.getElementById('completeRouteBtn');
+        const endTimeDisplay = document.getElementById('routeEndTime');
+        if (completeBtn) completeBtn.style.display = 'block';
+        if (endTimeDisplay) endTimeDisplay.style.display = 'none';
+    }
 }
 
 function showSubscriberListWithAnimation() {

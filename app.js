@@ -164,6 +164,57 @@ const circuitNames = {
 };
 
 // Initialize the app
+// Weather widget functionality
+function initializeWeatherWidget() {
+    const weatherWidget = document.getElementById('weatherWidget');
+    if (!weatherWidget) return;
+    
+    // Simulated weather data - in production, this would fetch from a weather API
+    const weatherConditions = [
+        { icon: '☀️', temp: 22, condition: 'sunny' },
+        { icon: '⛅', temp: 18, condition: 'partly-cloudy' },
+        { icon: '☁️', temp: 15, condition: 'cloudy' },
+        { icon: '🌧️', temp: 12, condition: 'rainy' }
+    ];
+    
+    // Get current weather based on time of day (simple simulation)
+    const hour = new Date().getHours();
+    let weatherIndex = 0; // Default to sunny
+    
+    if (hour >= 6 && hour < 12) {
+        weatherIndex = 0; // Morning - sunny
+    } else if (hour >= 12 && hour < 18) {
+        weatherIndex = 1; // Afternoon - partly cloudy
+    } else if (hour >= 18 && hour < 21) {
+        weatherIndex = 2; // Evening - cloudy
+    } else {
+        weatherIndex = 3; // Night - rainy
+    }
+    
+    const weather = weatherConditions[weatherIndex];
+    const iconSpan = weatherWidget.querySelector('.weather-icon');
+    const tempSpan = weatherWidget.querySelector('.weather-temp');
+    
+    if (iconSpan && tempSpan) {
+        iconSpan.textContent = weather.icon;
+        tempSpan.textContent = `${weather.temp}°C`;
+    }
+}
+
+// Phone theme toggle functionality
+function initializePhoneThemeToggle() {
+    const themeToggle = document.getElementById('phoneThemeToggle');
+    if (!themeToggle) return;
+    
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        
+        // Save preference
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('mailiaDarkMode', isDark ? 'true' : 'false');
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Load saved credentials if available
     loadSavedCredentials();
@@ -188,6 +239,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Update notification time to show current device time
     updateNotificationTime();
+    
+    // Initialize weather widget on phone screen
+    initializeWeatherWidget();
+    
+    // Initialize phone theme toggle
+    initializePhoneThemeToggle();
 });
 
 // Authentication

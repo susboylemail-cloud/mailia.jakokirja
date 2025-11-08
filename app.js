@@ -165,7 +165,7 @@ const circuitNames = {
 
 // Initialize the app
 // Weather widget functionality
-function initializeWeatherWidget() {
+async function initializeWeatherWidget() {
     const weatherWidget = document.getElementById('weatherWidget');
     if (!weatherWidget) return;
     
@@ -187,38 +187,115 @@ function initializeWeatherWidget() {
         rainy: `<line x1="16" y1="13" x2="16" y2="21"></line>
                 <line x1="8" y1="13" x2="8" y2="21"></line>
                 <line x1="12" y1="15" x2="12" y2="23"></line>
-                <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>`
+                <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>`,
+        snow: `<path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path>
+               <line x1="8" y1="16" x2="8" y2="16"></line>
+               <line x1="8" y1="20" x2="8" y2="20"></line>
+               <line x1="12" y1="18" x2="12" y2="18"></line>
+               <line x1="12" y1="22" x2="12" y2="22"></line>
+               <line x1="16" y1="16" x2="16" y2="16"></line>
+               <line x1="16" y1="20" x2="16" y2="20"></line>`
     };
     
-    // Simulated weather data
-    const weatherConditions = [
-        { icon: 'sunny', temp: 22, condition: 'sunny' },
-        { icon: 'partlyCloudy', temp: 18, condition: 'partly-cloudy' },
-        { icon: 'cloudy', temp: 15, condition: 'cloudy' },
-        { icon: 'rainy', temp: 12, condition: 'rainy' }
-    ];
-    
-    // Get current weather based on time of day
-    const hour = new Date().getHours();
-    let weatherIndex = 0; // Default to sunny
-    
-    if (hour >= 6 && hour < 12) {
-        weatherIndex = 0; // Morning - sunny
-    } else if (hour >= 12 && hour < 18) {
-        weatherIndex = 1; // Afternoon - partly cloudy
-    } else if (hour >= 18 && hour < 21) {
-        weatherIndex = 2; // Evening - cloudy
-    } else {
-        weatherIndex = 3; // Night - rainy
-    }
-    
-    const weather = weatherConditions[weatherIndex];
     const iconSvg = weatherWidget.querySelector('.weather-icon');
     const tempSpan = weatherWidget.querySelector('.weather-temp');
     
-    if (iconSvg && tempSpan) {
-        iconSvg.innerHTML = weatherIcons[weather.icon];
-        tempSpan.textContent = `${weather.temp}°C`;
+    // Function to update weather display
+    function updateWeatherDisplay(temp, condition) {
+        if (iconSvg && tempSpan) {
+            let iconKey = 'sunny';
+            
+            // Map weather conditions to icon types
+            if (condition.includes('clear') || condition.includes('sunny')) {
+                iconKey = 'sunny';
+            } else if (condition.includes('cloud') && (condition.includes('partly') || condition.includes('few'))) {
+                iconKey = 'partlyCloudy';
+            } else if (condition.includes('cloud') || condition.includes('overcast')) {
+                iconKey = 'cloudy';
+            } else if (condition.includes('rain') || condition.includes('drizzle') || condition.includes('shower')) {
+                iconKey = 'rainy';
+            } else if (condition.includes('snow') || condition.includes('sleet')) {
+                iconKey = 'snow';
+            }
+            
+            iconSvg.innerHTML = weatherIcons[iconKey];
+            tempSpan.textContent = `${Math.round(temp)}°C`;
+        }
+    }
+    
+    // Try to get user's location and fetch weather
+    if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                
+                try {
+                    // Using Open-Meteo API (free, no API key required)
+                    const response = await fetch(
+                        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=auto`
+                    );
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const temp = data.current.temperature_2m;
+                        const weatherCode = data.current.weather_code;
+                        
+                        // Map WMO weather codes to conditions
+                        let condition = 'clear';
+                        if (weatherCode === 0) condition = 'clear';
+                        else if ([1, 2].includes(weatherCode)) condition = 'partly cloudy';
+                        else if (weatherCode === 3) condition = 'overcast';
+                        else if ([45, 48].includes(weatherCode)) condition = 'fog';
+                        else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(weatherCode)) condition = 'rain';
+                        else if ([71, 73, 75, 77, 85, 86].includes(weatherCode)) condition = 'snow';
+                        else if ([95, 96, 99].includes(weatherCode)) condition = 'thunderstorm';
+                        
+                        updateWeatherDisplay(temp, condition);
+                    } else {
+                        throw new Error('Weather API response not ok');
+                    }
+                } catch (error) {
+                    console.warn('Failed to fetch weather data:', error);
+                    // Fall back to time-based simulation
+                    useFallbackWeather();
+                }
+            },
+            (error) => {
+                console.warn('Geolocation error:', error);
+                // Fall back to time-based simulation
+                useFallbackWeather();
+            },
+            {
+                timeout: 5000,
+                maximumAge: 300000 // Cache position for 5 minutes
+            }
+        );
+    } else {
+        // Geolocation not supported, use fallback
+        useFallbackWeather();
+    }
+    
+    // Fallback weather based on time of day
+    function useFallbackWeather() {
+        const hour = new Date().getHours();
+        let temp = 20;
+        let condition = 'clear';
+        
+        if (hour >= 6 && hour < 12) {
+            temp = 22;
+            condition = 'clear';
+        } else if (hour >= 12 && hour < 18) {
+            temp = 18;
+            condition = 'partly cloudy';
+        } else if (hour >= 18 && hour < 21) {
+            temp = 15;
+            condition = 'cloudy';
+        } else {
+            temp = 12;
+            condition = 'rain';
+        }
+        
+        updateWeatherDisplay(temp, condition);
     }
 }
 

@@ -155,6 +155,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize phone status bar with real-time updates
     initializePhoneStatusBar();
+    
+    // Update notification time to show current device time
+    updateNotificationTime();
 });
 
 // Authentication
@@ -954,11 +957,11 @@ function populateCircuitSelector() {
         renderCircuitOptions(search.value);
     }
     
-    function selectCircuit(circuit) {
+    async function selectCircuit(circuit) {
         display.querySelector('span').textContent = circuitNames[circuit] || circuit;
         dropdown.style.display = 'none';
         customSelect.classList.remove('open');
-        loadCircuit(circuit);
+        await loadCircuit(circuit);
         search.value = '';
         circuitSearchMemory = '';
     }
@@ -2256,4 +2259,15 @@ function scheduleMidnightReset() {
         // Schedule next midnight reset
         scheduleMidnightReset();
     }, timeUntilMidnight);
+}
+
+// Update notification time to show current device time
+function updateNotificationTime() {
+    const timeElement = document.getElementById('notificationTime');
+    if (timeElement) {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        timeElement.textContent = `${hours}:${minutes}`;
+    }
 }

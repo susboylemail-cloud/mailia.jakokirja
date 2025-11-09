@@ -1676,6 +1676,7 @@ body.dark-mode .route-time {
 
 .building-name {
     flex: 1;
+    color: #ff8c42; /* Soft orange to differentiate building addresses */
 }
 
 .building-delivery-count {

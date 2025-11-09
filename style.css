@@ -1764,16 +1764,16 @@ body.dark-mode .building-header {
 
 .subscriber-address {
     font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
-    color: var(--text-color);
+    font-size: 1.1rem; /* Increased for better readability */
+    margin-bottom: 0.5rem; /* Increased spacing between address and name */
+    color: #ff8c42; /* Soft orange to differentiate from name */
 }
 
 .subscriber-apartment {
     font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
-    color: var(--text-color);
+    font-size: 1.1rem; /* Increased for better readability */
+    margin-bottom: 0.5rem; /* Increased spacing between apartment and name */
+    color: #ff8c42; /* Soft orange to differentiate from name */
 }
 
 .subscriber-name {

@@ -244,19 +244,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Reset Status Dialog -->
-                <div id="resetStatusDialog" class="custom-dialog" style="display: none;">
-                    <div class="custom-dialog-content" style="max-width: 500px;">
-                        <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Nollaa jakelustatus</h3>
-                        <div style="margin-bottom: 1.5rem; color: var(--text-color); font-size: 0.95rem;">Valitse nollattavat piirit:</div>
-                        <div id="circuitCheckboxes" style="max-height: 400px; overflow-y: auto; margin-bottom: 1.5rem;"></div>
-                        <div class="custom-dialog-buttons">
-                            <button id="resetStatusCancel" class="custom-dialog-btn cancel-btn">Peruuta</button>
-                            <button id="resetStatusConfirm" class="custom-dialog-btn confirm-btn">Nollaa valitut</button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -277,6 +264,20 @@
             <div id="routeMessages" class="route-messages"></div>
         </div>
     </main>
+    
+    <!-- Reset Status Dialog (Global Overlay) -->
+    <div id="resetStatusDialog" class="custom-dialog" style="display: none;">
+        <div class="custom-dialog-content" style="max-width: 500px;">
+            <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Nollaa jakelustatus</h3>
+            <div style="margin-bottom: 1.5rem; color: var(--text-color); font-size: 0.95rem;">Valitse nollattavat piirit:</div>
+            <div id="circuitCheckboxes" style="max-height: 400px; overflow-y: auto; margin-bottom: 1.5rem;"></div>
+            <div class="custom-dialog-buttons">
+                <button id="resetStatusCancel" class="custom-dialog-btn cancel-btn">Peruuta</button>
+                <button id="resetStatusConfirm" class="custom-dialog-btn confirm-btn">Nollaa valitut</button>
+            </div>
+        </div>
+    </div>
+    
     </div>
     <!-- End Main Application -->
 

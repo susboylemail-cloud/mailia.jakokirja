@@ -4,7 +4,7 @@
 const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
 
 // Custom confirm dialog to match app theme
-function customConfirm(message) {
+function customConfirm(message, clickEvent = null) {
     return new Promise((resolve) => {
         const dialog = document.getElementById('customConfirmDialog');
         const messageEl = document.getElementById('customConfirmMessage');
@@ -13,6 +13,26 @@ function customConfirm(message) {
         
         messageEl.textContent = message;
         dialog.style.display = 'flex';
+        
+        // Position dialog near the click location if provided
+        if (clickEvent) {
+            const dialogContent = dialog.querySelector('.custom-dialog-content');
+            const rect = clickEvent.target.closest('.circuit-item').getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Position dialog content near the clicked item
+            dialogContent.style.position = 'absolute';
+            dialogContent.style.top = `${rect.top + scrollTop + rect.height / 2}px`;
+            dialogContent.style.left = '50%';
+            dialogContent.style.transform = 'translate(-50%, -50%)';
+        } else {
+            // Center positioning for non-positioned dialogs
+            const dialogContent = dialog.querySelector('.custom-dialog-content');
+            dialogContent.style.position = 'fixed';
+            dialogContent.style.top = '50%';
+            dialogContent.style.left = '50%';
+            dialogContent.style.transform = 'translate(-50%, -50%)';
+        }
         
         const handleOk = () => {
             dialog.style.display = 'none';
@@ -54,6 +74,8 @@ let isAuthenticated = false;
 let userRole = null; // 'delivery' or 'admin'
 let routeMessages = []; // Store route messages for admin panel
 let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
+let isLoadingCircuit = false; // Prevent concurrent circuit loads
+let isRenderingTracker = false; // Prevent concurrent tracker renders
 
 // Circuit file mapping for lazy loading
 const circuitFiles = {
@@ -627,23 +649,23 @@ function updateCheckboxVisibility() {
 
 
 async function showMainApp() {
-    // Start the page-turn transition animation
+    // Start the phone rise up transition animation
     const loginScreen = document.getElementById('loginScreen');
     const mainApp = document.getElementById('mainApp');
     
-    // Add page-turn transition class
+    // Add rise up transition class
     loginScreen.classList.add('zoom-transition');
     
-    // Show main app with simple fade-in after page turn completes
+    // Show main app and start slide-up animation from bottom
     setTimeout(() => {
         mainApp.style.display = 'block';
         mainApp.classList.add('zoom-in');
-    }, 1200);
+    }, 300);
     
     // Hide login screen completely after animation
     setTimeout(() => {
         loginScreen.style.display = 'none';
-    }, 2400);
+    }, 1500);
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();
@@ -1118,6 +1140,11 @@ function populateCircuitSelector() {
     const search = document.getElementById('circuitSearch');
     const optionsContainer = document.getElementById('circuitOptions');
     
+    if (!customSelect || !display || !dropdown || !search || !optionsContainer) {
+        console.error('Circuit selector elements not found');
+        return;
+    }
+    
     const circuits = Object.keys(circuitFiles).sort(sortCircuits);
     
     // Render circuit options
@@ -1183,13 +1210,29 @@ function populateCircuitSelector() {
     }
     
     async function selectCircuit(circuit) {
+        // Prevent concurrent circuit loads
+        if (isLoadingCircuit) {
+            console.log('Circuit load already in progress, ignoring click');
+            return;
+        }
+        
+        isLoadingCircuit = true;
         const displayText = display.querySelector('.circuit-display-text');
         displayText.textContent = circuitNames[circuit] || circuit;
         dropdown.style.display = 'none';
         customSelect.classList.remove('open');
-        await loadCircuit(circuit);
-        search.value = '';
-        circuitSearchMemory = '';
+        
+        try {
+            await loadCircuit(circuit);
+            search.value = '';
+            circuitSearchMemory = '';
+        } catch (error) {
+            console.error('Error loading circuit:', error);
+            // Reset display on error
+            displayText.textContent = 'Valitse piiri';
+        } finally {
+            isLoadingCircuit = false;
+        }
     }
     
     // Toggle dropdown
@@ -1281,34 +1324,54 @@ async function loadCircuitData(circuitId) {
 async function loadCircuit(circuitId) {
     currentCircuit = circuitId;
     
-    // Load circuit data on demand
-    const subscribers = await loadCircuitData(circuitId);
-    
-    document.getElementById('deliveryContent').style.display = 'block';
-    
-    renderCoverSheet(circuitId, subscribers);
-    renderSubscriberList(circuitId, subscribers);
-    updateRouteButtons(circuitId);
-    
-    // Hide subscriber list initially - it will be shown when route starts
-    const subscriberList = document.getElementById('subscriberList');
-    const startKey = `route_start_${circuitId}`;
-    const routeStarted = localStorage.getItem(startKey);
-    
-    if (!routeStarted) {
-        // Route not started yet - hide the list
-        subscriberList.style.display = 'none';
-    } else {
-        // Route already started - show the list
-        subscriberList.style.display = 'block';
+    try {
+        // Load circuit data on demand
+        const subscribers = await loadCircuitData(circuitId);
+        
+        const deliveryContent = document.getElementById('deliveryContent');
+        if (!deliveryContent) {
+            console.error('deliveryContent element not found');
+            return;
+        }
+        
+        deliveryContent.style.display = 'block';
+        
+        renderCoverSheet(circuitId, subscribers);
+        renderSubscriberList(circuitId, subscribers);
+        updateRouteButtons(circuitId);
+        
+        // Hide subscriber list initially - it will be shown when route starts
+        const subscriberList = document.getElementById('subscriberList');
+        if (!subscriberList) {
+            console.error('subscriberList element not found');
+            return;
+        }
+        
+        const startKey = `route_start_${circuitId}`;
+        const routeStarted = localStorage.getItem(startKey);
+        
+        if (!routeStarted) {
+            // Route not started yet - hide the list
+            subscriberList.style.display = 'none';
+        } else {
+            // Route already started - show the list
+            subscriberList.style.display = 'block';
+        }
+        
+        // Restore filter states
+        const hideStf = localStorage.getItem('hideStf') === 'true';
+        const hideDelivered = localStorage.getItem('hideDelivered') === 'true';
+        const hideStfFilter = document.getElementById('hideStfFilter');
+        const hideDeliveredFilter = document.getElementById('hideDeliveredFilter');
+        
+        if (hideStfFilter) hideStfFilter.checked = hideStf;
+        if (hideDeliveredFilter) hideDeliveredFilter.checked = hideDelivered;
+        
+        applyFilters();
+    } catch (error) {
+        console.error('Error in loadCircuit:', error);
+        throw error; // Re-throw to be caught by selectCircuit
     }
-    
-    // Restore filter states
-    const hideStf = localStorage.getItem('hideStf') === 'true';
-    const hideDelivered = localStorage.getItem('hideDelivered') === 'true';
-    document.getElementById('hideStfFilter').checked = hideStf;
-    document.getElementById('hideDeliveredFilter').checked = hideDelivered;
-    applyFilters();
 }
 
 // Cover Sheet
@@ -1924,17 +1987,18 @@ function reportUndelivered(circuitId, subscriber) {
     
     const dialogBox = document.createElement('div');
     dialogBox.style.cssText = `
-        background: var(--background-color);
+        background: var(--card-bg);
         padding: 2rem;
         border-radius: 12px;
         max-width: 400px;
         width: 90%;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border-color);
     `;
     
     dialogBox.innerHTML = `
-        <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem;">Jakeluhäiriön ilmoitus</h3>
-        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--background-color); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none;">
+        <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem; font-weight: 600;">Jakeluhäiriön ilmoitus</h3>
+        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--card-bg); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer;">
             <option value="">Valitse syy</option>
             <option value="Ei pääsyä">Ei pääsyä</option>
             <option value="Avaimongelma">Avainongelma</option>
@@ -1942,12 +2006,12 @@ function reportUndelivered(circuitId, subscriber) {
             <option value="Muu">Muu</option>
         </select>
         <div id="customReasonContainer" style="display: none; margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Tarkenna:</label>
-            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 1rem; resize: vertical; background: var(--background-color); color: var(--text-color);"></textarea>
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color); font-weight: 500;">Tarkenna:</label>
+            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; resize: vertical; background: var(--card-bg); color: var(--text-color); font-family: inherit;"></textarea>
         </div>
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 1.5px solid var(--border-color); background: var(--background-color); color: var(--text-color); border-radius: 8px; cursor: pointer; font-size: 1rem;">Peruuta</button>
-            <button id="submitBtn" style="padding: 0.75rem 1.5rem; border: none; background: var(--primary-blue); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem;">Lähetä</button>
+            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 2px solid var(--border-color); background: transparent; color: var(--text-color); border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 500;">Peruuta</button>
+            <button id="submitBtn" style="padding: 0.75rem 1.5rem; border: none; background: var(--primary-blue); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);">Lähetä</button>
         </div>
     `;
     
@@ -2407,15 +2471,34 @@ function initializeCircuitTracker() {
 }
 
 async function renderCircuitTracker() {
-    const tracker = document.getElementById('circuitTracker');
-    tracker.innerHTML = '';
+    // Prevent concurrent renders
+    if (isRenderingTracker) {
+        console.log('Circuit tracker render already in progress, ignoring request');
+        return;
+    }
     
-    // Use circuitNames instead of allData since we're lazy loading
-    const circuits = Object.keys(circuitNames).sort(sortCircuits);
+    isRenderingTracker = true;
     
-    for (const circuitId of circuits) {
-        const item = await createCircuitItem(circuitId);
-        tracker.appendChild(item);
+    try {
+        const tracker = document.getElementById('circuitTracker');
+        if (!tracker) {
+            console.error('circuitTracker element not found');
+            return;
+        }
+        
+        tracker.innerHTML = '';
+        
+        // Use circuitNames instead of allData since we're lazy loading
+        const circuits = Object.keys(circuitNames).sort(sortCircuits);
+        
+        for (const circuitId of circuits) {
+            const item = await createCircuitItem(circuitId);
+            tracker.appendChild(item);
+        }
+    } catch (error) {
+        console.error('Error rendering circuit tracker:', error);
+    } finally {
+        isRenderingTracker = false;
     }
 }
 
@@ -2500,8 +2583,8 @@ async function createCircuitItem(circuitId) {
     const resetItem = menuDropdown.querySelector('.reset-route');
     resetItem.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`)) {
-            resetRouteStatus(circuitId);
+        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`, e)) {
+            await resetRouteStatus(circuitId);
             menuDropdown.classList.remove('show');
         }
     });
@@ -2613,7 +2696,7 @@ function updateCircuitStatus(circuitId, status) {
 }
 
 // Reset route status manually
-function resetRouteStatus(circuitId) {
+async function resetRouteStatus(circuitId) {
     const startKey = `route_start_${circuitId}`;
     const endKey = `route_end_${circuitId}`;
     
@@ -2627,15 +2710,15 @@ function resetRouteStatus(circuitId) {
     );
     checkboxKeys.forEach(key => localStorage.removeItem(key));
     
-    // Re-render the tracker to show updated status
-    renderCircuitTracker();
-    
     // If this is the current circuit in delivery tab, update the buttons
+    // BUT don't call loadCircuit as it switches tabs - just update route buttons
     if (currentCircuit === circuitId) {
         updateRouteButtons(circuitId);
-        // Re-render the subscriber list to reset checkboxes
-        loadCircuit(circuitId);
     }
+    
+    // Re-render the tracker to show updated status
+    // This is called AFTER confirmation and reset to avoid destroying the menu mid-action
+    renderCircuitTracker();
 }
 
 // Midnight Reset

@@ -435,49 +435,51 @@ body {
 .phone-header-widgets {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: flex-start;
     margin-bottom: 0.5rem;
     margin-top: 2rem;
-    gap: 0.75rem;
+    gap: 1.5rem;
+    padding-left: 0.5rem;
 }
 
-/* Logo Image - Blends into Phone Background */
+/* Logo Text - White with Subtle Blue Hue */
 .phone-logo {
     position: relative;
-    width: 140px;
+    width: auto;
     height: auto;
     opacity: 0;
     flex: 0 0 auto;
     animation: logoFadeIn 1.5s ease-out 0.5s forwards;
+    /* Add subtle blue hue behind logo - reduced intensity */
+    filter: drop-shadow(0 0 8px rgba(93, 173, 226, 0.2)) 
+            drop-shadow(0 0 15px rgba(93, 173, 226, 0.15));
+}
+
+.phone-logo-text {
+    font-size: 2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 
+        0 0 8px rgba(93, 173, 226, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.05em;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* Make it blend like a wallpaper element */
+    opacity: 0.95;
 }
 
 .phone-logo-img {
     width: 100%;
     height: auto;
     display: block;
-    /* Blend into phone background */
+    /* Accent blue color tint to match app color scheme */
+    filter: brightness(1.3) contrast(1.1) saturate(1.2) 
+            hue-rotate(-10deg) drop-shadow(0 0 8px rgba(93, 173, 226, 0.6));
+    /* Add slight opacity for wallpaper effect */
+    opacity: 0.92;
+    /* Blend into phone background like a wallpaper */
     mix-blend-mode: screen;
-    opacity: 0.85;
-    /* Smooth edges for better integration */
-    filter: brightness(1.1) contrast(0.95);
-    /* Remove any harsh edges */
-    -webkit-mask-image: linear-gradient(to bottom, 
-        rgba(0,0,0,0) 0%, 
-        rgba(0,0,0,0.8) 10%, 
-        rgba(0,0,0,1) 20%, 
-        rgba(0,0,0,1) 80%, 
-        rgba(0,0,0,0.8) 90%, 
-        rgba(0,0,0,0) 100%
-    );
-    mask-image: linear-gradient(to bottom, 
-        rgba(0,0,0,0) 0%, 
-        rgba(0,0,0,0.8) 10%, 
-        rgba(0,0,0,1) 20%, 
-        rgba(0,0,0,1) 80%, 
-        rgba(0,0,0,0.8) 90%, 
-        rgba(0,0,0,0) 100%
-    );
 }
 
 /* Logo Fade In Animation */
@@ -497,7 +499,8 @@ body {
     flex-direction: column;
     gap: 0.5rem;
     align-items: flex-end;
-    flex: 0 0 auto;
+    flex: 1;
+    margin-left: auto;
 }
 
 /* Weather Widget - Pill Shape */
@@ -734,21 +737,14 @@ body {
     }
 }
 
-/* Page Turn Transition Animation */
-@keyframes pageTurn {
+/* Phone Rise Up Transition Animation */
+@keyframes phoneRiseUp {
     0% {
-        transform: perspective(1200px) rotateY(0deg);
-        transform-origin: left center;
+        transform: translateY(0) scale(1);
         opacity: 1;
     }
-    50% {
-        transform: perspective(1200px) rotateY(-90deg);
-        transform-origin: left center;
-        opacity: 0.8;
-    }
     100% {
-        transform: perspective(1200px) rotateY(-180deg);
-        transform-origin: left center;
+        transform: translateY(-120%) scale(0.8);
         opacity: 0;
     }
 }
@@ -763,7 +759,7 @@ body {
 }
 
 .login-screen.zoom-transition .phone-device {
-    animation: pageTurn 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: phoneRiseUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .login-screen.zoom-transition .phone-container {
@@ -771,25 +767,28 @@ body {
 }
 
 .login-screen.zoom-transition {
-    animation: fadeOutBackground 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeOutBackground 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 #mainApp {
     opacity: 0;
+    transform: translateY(100%);
 }
 
 #mainApp.zoom-in {
     opacity: 1;
-    animation: fadeInApp 0.6s ease-out forwards;
-    animation-delay: 1.2s;
+    animation: slideUpFromBottom 1.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.3s;
 }
 
-@keyframes fadeInApp {
+@keyframes slideUpFromBottom {
     0% {
         opacity: 0;
+        transform: translateY(100%);
     }
     100% {
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -1518,7 +1517,7 @@ body.dark-mode .route-time {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding-bottom: 30vh;
+    padding-bottom: 20vh;
     z-index: 2000;
     backdrop-filter: blur(6px);
     animation: fadeIn 0.3s ease-out;
@@ -1555,84 +1554,34 @@ body.dark-mode .route-time {
     }
 }
 
-.envelope-icon {
-    position: relative;
+.checkmark-circle-only {
     width: 120px;
-    height: 96px;
-    animation: envelopeBounce 0.6s ease-out;
-}
-
-@keyframes envelopeBounce {
-    0%, 20% {
-        transform: translateY(-20px) scale(0.8);
-        opacity: 0;
-    }
-    40% {
-        transform: translateY(5px) scale(1.05);
-    }
-    60% {
-        transform: translateY(-3px) scale(0.98);
-    }
-    80% {
-        transform: translateY(1px) scale(1.01);
-    }
-    100% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-}
-
-.envelope-icon svg {
-    width: 100%;
-    height: 100%;
-    filter: drop-shadow(0 4px 12px rgba(74, 144, 226, 0.4));
-}
-
-.envelope-body {
-    animation: envelopeDraw 0.5s ease-out forwards;
-}
-
-.envelope-flap {
-    animation: envelopeDraw 0.5s ease-out 0.1s forwards;
-}
-
-@keyframes envelopeDraw {
-    from {
-        stroke-dasharray: 300;
-        stroke-dashoffset: 300;
-    }
-    to {
-        stroke-dasharray: 300;
-        stroke-dashoffset: 0;
-    }
-}
-
-.checkmark-circle {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 52px;
-    height: 52px;
-    animation: checkmarkAppear 0.5s ease-out 0.4s both;
+    height: 120px;
+    animation: checkmarkAppear 0.5s ease-out both;
 }
 
 @keyframes checkmarkAppear {
     0% {
-        transform: translate(-50%, -50%) scale(0);
+        transform: scale(0);
         opacity: 0;
     }
     50% {
-        transform: translate(-50%, -50%) scale(1.2);
+        transform: scale(1.2);
     }
     100% {
-        transform: translate(-50%, -50%) scale(1);
+        transform: scale(1);
         opacity: 1;
     }
 }
 
-.checkmark-circle circle {
-    animation: circlePulse 0.3s ease-out 0.4s;
+.checkmark-circle-only svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 8px 16px rgba(40, 167, 69, 0.4));
+}
+
+.checkmark-circle-only circle {
+    animation: circlePulse 0.3s ease-out;
 }
 
 @keyframes circlePulse {
@@ -1650,7 +1599,7 @@ body.dark-mode .route-time {
 .checkmark {
     stroke-dasharray: 50;
     stroke-dashoffset: 50;
-    animation: checkmarkDraw 0.3s ease-out 0.6s forwards;
+    animation: checkmarkDraw 0.3s ease-out 0.2s forwards;
 }
 
 @keyframes checkmarkDraw {
@@ -2254,5 +2203,73 @@ body.dark-mode .circuit-menu-button:hover {
     background: var(--warm-gray);
     border-radius: 6px;
     font-style: italic;
+}
+
+/* Custom Confirmation Dialog */
+.custom-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    /* Remove flex centering - content will be positioned dynamically */
+}
+
+.custom-dialog-content {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    /* Position will be set dynamically by JavaScript */
+}
+
+.custom-dialog-message {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.custom-dialog-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.custom-dialog-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancel-btn {
+    background: transparent;
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+    background: var(--warm-gray);
+}
+
+.confirm-btn {
+    background: var(--primary-blue);
+    color: white;
+    box-shadow: 0 2px 8px rgba(93, 173, 226, 0.3);
+}
+
+.confirm-btn:hover {
+    background: #4a9ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(93, 173, 226, 0.4);
 }
 

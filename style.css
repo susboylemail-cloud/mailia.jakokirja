@@ -236,6 +236,28 @@ body {
     /* Removed rotation animation */
 }
 
+/* Scale down phone on desktop/laptop screens */
+@media (min-width: 769px) {
+    .phone-device {
+        width: 300px;
+        height: 615px;
+    }
+    
+    .phone-logo-img {
+        max-width: 140px;
+    }
+    
+    .phone-input {
+        font-size: 0.95rem;
+        padding: 0.85rem 1.1rem;
+    }
+    
+    .phone-login-button {
+        font-size: 0.95rem;
+        padding: 0.85rem 1.5rem;
+    }
+}
+
 /* Wiggle animation for wrong password */
 @keyframes wiggle {
     0%, 100% { transform: translateX(0); }
@@ -1654,6 +1676,7 @@ body.dark-mode .route-time {
 
 .building-name {
     flex: 1;
+    color: #ff8c42; /* Soft orange to differentiate building addresses */
 }
 
 .building-delivery-count {
@@ -1742,16 +1765,16 @@ body.dark-mode .building-header {
 
 .subscriber-address {
     font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
-    color: var(--text-color);
+    font-size: 1.1rem; /* Increased for better readability */
+    margin-bottom: 0.5rem; /* Increased spacing between address and name */
+    color: #ff8c42; /* Soft orange to differentiate from name */
 }
 
 .subscriber-apartment {
     font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
-    color: var(--text-color);
+    font-size: 1.1rem; /* Increased for better readability */
+    margin-bottom: 0.5rem; /* Increased spacing between apartment and name */
+    color: var(--text-color); /* Default color - apartment is not a street address */
 }
 
 .subscriber-name {
@@ -2273,3 +2296,30 @@ body.dark-mode .circuit-menu-button:hover {
     box-shadow: 0 4px 12px rgba(93, 173, 226, 0.4);
 }
 
+
+/* Message swipe animations */
+@keyframes checkmarkPopIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes circlePulse {
+    0% {
+        r: 0;
+    }
+    50% {
+        r: 28;
+    }
+    100% {
+        r: 25;
+    }
+}

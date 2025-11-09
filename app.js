@@ -14,21 +14,42 @@ function customConfirm(message, clickEvent = null) {
         messageEl.textContent = message;
         dialog.style.display = 'flex';
         
+        // Always use fixed positioning for dialogs to keep them visible on screen
+        const dialogContent = dialog.querySelector('.custom-dialog-content');
+        dialogContent.style.position = 'fixed';
+        
         // Position dialog near the click location if provided
-        if (clickEvent) {
-            const dialogContent = dialog.querySelector('.custom-dialog-content');
-            const rect = clickEvent.target.closest('.circuit-item').getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            
-            // Position dialog content near the clicked item
-            dialogContent.style.position = 'absolute';
-            dialogContent.style.top = `${rect.top + scrollTop + rect.height / 2}px`;
-            dialogContent.style.left = '50%';
-            dialogContent.style.transform = 'translate(-50%, -50%)';
+        if (clickEvent && clickEvent.target) {
+            const circuitItem = clickEvent.target.closest('.circuit-item');
+            if (circuitItem) {
+                const rect = circuitItem.getBoundingClientRect();
+                
+                // Position dialog in the center of the viewport vertically, but keep it visible
+                // Use fixed positioning so it stays in view even when scrolling
+                const viewportHeight = window.innerHeight;
+                const dialogHeight = 200; // Approximate dialog height
+                
+                // Try to position near the circuit item, but ensure it's visible
+                let top = rect.top + rect.height / 2;
+                
+                // Adjust if too close to top or bottom of viewport
+                if (top < dialogHeight / 2) {
+                    top = dialogHeight / 2 + 20;
+                } else if (top > viewportHeight - dialogHeight / 2) {
+                    top = viewportHeight - dialogHeight / 2 - 20;
+                }
+                
+                dialogContent.style.top = `${top}px`;
+                dialogContent.style.left = '50%';
+                dialogContent.style.transform = 'translate(-50%, -50%)';
+            } else {
+                // Fallback to center if circuit-item not found
+                dialogContent.style.top = '50%';
+                dialogContent.style.left = '50%';
+                dialogContent.style.transform = 'translate(-50%, -50%)';
+            }
         } else {
             // Center positioning for non-positioned dialogs
-            const dialogContent = dialog.querySelector('.custom-dialog-content');
-            dialogContent.style.position = 'fixed';
             dialogContent.style.top = '50%';
             dialogContent.style.left = '50%';
             dialogContent.style.transform = 'translate(-50%, -50%)';
@@ -1996,8 +2017,27 @@ function reportUndelivered(circuitId, subscriber) {
         border: 1px solid var(--border-color);
     `;
     
+    // Build product selection checkboxes if multiple products
+    let productSelectionHTML = '';
+    if (subscriber.products.length > 1) {
+        productSelectionHTML = `
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color); font-weight: 500;">Valitse tuote(et) jotka eivät toimitettu:</label>
+                <div id="productCheckboxes" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; background: var(--warm-gray); border-radius: 8px;">
+                    ${subscriber.products.map((product, index) => `
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" value="${product}" data-product-index="${index}" style="margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="color: var(--text-color);">${product}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
     dialogBox.innerHTML = `
         <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem; font-weight: 600;">Jakeluhäiriön ilmoitus</h3>
+        ${productSelectionHTML}
         <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--card-bg); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer;">
             <option value="">Valitse syy</option>
             <option value="Ei pääsyä">Ei pääsyä</option>
@@ -2023,6 +2063,7 @@ function reportUndelivered(circuitId, subscriber) {
     const customText = document.getElementById('customReasonText');
     const cancelBtn = document.getElementById('cancelBtn');
     const submitBtn = document.getElementById('submitBtn');
+    const productCheckboxes = document.getElementById('productCheckboxes');
     
     // Show custom reason field when "Muu" is selected
     select.addEventListener('change', () => {
@@ -2057,12 +2098,23 @@ function reportUndelivered(circuitId, subscriber) {
             reason = `Muu: ${customReason}`;
         }
         
+        // Get selected products if multiple products available
+        let selectedProducts = subscriber.products;
+        if (productCheckboxes) {
+            const checkedBoxes = productCheckboxes.querySelectorAll('input[type="checkbox"]:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Valitse vähintään yksi tuote');
+                return;
+            }
+            selectedProducts = Array.from(checkedBoxes).map(cb => cb.value);
+        }
+        
         const report = {
             timestamp: new Date().toISOString(),
             circuit: circuitId,
             address: subscriber.address,
             name: subscriber.name,
-            products: subscriber.products.join(', '),
+            products: selectedProducts.join(', '),
             reason: reason
         };
         
@@ -2126,6 +2178,118 @@ function initializeEventListeners() {
     document.getElementById('completeRouteBtn').addEventListener('click', () => {
         completeRoute(currentCircuit);
     });
+    
+    // Initialize message swipe functionality
+    initializeMessageSwipe();
+}
+
+// Message Swipe and Read Functionality
+function initializeMessageSwipe() {
+    // This will be called when messages are rendered
+    // We'll add swipe handlers to message cards dynamically
+}
+
+function addSwipeToMessageCard(messageCard, messageIndex) {
+    let startX = 0;
+    let currentX = 0;
+    let isSwiping = false;
+    
+    const handleStart = (e) => {
+        startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        currentX = startX;
+        isSwiping = true;
+        messageCard.style.transition = 'none';
+    };
+    
+    const handleMove = (e) => {
+        if (!isSwiping) return;
+        
+        currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        const diff = currentX - startX;
+        
+        // Only allow swiping right (positive diff)
+        if (diff > 0) {
+            messageCard.style.transform = `translateX(${diff}px)`;
+            messageCard.style.opacity = 1 - (diff / 300);
+        }
+    };
+    
+    const handleEnd = async () => {
+        if (!isSwiping) return;
+        
+        const diff = currentX - startX;
+        isSwiping = false;
+        
+        messageCard.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+        
+        // If swiped more than 100px, mark as read
+        if (diff > 100) {
+            await markMessageAsRead(messageCard, messageIndex);
+        } else {
+            // Snap back
+            messageCard.style.transform = '';
+            messageCard.style.opacity = '';
+        }
+    };
+    
+    // Add event listeners
+    messageCard.addEventListener('mousedown', handleStart);
+    messageCard.addEventListener('touchstart', handleStart, {passive: true});
+    
+    messageCard.addEventListener('mousemove', handleMove);
+    messageCard.addEventListener('touchmove', handleMove, {passive: true});
+    
+    messageCard.addEventListener('mouseup', handleEnd);
+    messageCard.addEventListener('touchend', handleEnd);
+    messageCard.addEventListener('mouseleave', handleEnd);
+    
+    messageCard.style.cursor = 'grab';
+    messageCard.style.userSelect = 'none';
+}
+
+async function markMessageAsRead(messageCard, messageIndex) {
+    // Animate card off screen
+    messageCard.style.transform = 'translateX(100%)';
+    messageCard.style.opacity = '0';
+    
+    // Show checkmark animation
+    const checkmark = document.createElement('div');
+    checkmark.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10000;
+        animation: checkmarkPopIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    `;
+    
+    checkmark.innerHTML = `
+        <div style="width: 80px; height: 80px;">
+            <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="26" cy="26" r="25" fill="#28a745" style="animation: circlePulse 0.3s ease-out;"/>
+                <path class="checkmark" d="M14 27 L22 35 L38 17" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" style="stroke-dasharray: 50; stroke-dashoffset: 50; animation: checkmarkDraw 0.3s ease-out 0.2s forwards;"/>
+            </svg>
+        </div>
+    `;
+    
+    document.body.appendChild(checkmark);
+    
+    // Remove message from storage after a delay
+    setTimeout(() => {
+        const messages = loadRouteMessages();
+        messages.splice(messageIndex, 1);
+        saveRouteMessages(messages);
+        
+        // Remove checkmark
+        document.body.removeChild(checkmark);
+        
+        // Re-render messages
+        renderRouteMessages();
+    }, 800);
+}
+
+function saveRouteMessages(messages) {
+    localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
 }
 
 function applyFilters() {
@@ -2168,13 +2332,24 @@ function applyFilters() {
         }
     });
     
-    // Hide empty building groups
+    // Hide empty building groups and update delivery counts
     setTimeout(() => {
         const buildingGroups = document.querySelectorAll('.building-group');
         buildingGroups.forEach(group => {
             const visibleCards = Array.from(group.querySelectorAll('.subscriber-card'))
                 .filter(card => card.style.display !== 'none');
-            group.style.display = visibleCards.length > 0 ? '' : 'none';
+            
+            if (visibleCards.length > 0) {
+                group.style.display = '';
+                
+                // Update delivery count badge to reflect visible deliveries only
+                const countBadge = group.querySelector('.building-delivery-count');
+                if (countBadge) {
+                    countBadge.textContent = `${visibleCards.length} jakelua`;
+                }
+            } else {
+                group.style.display = 'none';
+            }
         });
     }, ANIMATION_DURATION_MS);
 }
@@ -2212,7 +2387,6 @@ function startRoute(circuitId) {
     
     // Update UI to reflect in-progress state
     updateRouteButtons(circuitId);
-    updateCircuitStatus(circuitId, 'in-progress');
     
     // If route was previously completed, ensure complete button is visible
     if (wasCompleted) {
@@ -2295,7 +2469,6 @@ function completeRoute(circuitId) {
     }, displayDuration);
     
     updateRouteButtons(circuitId);
-    updateCircuitStatus(circuitId, 'completed');
 }
 
 function hideSubscriberListWithAnimation() {
@@ -2353,8 +2526,7 @@ function updateRouteButtons(circuitId) {
     } else {
         // Route is completed - show "Aloita reitti" button again to allow viewing the list
         startBtn.style.display = 'block';
-        startTimeDisplay.style.display = 'block';
-        startTimeDisplay.textContent = `Aloitettu: ${formatTime(new Date(startTime))}`;
+        startTimeDisplay.style.display = 'none'; // Hide start time when route is completed
         completeContainer.style.display = 'block';
         completeBtn.style.display = 'none';
         endTimeDisplay.style.display = 'block';
@@ -2451,18 +2623,10 @@ function renderRouteMessages() {
         messageCard.appendChild(messageBody);
         
         messagesContainer.appendChild(messageCard);
+        
+        // Add swipe functionality to this message card
+        addSwipeToMessageCard(messageCard, index);
     });
-    
-    // Add clear button handler
-    const clearBtn = document.getElementById('clearMessagesBtn');
-    if (clearBtn) {
-        clearBtn.onclick = async () => {
-            if (await customConfirm('Haluatko varmasti tyhjentää kaikki viestit?')) {
-                localStorage.removeItem('mailiaRouteMessages');
-                renderRouteMessages();
-            }
-        };
-    }
 }
 
 // Circuit Tracker
@@ -2527,67 +2691,6 @@ async function createCircuitItem(circuitId) {
     name.className = 'circuit-name';
     name.textContent = circuitNames[circuitId] || circuitId;
     header.appendChild(name);
-    
-    // Add 3-dot menu for reset functionality
-    const menuContainer = document.createElement('div');
-    menuContainer.className = 'circuit-menu-container';
-    
-    const menuButton = document.createElement('button');
-    menuButton.className = 'circuit-menu-button';
-    menuButton.innerHTML = `
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="12" cy="5" r="1"></circle>
-            <circle cx="12" cy="19" r="1"></circle>
-        </svg>
-    `;
-    menuButton.setAttribute('aria-label', 'Valinnat');
-    
-    const menuDropdown = document.createElement('div');
-    menuDropdown.className = 'circuit-menu-dropdown';
-    menuDropdown.innerHTML = `
-        <div class="circuit-menu-item reset-route" data-circuit="${circuitId}">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="1 4 1 10 7 10"></polyline>
-                <polyline points="23 20 23 14 17 14"></polyline>
-                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-            </svg>
-            Nollaa reitin tila
-        </div>
-    `;
-    
-    menuContainer.appendChild(menuButton);
-    menuContainer.appendChild(menuDropdown);
-    header.appendChild(menuContainer);
-    
-    // Toggle menu on button click
-    menuButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        // Close other menus
-        document.querySelectorAll('.circuit-menu-dropdown.show').forEach(dropdown => {
-            if (dropdown !== menuDropdown) {
-                dropdown.classList.remove('show');
-            }
-        });
-        menuDropdown.classList.toggle('show');
-    });
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!menuContainer.contains(e.target)) {
-            menuDropdown.classList.remove('show');
-        }
-    });
-    
-    // Reset route handler
-    const resetItem = menuDropdown.querySelector('.reset-route');
-    resetItem.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`, e)) {
-            await resetRouteStatus(circuitId);
-            menuDropdown.classList.remove('show');
-        }
-    });
     
     content.appendChild(header);
     
@@ -2685,39 +2788,6 @@ function startCircuitFromTracker(circuitId) {
 
 function completeCircuitFromTracker(circuitId) {
     completeRoute(circuitId);
-    renderCircuitTracker();
-}
-
-function updateCircuitStatus(circuitId, status) {
-    // Update status and re-render tracker if on tracker tab
-    if (document.getElementById('trackerTab').classList.contains('active')) {
-        renderCircuitTracker();
-    }
-}
-
-// Reset route status manually
-async function resetRouteStatus(circuitId) {
-    const startKey = `route_start_${circuitId}`;
-    const endKey = `route_end_${circuitId}`;
-    
-    // Clear route timing data
-    localStorage.removeItem(startKey);
-    localStorage.removeItem(endKey);
-    
-    // Clear all checkbox states for this circuit
-    const checkboxKeys = Object.keys(localStorage).filter(key => 
-        key.startsWith(`checkbox_${circuitId}_`)
-    );
-    checkboxKeys.forEach(key => localStorage.removeItem(key));
-    
-    // If this is the current circuit in delivery tab, update the buttons
-    // BUT don't call loadCircuit as it switches tabs - just update route buttons
-    if (currentCircuit === circuitId) {
-        updateRouteButtons(circuitId);
-    }
-    
-    // Re-render the tracker to show updated status
-    // This is called AFTER confirmation and reset to avoid destroying the menu mid-action
     renderCircuitTracker();
 }
 

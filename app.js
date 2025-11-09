@@ -2526,8 +2526,7 @@ function updateRouteButtons(circuitId) {
     } else {
         // Route is completed - show "Aloita reitti" button again to allow viewing the list
         startBtn.style.display = 'block';
-        startTimeDisplay.style.display = 'block';
-        startTimeDisplay.textContent = `Aloitettu: ${formatTime(new Date(startTime))}`;
+        startTimeDisplay.style.display = 'none'; // Hide start time when route is completed
         completeContainer.style.display = 'block';
         completeBtn.style.display = 'none';
         endTimeDisplay.style.display = 'block';

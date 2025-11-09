@@ -1773,7 +1773,7 @@ body.dark-mode .building-header {
     font-weight: 700;
     font-size: 1.1rem; /* Increased for better readability */
     margin-bottom: 0.5rem; /* Increased spacing between apartment and name */
-    color: #ff8c42; /* Soft orange to differentiate from name */
+    color: var(--text-color); /* Default color - apartment is not a street address */
 }
 
 .subscriber-name {

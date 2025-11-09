@@ -2205,3 +2205,73 @@ body.dark-mode .circuit-menu-button:hover {
     font-style: italic;
 }
 
+/* Custom Confirmation Dialog */
+.custom-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 20vh;
+    z-index: 10000;
+}
+
+.custom-dialog-content {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.custom-dialog-message {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.custom-dialog-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.custom-dialog-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancel-btn {
+    background: transparent;
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+    background: var(--warm-gray);
+}
+
+.confirm-btn {
+    background: var(--primary-blue);
+    color: white;
+    box-shadow: 0 2px 8px rgba(93, 173, 226, 0.3);
+}
+
+.confirm-btn:hover {
+    background: #4a9ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(93, 173, 226, 0.4);
+}
+

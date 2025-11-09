@@ -4,7 +4,7 @@
 const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
 
 // Custom confirm dialog to match app theme
-function customConfirm(message) {
+function customConfirm(message, clickEvent = null) {
     return new Promise((resolve) => {
         const dialog = document.getElementById('customConfirmDialog');
         const messageEl = document.getElementById('customConfirmMessage');
@@ -13,6 +13,26 @@ function customConfirm(message) {
         
         messageEl.textContent = message;
         dialog.style.display = 'flex';
+        
+        // Position dialog near the click location if provided
+        if (clickEvent) {
+            const dialogContent = dialog.querySelector('.custom-dialog-content');
+            const rect = clickEvent.target.closest('.circuit-item').getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Position dialog content near the clicked item
+            dialogContent.style.position = 'absolute';
+            dialogContent.style.top = `${rect.top + scrollTop + rect.height / 2}px`;
+            dialogContent.style.left = '50%';
+            dialogContent.style.transform = 'translate(-50%, -50%)';
+        } else {
+            // Center positioning for non-positioned dialogs
+            const dialogContent = dialog.querySelector('.custom-dialog-content');
+            dialogContent.style.position = 'fixed';
+            dialogContent.style.top = '50%';
+            dialogContent.style.left = '50%';
+            dialogContent.style.transform = 'translate(-50%, -50%)';
+        }
         
         const handleOk = () => {
             dialog.style.display = 'none';
@@ -2563,7 +2583,7 @@ async function createCircuitItem(circuitId) {
     const resetItem = menuDropdown.querySelector('.reset-route');
     resetItem.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`)) {
+        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`, e)) {
             await resetRouteStatus(circuitId);
             menuDropdown.classList.remove('show');
         }
@@ -2691,10 +2711,9 @@ async function resetRouteStatus(circuitId) {
     checkboxKeys.forEach(key => localStorage.removeItem(key));
     
     // If this is the current circuit in delivery tab, update the buttons
+    // BUT don't call loadCircuit as it switches tabs - just update route buttons
     if (currentCircuit === circuitId) {
         updateRouteButtons(circuitId);
-        // Re-render the subscriber list to reset checkboxes
-        await loadCircuit(circuitId);
     }
     
     // Re-render the tracker to show updated status

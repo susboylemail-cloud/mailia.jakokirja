@@ -2213,10 +2213,8 @@ body.dark-mode .circuit-menu-button:hover {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     z-index: 10000;
+    /* Remove flex centering - content will be positioned dynamically */
 }
 
 .custom-dialog-content {
@@ -2227,6 +2225,7 @@ body.dark-mode .circuit-menu-button:hover {
     max-width: 400px;
     width: 90%;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    /* Position will be set dynamically by JavaScript */
 }
 
 .custom-dialog-message {

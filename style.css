@@ -236,6 +236,28 @@ body {
     /* Removed rotation animation */
 }
 
+/* Scale down phone on desktop/laptop screens */
+@media (min-width: 769px) {
+    .phone-device {
+        width: 300px;
+        height: 615px;
+    }
+    
+    .phone-logo-img {
+        max-width: 140px;
+    }
+    
+    .phone-input {
+        font-size: 0.95rem;
+        padding: 0.85rem 1.1rem;
+    }
+    
+    .phone-login-button {
+        font-size: 0.95rem;
+        padding: 0.85rem 1.5rem;
+    }
+}
+
 /* Wiggle animation for wrong password */
 @keyframes wiggle {
     0%, 100% { transform: translateX(0); }

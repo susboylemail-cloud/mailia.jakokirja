@@ -2564,7 +2564,7 @@ async function createCircuitItem(circuitId) {
     resetItem.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`)) {
-            resetRouteStatus(circuitId);
+            await resetRouteStatus(circuitId);
             menuDropdown.classList.remove('show');
         }
     });
@@ -2676,7 +2676,7 @@ function updateCircuitStatus(circuitId, status) {
 }
 
 // Reset route status manually
-function resetRouteStatus(circuitId) {
+async function resetRouteStatus(circuitId) {
     const startKey = `route_start_${circuitId}`;
     const endKey = `route_end_${circuitId}`;
     
@@ -2690,15 +2690,16 @@ function resetRouteStatus(circuitId) {
     );
     checkboxKeys.forEach(key => localStorage.removeItem(key));
     
-    // Re-render the tracker to show updated status
-    renderCircuitTracker();
-    
     // If this is the current circuit in delivery tab, update the buttons
     if (currentCircuit === circuitId) {
         updateRouteButtons(circuitId);
         // Re-render the subscriber list to reset checkboxes
-        loadCircuit(circuitId);
+        await loadCircuit(circuitId);
     }
+    
+    // Re-render the tracker to show updated status
+    // This is called AFTER confirmation and reset to avoid destroying the menu mid-action
+    renderCircuitTracker();
 }
 
 // Midnight Reset

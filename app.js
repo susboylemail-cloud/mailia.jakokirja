@@ -2220,13 +2220,24 @@ function applyFilters() {
         }
     });
     
-    // Hide empty building groups
+    // Hide empty building groups and update delivery counts
     setTimeout(() => {
         const buildingGroups = document.querySelectorAll('.building-group');
         buildingGroups.forEach(group => {
             const visibleCards = Array.from(group.querySelectorAll('.subscriber-card'))
                 .filter(card => card.style.display !== 'none');
-            group.style.display = visibleCards.length > 0 ? '' : 'none';
+            
+            if (visibleCards.length > 0) {
+                group.style.display = '';
+                
+                // Update delivery count badge to reflect visible deliveries only
+                const countBadge = group.querySelector('.building-delivery-count');
+                if (countBadge) {
+                    countBadge.textContent = `${visibleCards.length} jakelua`;
+                }
+            } else {
+                group.style.display = 'none';
+            }
         });
     }, ANIMATION_DURATION_MS);
 }

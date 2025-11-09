@@ -2194,7 +2194,10 @@ function initializeResetStatusDialog() {
     const confirmBtn = document.getElementById('resetStatusConfirm');
     const checkboxesContainer = document.getElementById('circuitCheckboxes');
     
-    if (!resetBtn || !dialog) return;
+    if (!resetBtn || !dialog || !cancelBtn || !confirmBtn || !checkboxesContainer) {
+        console.error('Reset status dialog elements not found');
+        return;
+    }
     
     resetBtn.addEventListener('click', () => {
         // Clear and populate checkboxes
@@ -2255,12 +2258,12 @@ function initializeResetStatusDialog() {
             });
             
             // Re-render the tracker if on tracker tab
-            if (document.getElementById('trackerTab').classList.contains('active')) {
+            if (document.getElementById('trackerTab') && document.getElementById('trackerTab').classList.contains('active')) {
                 renderCircuitTracker();
             }
             
             // If current circuit is being reset, update the buttons
-            if (selectedCircuits.includes(currentCircuit)) {
+            if (currentCircuit && selectedCircuits.includes(currentCircuit)) {
                 updateRouteButtons(currentCircuit);
             }
             

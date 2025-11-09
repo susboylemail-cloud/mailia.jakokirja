@@ -1996,8 +1996,27 @@ function reportUndelivered(circuitId, subscriber) {
         border: 1px solid var(--border-color);
     `;
     
+    // Build product selection checkboxes if multiple products
+    let productSelectionHTML = '';
+    if (subscriber.products.length > 1) {
+        productSelectionHTML = `
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color); font-weight: 500;">Valitse tuote(et) jotka eivät toimitettu:</label>
+                <div id="productCheckboxes" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; background: var(--warm-gray); border-radius: 8px;">
+                    ${subscriber.products.map((product, index) => `
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" value="${product}" data-product-index="${index}" style="margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="color: var(--text-color);">${product}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
     dialogBox.innerHTML = `
         <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem; font-weight: 600;">Jakeluhäiriön ilmoitus</h3>
+        ${productSelectionHTML}
         <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--card-bg); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer;">
             <option value="">Valitse syy</option>
             <option value="Ei pääsyä">Ei pääsyä</option>
@@ -2023,6 +2042,7 @@ function reportUndelivered(circuitId, subscriber) {
     const customText = document.getElementById('customReasonText');
     const cancelBtn = document.getElementById('cancelBtn');
     const submitBtn = document.getElementById('submitBtn');
+    const productCheckboxes = document.getElementById('productCheckboxes');
     
     // Show custom reason field when "Muu" is selected
     select.addEventListener('change', () => {
@@ -2057,12 +2077,23 @@ function reportUndelivered(circuitId, subscriber) {
             reason = `Muu: ${customReason}`;
         }
         
+        // Get selected products if multiple products available
+        let selectedProducts = subscriber.products;
+        if (productCheckboxes) {
+            const checkedBoxes = productCheckboxes.querySelectorAll('input[type="checkbox"]:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Valitse vähintään yksi tuote');
+                return;
+            }
+            selectedProducts = Array.from(checkedBoxes).map(cb => cb.value);
+        }
+        
         const report = {
             timestamp: new Date().toISOString(),
             circuit: circuitId,
             address: subscriber.address,
             name: subscriber.name,
-            products: subscriber.products.join(', '),
+            products: selectedProducts.join(', '),
             reason: reason
         };
         
@@ -2583,7 +2614,10 @@ async function createCircuitItem(circuitId) {
     const resetItem = menuDropdown.querySelector('.reset-route');
     resetItem.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`, e)) {
+        // Pass the menu button element (not the click event on the menu item) for better positioning
+        const menuButton = menuContainer.querySelector('.circuit-menu-button');
+        const confirmEvent = { target: menuButton };
+        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`, confirmEvent)) {
             await resetRouteStatus(circuitId);
             menuDropdown.classList.remove('show');
         }
@@ -2717,8 +2751,10 @@ async function resetRouteStatus(circuitId) {
     }
     
     // Re-render the tracker to show updated status
-    // This is called AFTER confirmation and reset to avoid destroying the menu mid-action
-    renderCircuitTracker();
+    // Only re-render if we're currently on the Seuranta (tracker) tab to avoid tab switching
+    if (document.getElementById('trackerTab').classList.contains('active')) {
+        renderCircuitTracker();
+    }
 }
 
 // Midnight Reset

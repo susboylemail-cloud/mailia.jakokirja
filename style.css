@@ -2273,3 +2273,30 @@ body.dark-mode .circuit-menu-button:hover {
     box-shadow: 0 4px 12px rgba(93, 173, 226, 0.4);
 }
 
+
+/* Message swipe animations */
+@keyframes checkmarkPopIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes circlePulse {
+    0% {
+        r: 0;
+    }
+    50% {
+        r: 28;
+    }
+    100% {
+        r: 25;
+    }
+}

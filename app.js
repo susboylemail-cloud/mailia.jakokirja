@@ -2178,6 +2178,212 @@ function initializeEventListeners() {
     document.getElementById('completeRouteBtn').addEventListener('click', () => {
         completeRoute(currentCircuit);
     });
+    
+    // Initialize reset status button
+    initializeResetStatusDialog();
+    
+    // Initialize message swipe functionality
+    initializeMessageSwipe();
+}
+
+// Reset Status Dialog
+function initializeResetStatusDialog() {
+    const resetBtn = document.getElementById('resetStatusBtn');
+    const dialog = document.getElementById('resetStatusDialog');
+    const cancelBtn = document.getElementById('resetStatusCancel');
+    const confirmBtn = document.getElementById('resetStatusConfirm');
+    const checkboxesContainer = document.getElementById('circuitCheckboxes');
+    
+    if (!resetBtn || !dialog) return;
+    
+    resetBtn.addEventListener('click', () => {
+        // Clear and populate checkboxes
+        checkboxesContainer.innerHTML = '';
+        
+        const circuits = Object.keys(circuitNames).sort(sortCircuits);
+        circuits.forEach(circuitId => {
+            const label = document.createElement('label');
+            label.style.cssText = 'display: flex; align-items: center; padding: 0.75rem; cursor: pointer; border-radius: 6px; transition: background 0.2s;';
+            label.onmouseover = () => label.style.background = 'var(--warm-gray)';
+            label.onmouseout = () => label.style.background = '';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = circuitId;
+            checkbox.style.cssText = 'margin-right: 0.75rem; width: 20px; height: 20px; cursor: pointer;';
+            
+            const circuitName = document.createElement('span');
+            circuitName.textContent = circuitNames[circuitId] || circuitId;
+            circuitName.style.color = 'var(--text-color)';
+            
+            label.appendChild(checkbox);
+            label.appendChild(circuitName);
+            checkboxesContainer.appendChild(label);
+        });
+        
+        dialog.style.display = 'flex';
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        dialog.style.display = 'none';
+    });
+    
+    confirmBtn.addEventListener('click', async () => {
+        const checkboxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked');
+        const selectedCircuits = Array.from(checkboxes).map(cb => cb.value);
+        
+        if (selectedCircuits.length === 0) {
+            alert('Valitse vähintään yksi piiri');
+            return;
+        }
+        
+        const confirmed = await customConfirm(
+            `Haluatko varmasti nollata ${selectedCircuits.length} piirin jakelustatus?`
+        );
+        
+        if (confirmed) {
+            selectedCircuits.forEach(circuitId => {
+                // Clear route timing data
+                localStorage.removeItem(`route_start_${circuitId}`);
+                localStorage.removeItem(`route_end_${circuitId}`);
+                
+                // Clear all checkbox states for this circuit
+                const checkboxKeys = Object.keys(localStorage).filter(key => 
+                    key.startsWith(`checkbox_${circuitId}_`)
+                );
+                checkboxKeys.forEach(key => localStorage.removeItem(key));
+            });
+            
+            // Re-render the tracker if on tracker tab
+            if (document.getElementById('trackerTab').classList.contains('active')) {
+                renderCircuitTracker();
+            }
+            
+            // If current circuit is being reset, update the buttons
+            if (selectedCircuits.includes(currentCircuit)) {
+                updateRouteButtons(currentCircuit);
+            }
+            
+            dialog.style.display = 'none';
+            alert(`${selectedCircuits.length} piirin status nollattu`);
+        }
+    });
+    
+    // Close on background click
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+            dialog.style.display = 'none';
+        }
+    });
+}
+
+// Message Swipe and Read Functionality
+function initializeMessageSwipe() {
+    // This will be called when messages are rendered
+    // We'll add swipe handlers to message cards dynamically
+}
+
+function addSwipeToMessageCard(messageCard, messageIndex) {
+    let startX = 0;
+    let currentX = 0;
+    let isSwiping = false;
+    
+    const handleStart = (e) => {
+        startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        currentX = startX;
+        isSwiping = true;
+        messageCard.style.transition = 'none';
+    };
+    
+    const handleMove = (e) => {
+        if (!isSwiping) return;
+        
+        currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        const diff = currentX - startX;
+        
+        // Only allow swiping right (positive diff)
+        if (diff > 0) {
+            messageCard.style.transform = `translateX(${diff}px)`;
+            messageCard.style.opacity = 1 - (diff / 300);
+        }
+    };
+    
+    const handleEnd = async () => {
+        if (!isSwiping) return;
+        
+        const diff = currentX - startX;
+        isSwiping = false;
+        
+        messageCard.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+        
+        // If swiped more than 100px, mark as read
+        if (diff > 100) {
+            await markMessageAsRead(messageCard, messageIndex);
+        } else {
+            // Snap back
+            messageCard.style.transform = '';
+            messageCard.style.opacity = '';
+        }
+    };
+    
+    // Add event listeners
+    messageCard.addEventListener('mousedown', handleStart);
+    messageCard.addEventListener('touchstart', handleStart, {passive: true});
+    
+    messageCard.addEventListener('mousemove', handleMove);
+    messageCard.addEventListener('touchmove', handleMove, {passive: true});
+    
+    messageCard.addEventListener('mouseup', handleEnd);
+    messageCard.addEventListener('touchend', handleEnd);
+    messageCard.addEventListener('mouseleave', handleEnd);
+    
+    messageCard.style.cursor = 'grab';
+    messageCard.style.userSelect = 'none';
+}
+
+async function markMessageAsRead(messageCard, messageIndex) {
+    // Animate card off screen
+    messageCard.style.transform = 'translateX(100%)';
+    messageCard.style.opacity = '0';
+    
+    // Show checkmark animation
+    const checkmark = document.createElement('div');
+    checkmark.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10000;
+        animation: checkmarkPopIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    `;
+    
+    checkmark.innerHTML = `
+        <div style="width: 80px; height: 80px;">
+            <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="26" cy="26" r="25" fill="#28a745" style="animation: circlePulse 0.3s ease-out;"/>
+                <path class="checkmark" d="M14 27 L22 35 L38 17" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" style="stroke-dasharray: 50; stroke-dashoffset: 50; animation: checkmarkDraw 0.3s ease-out 0.2s forwards;"/>
+            </svg>
+        </div>
+    `;
+    
+    document.body.appendChild(checkmark);
+    
+    // Remove message from storage after a delay
+    setTimeout(() => {
+        const messages = loadRouteMessages();
+        messages.splice(messageIndex, 1);
+        saveRouteMessages(messages);
+        
+        // Remove checkmark
+        document.body.removeChild(checkmark);
+        
+        // Re-render messages
+        renderRouteMessages();
+    }, 800);
+}
+
+function saveRouteMessages(messages) {
+    localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
 }
 
 function applyFilters() {
@@ -2512,6 +2718,9 @@ function renderRouteMessages() {
         messageCard.appendChild(messageBody);
         
         messagesContainer.appendChild(messageCard);
+        
+        // Add swipe functionality to this message card
+        addSwipeToMessageCard(messageCard, index);
     });
 }
 

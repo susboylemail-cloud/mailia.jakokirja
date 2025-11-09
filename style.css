@@ -1515,8 +1515,9 @@ body.dark-mode .route-time {
     bottom: 0;
     background: rgba(26, 29, 33, 0.95);
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
+    padding-bottom: 20vh;
     z-index: 2000;
     backdrop-filter: blur(6px);
     animation: fadeIn 0.3s ease-out;

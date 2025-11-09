@@ -14,21 +14,42 @@ function customConfirm(message, clickEvent = null) {
         messageEl.textContent = message;
         dialog.style.display = 'flex';
         
+        // Always use fixed positioning for dialogs to keep them visible on screen
+        const dialogContent = dialog.querySelector('.custom-dialog-content');
+        dialogContent.style.position = 'fixed';
+        
         // Position dialog near the click location if provided
-        if (clickEvent) {
-            const dialogContent = dialog.querySelector('.custom-dialog-content');
-            const rect = clickEvent.target.closest('.circuit-item').getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            
-            // Position dialog content near the clicked item
-            dialogContent.style.position = 'absolute';
-            dialogContent.style.top = `${rect.top + scrollTop + rect.height / 2}px`;
-            dialogContent.style.left = '50%';
-            dialogContent.style.transform = 'translate(-50%, -50%)';
+        if (clickEvent && clickEvent.target) {
+            const circuitItem = clickEvent.target.closest('.circuit-item');
+            if (circuitItem) {
+                const rect = circuitItem.getBoundingClientRect();
+                
+                // Position dialog in the center of the viewport vertically, but keep it visible
+                // Use fixed positioning so it stays in view even when scrolling
+                const viewportHeight = window.innerHeight;
+                const dialogHeight = 200; // Approximate dialog height
+                
+                // Try to position near the circuit item, but ensure it's visible
+                let top = rect.top + rect.height / 2;
+                
+                // Adjust if too close to top or bottom of viewport
+                if (top < dialogHeight / 2) {
+                    top = dialogHeight / 2 + 20;
+                } else if (top > viewportHeight - dialogHeight / 2) {
+                    top = viewportHeight - dialogHeight / 2 - 20;
+                }
+                
+                dialogContent.style.top = `${top}px`;
+                dialogContent.style.left = '50%';
+                dialogContent.style.transform = 'translate(-50%, -50%)';
+            } else {
+                // Fallback to center if circuit-item not found
+                dialogContent.style.top = '50%';
+                dialogContent.style.left = '50%';
+                dialogContent.style.transform = 'translate(-50%, -50%)';
+            }
         } else {
             // Center positioning for non-positioned dialogs
-            const dialogContent = dialog.querySelector('.custom-dialog-content');
-            dialogContent.style.position = 'fixed';
             dialogContent.style.top = '50%';
             dialogContent.style.left = '50%';
             dialogContent.style.transform = 'translate(-50%, -50%)';
@@ -2614,10 +2635,8 @@ async function createCircuitItem(circuitId) {
     const resetItem = menuDropdown.querySelector('.reset-route');
     resetItem.addEventListener('click', async (e) => {
         e.stopPropagation();
-        // Pass the menu button element (not the click event on the menu item) for better positioning
-        const menuButton = menuContainer.querySelector('.circuit-menu-button');
-        const confirmEvent = { target: menuButton };
-        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`, confirmEvent)) {
+        // Pass the click event - the customConfirm will find the circuit-item
+        if (await customConfirm(`Haluatko varmasti nollata piirin ${circuitNames[circuitId]} tilan?`, e)) {
             await resetRouteStatus(circuitId);
             menuDropdown.classList.remove('show');
         }

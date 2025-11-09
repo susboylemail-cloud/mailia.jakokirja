@@ -2513,17 +2513,6 @@ function renderRouteMessages() {
         
         messagesContainer.appendChild(messageCard);
     });
-    
-    // Add clear button handler
-    const clearBtn = document.getElementById('clearMessagesBtn');
-    if (clearBtn) {
-        clearBtn.onclick = async () => {
-            if (await customConfirm('Haluatko varmasti tyhjentää kaikki viestit?')) {
-                localStorage.removeItem('mailiaRouteMessages');
-                renderRouteMessages();
-            }
-        };
-    }
 }
 
 // Circuit Tracker

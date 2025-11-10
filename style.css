@@ -1423,7 +1423,7 @@ main {
 .product-counts {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.875rem;
+    gap: 0.75rem;
     margin-bottom: 1.5rem;
     max-width: 400px;
 }
@@ -1432,62 +1432,63 @@ main {
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--primary-blue);
-    color: white;
-    padding: 0.4rem 0.75rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.85rem;
+    padding: 0.65rem 1rem;
+    border-radius: 22px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1;
+    min-height: 44px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Product-specific colors for badges */
 .product-badge.product-ES {
-    background: #5DADE2;            /* Clear accessible blue */
+    background: #2E86C1;            /* Darker blue for better contrast */
     color: white;
 }
 
 .product-badge.product-UV {
-    background: #F9A825;            /* Rich gold/yellow */
+    background: #F39C12;            /* Darker gold for better contrast */
     color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-badge.product-HS {
-    background: #58D68D;            /* Success green */
+    background: #27AE60;            /* Darker green for better contrast */
     color: white;
 }
 
 .product-badge.product-STF {
-    background: #FF6B35;            /* Bright red-orange to differ from UV */
+    background: #E74C3C;            /* Darker red-orange for better contrast */
     color: white;
 }
 
 .product-badge.product-JO {
-    background: #AF7AC5;            /* Purple for distinction */
+    background: #8E44AD;            /* Darker purple for better contrast */
     color: white;
 }
 
 .product-badge.product-LU {
-    background: #FFA726;
+    background: #E67E22;            /* Darker orange for better contrast */
     color: white;
 }
 
 .product-badge.product-ISA {
-    background: #FFD700;            /* Gold for Itä-Savo */
+    background: #F39C12;            /* Darker gold for Itä-Savo */
     color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-badge.product-PASA {
-    background: #48C9B0;            /* Turquoise for Parikkalan Sanomat */
+    background: #16A085;            /* Darker turquoise for Parikkalan Sanomat */
     color: white;
 }
 
 .product-badge.product-YHTS {
-    background: #E74C3C;            /* Red for Yhteishyvä */
+    background: #C0392B;            /* Darker red for Yhteishyvä */
     color: white;
 }
 
 .product-badge.product-MST {
-    background: #9B59B6;            /* Purple for Maaseudun Tulevaisuus */
+    background: #7D3C98;            /* Darker purple for Maaseudun Tulevaisuus */
     color: white;
 }
 
@@ -1495,23 +1496,26 @@ main {
 .product-badge.product-RL,
 .product-badge.product-PL,
 .product-badge.product-LUUM {
-    background: #95A5A6;            /* Gray for miscellaneous */
+    background: #7F8C8D;            /* Darker gray for miscellaneous */
     color: white;
 }
 
 .product-badge .count {
-    margin-left: 0.4rem;
-    background: rgba(255, 255, 255, 0.3);
-    padding: 0.15rem 0.5rem;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 0.8rem;
+    margin-left: 0.5rem;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    line-height: 1;
+    min-width: 24px;
+    text-align: center;
 }
 
 body.dark-mode .product-badge.product-UV .count,
-body.dark-mode .product-badge.product-ISA .count,
-body.dark-mode .product-badge.product-STF .count {
-    background: rgba(0, 0, 0, 0.2);
+body.dark-mode .product-badge.product-ISA .count {
+    background: rgba(0, 0, 0, 0.35);
+    color: #1A1D21;
 }
 
 /* Route Buttons */
@@ -1877,52 +1881,52 @@ body.dark-mode .subscriber-name {
 
 /* Product-specific colors for tags */
 .product-tag.product-ES {
-    background: #5DADE2;            /* Clear accessible blue */
+    background: #2E86C1;            /* Darker blue for better contrast */
     color: white;
 }
 
 .product-tag.product-UV {
-    background: #F9A825;            /* Rich gold/yellow */
+    background: #F39C12;            /* Darker gold for better contrast */
     color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-tag.product-HS {
-    background: #58D68D;            /* Success green */
+    background: #27AE60;            /* Darker green for better contrast */
     color: white;
 }
 
 .product-tag.product-STF {
-    background: #FF6B35;            /* Bright red-orange to differ from UV */
+    background: #E74C3C;            /* Darker red-orange for better contrast */
     color: white;
 }
 
 .product-tag.product-JO {
-    background: #AF7AC5;            /* Purple for distinction */
+    background: #8E44AD;            /* Darker purple for better contrast */
     color: white;
 }
 
 .product-tag.product-LU {
-    background: #FFA726;
+    background: #E67E22;            /* Darker orange for better contrast */
     color: white;
 }
 
 .product-tag.product-ISA {
-    background: #FFD700;            /* Gold for Itä-Savo */
+    background: #F39C12;            /* Darker gold for Itä-Savo */
     color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-tag.product-PASA {
-    background: #48C9B0;            /* Turquoise for Parikkalan Sanomat */
+    background: #16A085;            /* Darker turquoise for Parikkalan Sanomat */
     color: white;
 }
 
 .product-tag.product-YHTS {
-    background: #E74C3C;            /* Red for Yhteishyvä */
+    background: #C0392B;            /* Darker red for Yhteishyvä */
     color: white;
 }
 
 .product-tag.product-MST {
-    background: #9B59B6;            /* Purple for Maaseudun Tulevaisuus */
+    background: #7D3C98;            /* Darker purple for Maaseudun Tulevaisuus */
     color: white;
 }
 
@@ -1930,7 +1934,7 @@ body.dark-mode .subscriber-name {
 .product-tag.product-RL,
 .product-tag.product-PL,
 .product-tag.product-LUUM {
-    background: #95A5A6;            /* Gray for miscellaneous */
+    background: #7F8C8D;            /* Darker gray for miscellaneous */
     color: white;
 }
 

@@ -2143,6 +2143,10 @@ function renderCoverSheet(circuitId, subscribers) {
         margin-bottom: 1rem;
         transition: all 0.3s ease;
         box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
     `;
     mapButton.onclick = (e) => {
         e.stopPropagation();

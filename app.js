@@ -347,8 +347,16 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
                     font-weight: 500;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
                 ">
-                    🗺️ Näytä kartalla
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    Näytä kartalla
                 </button>
                 <button class="modal-btn start-btn" style="
                     background: #007bff;
@@ -360,8 +368,15 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
                     font-weight: 500;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
                 ">
-                    🔵 Aloita reitti
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Aloita reitti
                 </button>
                 <button class="modal-btn complete-btn" style="
                     background: #28a745;
@@ -373,8 +388,15 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
                     font-weight: 500;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
                 ">
-                    🟢 Merkitse valmiiksi
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Merkitse valmiiksi
                 </button>
             </div>
         `;
@@ -392,8 +414,16 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
                     font-weight: 500;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
                 ">
-                    🗺️ Näytä kartalla
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    Näytä kartalla
                 </button>
                 <button class="modal-btn reset-btn" style="
                     background: #dc3545;
@@ -405,8 +435,16 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
                     font-weight: 500;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
                 ">
-                    🔴 Nollaa reitti
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="1 4 1 10 7 10"></polyline>
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                    </svg>
+                    Nollaa reitti
                 </button>
                 ${status !== 'completed' ? `
                 <button class="modal-btn complete-btn" style="
@@ -419,8 +457,15 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
                     font-weight: 500;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
                 ">
-                    🟢 Merkitse valmiiksi
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Merkitse valmiiksi
                 </button>
                 ` : ''}
             </div>

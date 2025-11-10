@@ -146,6 +146,18 @@ function initializeWebSocketListeners() {
             console.log('Refreshing circuit tracker...');
             renderCircuitTracker();
         }
+        
+        // Also refresh dashboard if it's active (route completion affects delivery counts)
+        const dashboardTab = document.querySelector('.tab-content.active#dashboardTab');
+        if (dashboardTab && (data.status === 'completed' || data.action === 'complete')) {
+            console.log('Route completed - refreshing dashboard delivery count...');
+            if (typeof loadTodayDeliveryCount === 'function') {
+                loadTodayDeliveryCount();
+            }
+            if (typeof loadPeriodDeliveryCount === 'function') {
+                loadPeriodDeliveryCount();
+            }
+        }
     });
     
     // Listen for route messages
@@ -165,6 +177,13 @@ function initializeWebSocketListeners() {
             renderRouteMessages();
         } else {
             console.log('Messages tab not active, skipping render');
+        }
+        
+        // Also refresh dashboard if it's active
+        const dashboardTab = document.querySelector('.tab-content.active#dashboardTab');
+        if (dashboardTab && typeof loadTodayDeliveryCount === 'function') {
+            console.log('Refreshing dashboard delivery count...');
+            loadTodayDeliveryCount();
         }
     });
     
@@ -214,6 +233,13 @@ function initializeWebSocketListeners() {
         console.log('Triggering tracker refresh after delivery update');
         if (typeof renderCircuitTracker === 'function') {
             renderCircuitTracker();
+        }
+        
+        // Also refresh dashboard if it's active (deliveries affect counts)
+        const dashboardTab = document.querySelector('.tab-content.active#dashboardTab');
+        if (dashboardTab && typeof loadTodayDeliveryCount === 'function') {
+            console.log('Delivery updated - refreshing dashboard delivery count...');
+            loadTodayDeliveryCount();
         }
     });
 }

@@ -167,6 +167,15 @@
                             <input type="checkbox" id="hideDeliveredFilter">
                             Piilota kuitatut tilaukset
                         </label>
+                        <button id="addSubscriberBtn" class="admin-only settings-action-btn" style="display: none;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                            Lisää tilaaja
+                        </button>
                     </div>
                 </div>
                 <button id="logoutBtn" class="logout-button icon-button" aria-label="Kirjaudu ulos">
@@ -357,6 +366,54 @@
     
     </div>
     <!-- End Main Application -->
+
+    <!-- Add Subscriber Modal (Admin Only) -->
+    <div id="addSubscriberModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Lisää tilaaja</h2>
+                <button class="modal-close" onclick="closeAddSubscriberModal()">&times;</button>
+            </div>
+            <form id="addSubscriberForm">
+                <div class="form-group">
+                    <label for="subscriberCircuit">Piiri *</label>
+                    <select id="subscriberCircuit" required>
+                        <option value="">Valitse piiri...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="subscriberStreet">Katu *</label>
+                    <input type="text" id="subscriberStreet" required placeholder="esim. Mansikkatie">
+                </div>
+                <div class="form-group">
+                    <label for="subscriberNumber">Numero</label>
+                    <input type="text" id="subscriberNumber" placeholder="esim. 12">
+                </div>
+                <div class="form-group">
+                    <label for="subscriberBuilding">Rakennus</label>
+                    <input type="text" id="subscriberBuilding" placeholder="esim. A">
+                </div>
+                <div class="form-group">
+                    <label for="subscriberApartment">Asunto</label>
+                    <input type="text" id="subscriberApartment" placeholder="esim. 5">
+                </div>
+                <div class="form-group">
+                    <label for="subscriberName">Nimi</label>
+                    <input type="text" id="subscriberName" placeholder="Tilaajan nimi (valinnainen)">
+                </div>
+                <div class="form-group">
+                    <label>Tuotteet * (valitse vähintään yksi)</label>
+                    <div id="productCheckboxes" class="product-checkboxes">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAddSubscriberModal()">Peruuta</button>
+                    <button type="submit" class="btn-primary">Tallenna</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Google Maps API -->
     <script>

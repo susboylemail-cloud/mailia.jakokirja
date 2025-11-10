@@ -160,6 +160,24 @@ function initializeWebSocketListeners() {
         }
     });
     
+    // Listen for subscriber updates (manual additions/changes by admin)
+    window.addEventListener('subscriberUpdated', async (event) => {
+        const data = event.detail;
+        console.log('Subscriber updated event received:', data);
+        
+        // Reload circuit if it matches current view
+        if (currentCircuit && data.circuitId === currentCircuit) {
+            console.log('Reloading current circuit due to subscriber update...');
+            await loadCircuit(currentCircuit);
+            showNotification(
+                data.action === 'created' 
+                    ? 'Uusi tilaaja lisätty piirille' 
+                    : 'Tilaaja päivitetty',
+                'success'
+            );
+        }
+    });
+    
     // Listen for route messages
     window.addEventListener('messageReceived', (event) => {
         const data = event.detail;
@@ -4634,5 +4652,190 @@ async function initializeGoogleMap(circuitId, circuitData, mapContainer, infoPan
 
     showNotification(`Kartta ladattu! ${locations.length} osoitetta näytetään.`, 'success');
 }
+
+// ===========================
+// MANUAL SUBSCRIBER MANAGEMENT (ADMIN ONLY)
+// ===========================
+
+// Initialize add subscriber functionality
+function initializeAddSubscriberModal() {
+    const addBtn = document.getElementById('addSubscriberBtn');
+    const modal = document.getElementById('addSubscriberModal');
+    const form = document.getElementById('addSubscriberForm');
+    const circuitSelect = document.getElementById('subscriberCircuit');
+    const productCheckboxes = document.getElementById('productCheckboxes');
+
+    // Show button only for admins
+    const userRole = localStorage.getItem('mailiaUserRole');
+    if (userRole === 'admin' && addBtn) {
+        addBtn.style.display = 'flex';
+    }
+
+    // Open modal
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            populateCircuitOptions();
+            populateProductCheckboxes();
+            modal.style.display = 'block';
+            document.getElementById('settingsDropdown').style.display = 'none';
+        });
+    }
+
+    // Form submission
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleAddSubscriber();
+        });
+    }
+}
+
+// Populate circuit dropdown
+function populateCircuitOptions() {
+    const circuitSelect = document.getElementById('subscriberCircuit');
+    const currentCircuits = Array.from(document.getElementById('circuitSelector').options)
+        .filter(opt => opt.value !== '')
+        .map(opt => ({ id: opt.value, name: opt.text }));
+
+    circuitSelect.innerHTML = '<option value="">Valitse piiri...</option>';
+    currentCircuits.forEach(circuit => {
+        const option = document.createElement('option');
+        option.value = circuit.id;
+        option.textContent = circuit.name;
+        circuitSelect.appendChild(option);
+    });
+}
+
+// Populate product checkboxes with all available products
+function populateProductCheckboxes() {
+    const container = document.getElementById('productCheckboxes');
+    const products = [
+        'UV', 'HS', 'ES', 'ISA', 'STF', 'JO', 'LU', 'PASA', 'YHTS', 'MST',
+        'HSP', 'HSPE', 'HSPS', 'HSLS', 'HSTS', 'HSTO', 'MALA', 'SH',
+        'ESP', 'ESMP', 'ESPS', 'ESLS', 'ETSA',
+        'ISAP', 'ISALASU', 'ISAPESU', 'ISASU',
+        'RL', 'PL', 'Muu', 'LUUM'
+    ];
+
+    container.innerHTML = '';
+    products.forEach(product => {
+        const div = document.createElement('div');
+        div.className = 'product-checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `product_${product}`;
+        checkbox.value = product;
+        
+        const label = document.createElement('label');
+        label.htmlFor = `product_${product}`;
+        label.textContent = product;
+        
+        div.appendChild(checkbox);
+        div.appendChild(label);
+        container.appendChild(div);
+    });
+}
+
+// Handle subscriber addition
+async function handleAddSubscriber() {
+    const circuitId = document.getElementById('subscriberCircuit').value;
+    const street = document.getElementById('subscriberStreet').value.trim();
+    const number = document.getElementById('subscriberNumber').value.trim();
+    const building = document.getElementById('subscriberBuilding').value.trim();
+    const apartment = document.getElementById('subscriberApartment').value.trim();
+    const name = document.getElementById('subscriberName').value.trim();
+
+    // Get selected products
+    const selectedProducts = Array.from(document.querySelectorAll('#productCheckboxes input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+
+    if (!circuitId) {
+        showNotification('Valitse piiri', 'error');
+        return;
+    }
+
+    if (!street) {
+        showNotification('Syötä katu', 'error');
+        return;
+    }
+
+    if (selectedProducts.length === 0) {
+        showNotification('Valitse vähintään yksi tuote', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/subscriptions/subscriber`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('mailiaToken')}`
+            },
+            body: JSON.stringify({
+                circuitId,
+                street,
+                number,
+                building,
+                apartment,
+                name,
+                products: selectedProducts
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Tilaajan lisäys epäonnistui');
+        }
+
+        const result = await response.json();
+        
+        showNotification(
+            result.action === 'created' 
+                ? 'Tilaaja lisätty onnistuneesti!' 
+                : 'Tilaaja päivitetty onnistuneesti!',
+            'success'
+        );
+
+        closeAddSubscriberModal();
+
+        // Broadcast update via WebSocket
+        if (socket && socket.connected) {
+            socket.emit('subscriber_updated', {
+                circuitId,
+                action: result.action
+            });
+        }
+
+        // Refresh current circuit if it matches
+        if (currentCircuit === circuitId) {
+            await loadCircuit(circuitId);
+        }
+    } catch (error) {
+        console.error('Add subscriber error:', error);
+        showNotification(error.message || 'Tilaajan lisäys epäonnistui', 'error');
+    }
+}
+
+// Close modal
+function closeAddSubscriberModal() {
+    const modal = document.getElementById('addSubscriberModal');
+    const form = document.getElementById('addSubscriberForm');
+    
+    modal.style.display = 'none';
+    form.reset();
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing initialization code ...
+    
+    // Initialize add subscriber modal if admin
+    const userRole = localStorage.getItem('mailiaUserRole');
+    if (userRole === 'admin') {
+        initializeAddSubscriberModal();
+    }
+});
+
 
 

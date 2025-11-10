@@ -5,6 +5,16 @@ import logger from '../config/logger';
 
 const router = Router();
 
+// Dynamic import of io to avoid circular dependencies
+let io: any = null;
+const getIO = async () => {
+    if (!io) {
+        const { io: socketIO } = await import('../server');
+        io = socketIO;
+    }
+    return io;
+};
+
 // Get subscription changes
 router.get('/changes', 
     authenticate, 
@@ -71,6 +81,126 @@ router.post('/changes/:id/process',
         } catch (error) {
             logger.error('Process subscription change error:', error);
             res.status(500).json({ error: 'Failed to process subscription change' });
+        }
+    }
+);
+
+// Manually add or update subscriber (admin only)
+router.post('/subscriber',
+    authenticate,
+    authorize('admin'),
+    async (req, res) => {
+        try {
+            const { circuitId, street, number, building, apartment, name, products } = req.body;
+
+            // Validate required fields
+            if (!circuitId || !street || !products || products.length === 0) {
+                return res.status(400).json({ 
+                    error: 'Circuit ID, street, and at least one product are required' 
+                });
+            }
+
+            // Get circuit internal ID
+            const circuitResult = await query(
+                'SELECT id FROM circuits WHERE circuit_id = $1',
+                [circuitId]
+            );
+
+            if (circuitResult.rows.length === 0) {
+                return res.status(404).json({ error: 'Circuit not found' });
+            }
+
+            const circuitDbId = circuitResult.rows[0].id;
+
+            // Build address
+            const address = `${street}${number ? ' ' + number : ''}${building ? ' ' + building : ''}${apartment ? ' ' + apartment : ''}`;
+            const buildingAddress = `${street}${number ? ' ' + number : ''}`;
+
+            // Check if subscriber already exists
+            const existingSubscriber = await query(
+                `SELECT id FROM subscribers 
+                WHERE circuit_id = $1 AND address = $2`,
+                [circuitDbId, address]
+            );
+
+            let subscriberId;
+
+            if (existingSubscriber.rows.length > 0) {
+                // Update existing subscriber
+                subscriberId = existingSubscriber.rows[0].id;
+                
+                await query(
+                    `UPDATE subscribers 
+                    SET name = $1, building_address = $2, updated_at = NOW()
+                    WHERE id = $3`,
+                    [name || '', buildingAddress, subscriberId]
+                );
+
+                // Delete existing products
+                await query('DELETE FROM subscriber_products WHERE subscriber_id = $1', [subscriberId]);
+            } else {
+                // Get max order_index for the circuit
+                const maxOrderResult = await query(
+                    'SELECT COALESCE(MAX(order_index), 0) as max_order FROM subscribers WHERE circuit_id = $1',
+                    [circuitDbId]
+                );
+                const orderIndex = maxOrderResult.rows[0].max_order + 1;
+
+                // Insert new subscriber
+                const insertResult = await query(
+                    `INSERT INTO subscribers (circuit_id, address, building_address, name, order_index)
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING id`,
+                    [circuitDbId, address, buildingAddress, name || '', orderIndex]
+                );
+                subscriberId = insertResult.rows[0].id;
+            }
+
+            // Insert products
+            for (const product of products) {
+                await query(
+                    `INSERT INTO subscriber_products (subscriber_id, product_code, quantity)
+                    VALUES ($1, $2, $3)`,
+                    [subscriberId, product, 1]
+                );
+            }
+
+            // Get the complete subscriber data to return
+            const result = await query(
+                `SELECT s.*, 
+                    array_agg(sp.product_code) as products
+                FROM subscribers s
+                LEFT JOIN subscriber_products sp ON s.id = sp.id
+                WHERE s.id = $1
+                GROUP BY s.id`,
+                [subscriberId]
+            );
+
+            logger.info(`Admin manually ${existingSubscriber.rows.length > 0 ? 'updated' : 'added'} subscriber:`, {
+                circuitId,
+                address,
+                products
+            });
+
+            // Broadcast update to all connected clients via WebSocket
+            const socketIO = await getIO();
+            if (socketIO) {
+                socketIO.emit('subscriber_updated', {
+                    circuitId,
+                    action: existingSubscriber.rows.length > 0 ? 'updated' : 'created',
+                    subscriber: result.rows[0]
+                });
+                logger.info(`Broadcasted subscriber update for circuit ${circuitId}`);
+            }
+
+            res.json({
+                success: true,
+                subscriber: result.rows[0],
+                action: existingSubscriber.rows.length > 0 ? 'updated' : 'created'
+            });
+        } catch (error) {
+            logger.error('Manual subscriber add/update error:', error);
+            res.status(500).json({ error: 'Failed to add/update subscriber' });
         }
     }
 );

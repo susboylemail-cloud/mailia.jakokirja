@@ -324,6 +324,11 @@ class MailiaAPI {
             window.dispatchEvent(new CustomEvent('subscriptionChanged', { detail: data }));
         });
 
+        this.socket.on('subscriber_updated', (data) => {
+            console.log('Subscriber updated:', data);
+            window.dispatchEvent(new CustomEvent('subscriberUpdated', { detail: data }));
+        });
+
         this.socket.on('route:updated', (data) => {
             console.log('Route updated:', data);
             window.dispatchEvent(new CustomEvent('routeUpdated', { detail: data }));

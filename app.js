@@ -1,3 +1,105 @@
+// Generic modal factory (lightweight, non-invasive)
+function createModal({ title, bodyHTML, actions = [] }) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:2rem;max-width:440px;width:90%;color:var(--text-color);box-shadow:0 8px 24px rgba(0,0,0,0.4);';
+    box.innerHTML = `
+        <h3 style="margin:0 0 1rem 0;font-size:1.25rem;font-weight:600;">${title}</h3>
+        <div class="modal-body">${bodyHTML}</div>
+        <div class="modal-actions" style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem;"></div>
+    `;
+    const actionsContainer = box.querySelector('.modal-actions');
+    actions.forEach(a => {
+        const btn = document.createElement('button');
+        btn.textContent = a.label;
+        btn.type = 'button';
+        btn.id = a.id || '';
+        btn.style.cssText = a.variant === 'primary'
+            ? 'padding:.75rem 1.5rem;border:none;background:var(--primary-blue);color:#fff;border-radius:8px;font-weight:600;cursor:pointer;'
+            : 'padding:.75rem 1.5rem;border:2px solid var(--border-color);background:transparent;color:var(--text-color);border-radius:8px;font-weight:500;cursor:pointer;';
+        btn.addEventListener('click', () => a.handler && a.handler({ close }));
+        actionsContainer.appendChild(btn);
+    });
+    function close() { document.body.removeChild(overlay); }
+    overlay.appendChild(box);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.body.appendChild(overlay);
+    return { overlay, box, close };
+}
+
+// Refactored report dialog using createModal
+function openDeliveryIssueDialog(subscriber, circuitId) {
+    const hasMultiple = subscriber.products.length > 1;
+    const productHTML = hasMultiple ? `
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;margin-bottom:.5rem;font-weight:500;">Valitse tuote(et) jotka eivät toimitettu:</label>
+          <div id="reportProducts" style="display:flex;flex-direction:column;gap:.5rem;padding:.75rem;background:var(--warm-gray);border-radius:8px;">
+            ${subscriber.products.map((p,i)=>`<label style='display:flex;align-items:center;cursor:pointer;'>
+              <input type='checkbox' value='${p}' data-idx='${i}' style='margin-right:.5rem;width:18px;height:18px;cursor:pointer;'>
+              <span>${p}</span>
+            </label>`).join('')}
+          </div>
+        </div>` : '';
+    const bodyHTML = `
+        ${productHTML}
+        <select id='reportIssue' style='width:100%;padding:.75rem;border:2px solid var(--border-color);border-radius:8px;font-size:1rem;margin-bottom:1rem;background:var(--card-bg);color:var(--text-color);'>
+          <option value=''>Valitse syy</option>
+          <option value='Ei pääsyä'>Ei pääsyä</option>
+          <option value='Avainongelma'>Avainongelma</option>
+          <option value='Lehtipuute'>Lehtipuute</option>
+          <option value='Muu'>Muu</option>
+        </select>
+        <div id='reportCustomWrap' style='display:none;margin-bottom:1rem;'>
+          <label style='display:block;margin-bottom:.5rem;font-weight:500;'>Tarkenna:</label>
+          <textarea id='reportCustomText' rows='3' style='width:100%;padding:.75rem;border:2px solid var(--border-color);border-radius:8px;font-size:1rem;resize:vertical;background:var(--card-bg);color:var(--text-color);'></textarea>
+        </div>`;
+    const { box, close } = createModal({
+        title: 'Jakeluhäiriön ilmoitus',
+        bodyHTML,
+        actions: [
+            { id: 'reportCancel', label: 'Peruuta', variant: 'secondary', handler: () => close() },
+            { id: 'reportSubmit', label: 'Lähetä', variant: 'primary', handler: () => {
+                const issueSelect = box.querySelector('#reportIssue');
+                let reason = issueSelect.value;
+                if (!reason) { alert('Valitse syy'); return; }
+                if (reason === 'Muu') {
+                    const customTxt = box.querySelector('#reportCustomText').value.trim();
+                    if (!customTxt) { alert('Kirjoita tarkennusviesti'); return; }
+                    reason = `Muu: ${customTxt}`;
+                }
+                let selectedProducts = subscriber.products;
+                if (hasMultiple) {
+                    const checked = Array.from(box.querySelectorAll('#reportProducts input[type="checkbox"]:checked')).map(cb => cb.value);
+                    if (checked.length === 0) { alert('Valitse vähintään yksi tuote'); return; }
+                    selectedProducts = checked;
+                }
+                const report = {
+                    timestamp: new Date().toISOString(),
+                    circuit: circuitId,
+                    address: subscriber.address,
+                    name: subscriber.name,
+                    products: selectedProducts.join(', '),
+                    reason
+                };
+                saveRouteMessage(report);
+                alert('Raportti tallennettu!');
+                close();
+            } }
+        ]
+    });
+    // Toggle custom reason field
+    const issueSelect = box.querySelector('#reportIssue');
+    const customWrap = box.querySelector('#reportCustomWrap');
+    issueSelect.addEventListener('change', () => {
+        customWrap.style.display = issueSelect.value === 'Muu' ? 'block' : 'none';
+    });
+}
+// Helper: collect checked product values from a container
+function getCheckedProducts(container) {
+    if (!container) return [];
+    return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+}
 // Mailia Delivery Tracking Application
 
 // ============= Global State =============
@@ -2765,7 +2867,8 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     `;
     reportBtn.title = 'Ilmoita ongelmasta';
     reportBtn.addEventListener('click', () => {
-        reportUndelivered(circuitId, subscriber);
+        // Use new modal-based delivery issue dialog
+        openDeliveryIssueDialog(subscriber, circuitId);
     });
     card.appendChild(reportBtn);
     
@@ -2969,150 +3072,7 @@ function initializeSwipeToMark(card, checkbox, circuitId, address, subscriberId 
 }
 
 // Report Undelivered Functionality
-function reportUndelivered(circuitId, subscriber) {
-    // Create a styled dialog for selecting delivery issue
-    const dialog = document.createElement('div');
-    dialog.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-    `;
-    
-    const dialogBox = document.createElement('div');
-    dialogBox.style.cssText = `
-        background: var(--card-bg);
-        padding: 2rem;
-        border-radius: 12px;
-        max-width: 400px;
-        width: 90%;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        border: 1px solid var(--border-color);
-    `;
-    
-    // Build product selection checkboxes if multiple products
-    let productSelectionHTML = '';
-    if (subscriber.products.length > 1) {
-        productSelectionHTML = `
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color); font-weight: 500;">Valitse tuote(et) jotka eivät toimitettu:</label>
-                <div id="productCheckboxes" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; background: var(--warm-gray); border-radius: 8px;">
-                    ${subscriber.products.map((product, index) => `
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" value="${product}" data-product-index="${index}" style="margin-right: 0.5rem; width: 18px; height: 18px; cursor: pointer;">
-                            <span style="color: var(--text-color);">${product}</span>
-                        </label>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
-    
-    dialogBox.innerHTML = `
-        <h3 style="margin-top: 0; color: var(--text-color); font-size: 1.25rem; font-weight: 600;">Jakeluhäiriön ilmoitus</h3>
-        ${productSelectionHTML}
-        <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--card-bg); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer;">
-            <option value="">Valitse syy</option>
-            <option value="Ei pääsyä">Ei pääsyä</option>
-            <option value="Avainongelma">Avainongelma</option>
-            <option value="Lehtipuute">Lehtipuute</option>
-            <option value="Muu">Muu</option>
-        </select>
-        <div id="customReasonContainer" style="display: none; margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color); font-weight: 500;">Tarkenna:</label>
-            <textarea id="customReasonText" rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; resize: vertical; background: var(--card-bg); color: var(--text-color); font-family: inherit;"></textarea>
-        </div>
-        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-            <button id="cancelBtn" style="padding: 0.75rem 1.5rem; border: 2px solid var(--border-color); background: transparent; color: var(--text-color); border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 500;">Peruuta</button>
-            <button id="submitBtn" style="padding: 0.75rem 1.5rem; border: none; background: var(--primary-blue); color: white; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);">Lähetä</button>
-        </div>
-    `;
-    
-    dialog.appendChild(dialogBox);
-    document.body.appendChild(dialog);
-    
-    const select = document.getElementById('deliveryIssueSelect');
-    const customContainer = document.getElementById('customReasonContainer');
-    const customText = document.getElementById('customReasonText');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const productCheckboxes = document.getElementById('productCheckboxes');
-    
-    // Show custom reason field when "Muu" is selected
-    select.addEventListener('change', () => {
-        if (select.value === 'Muu') {
-            customContainer.style.display = 'block';
-        } else {
-            customContainer.style.display = 'none';
-        }
-    });
-    
-    // Cancel button
-    cancelBtn.addEventListener('click', () => {
-        document.body.removeChild(dialog);
-    });
-    
-    // Submit button
-    submitBtn.addEventListener('click', () => {
-        let reason = select.value;
-        
-        if (!reason) {
-            alert('Valitse syy');
-            return;
-        }
-        
-        // If "Muu" selected, append custom text
-        if (reason === 'Muu') {
-            const customReason = customText.value.trim();
-            if (!customReason) {
-                alert('Kirjoita tarkennusviesti');
-                return;
-            }
-            reason = `Muu: ${customReason}`;
-        }
-        
-        // Get selected products if multiple products available
-        let selectedProducts = subscriber.products;
-        if (subscriber.products.length > 1) {
-            const checkedBoxes = productCheckboxes.querySelectorAll('input[type="checkbox"]:checked');
-            if (checkedBoxes.length === 0) {
-                alert('Valitse vähintään yksi tuote');
-                return;
-            }
-            selectedProducts = Array.from(checkedBoxes).map(cb => cb.value);
-        }
-        
-        const report = {
-            timestamp: new Date().toISOString(),
-            circuit: circuitId,
-            address: subscriber.address,
-            name: subscriber.name,
-            products: selectedProducts.join(', '),
-            reason: reason
-        };
-        
-        // Save to localStorage
-        saveRouteMessage(report);
-        
-        // Remove dialog
-        document.body.removeChild(dialog);
-        
-        alert('Raportti tallennettu!');
-    });
-    
-    // Close on background click
-    dialog.addEventListener('click', (e) => {
-        if (e.target === dialog) {
-            document.body.removeChild(dialog);
-        }
-    });
-}
+// legacy reportUndelivered removed; replaced by openDeliveryIssueDialog
 
 function saveRouteMessage(message) {
     // Get current route ID
@@ -4854,7 +4814,8 @@ function populateCircuitOptions() {
 
 // Populate product checkboxes with all available products
 function populateProductCheckboxes() {
-    const container = document.getElementById('productCheckboxes');
+    // Target only the Add Subscriber modal's container
+    const container = document.getElementById('addSubscriberProductCheckboxes');
     const products = [
         'UV', 'HS', 'ES', 'ISA', 'STF', 'JO', 'LU', 'PASA', 'YHTS', 'MST',
         'HSP', 'HSPE', 'HSPS', 'HSLS', 'HSTS', 'HSTO', 'MALA', 'SH',
@@ -4894,9 +4855,10 @@ async function handleAddSubscriber() {
     const orderIndexInput = document.getElementById('subscriberOrderIndex').value.trim();
     const orderIndex = orderIndexInput ? parseInt(orderIndexInput) : null;
 
-    // Get selected products
-    const selectedProducts = Array.from(document.querySelectorAll('#productCheckboxes input[type="checkbox"]:checked'))
-        .map(cb => cb.value);
+    // Get selected products (scoped to Add Subscriber modal)
+    const modal = document.getElementById('addSubscriberModal');
+    const productsContainer = modal.querySelector('#addSubscriberProductCheckboxes');
+    const selectedProducts = getCheckedProducts(productsContainer);
 
     if (!circuitId) {
         showNotification('Valitse piiri', 'error');

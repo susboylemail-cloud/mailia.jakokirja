@@ -318,21 +318,12 @@ body {
     font-weight: 500;
     z-index: 100;
 }
-    align-items: center;
-    padding: 0 1.5rem;
-    padding-top: 0.5rem;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.75rem;
-    font-weight: 500;
-    z-index: 100;
-}
 
 .status-bar-left {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
-
 .status-bar-right {
     display: flex;
     align-items: center;
@@ -820,7 +811,6 @@ body {
 .tap-to-login,
 .login-form-container {
     display: none !important;
-    }
 }
 
 /* Fade and blur background when login form is visible */
@@ -1883,6 +1873,8 @@ body.dark-mode .subscriber-name {
 .product-tag.product-ES {
     background: #2E86C1;            /* Darker blue for better contrast */
     color: white;
+    font-size: 0.75rem;             /* Ensure consistent sizing */
+    padding: 0.25rem 0.6rem;        /* Match base product-tag padding */
 }
 
 .product-tag.product-UV {
@@ -3131,6 +3123,146 @@ body.dark-mode .circuit-checkbox-list {
 }
 
 .settings-action-btn:hover {
+    background: #5DADE2;
+    transform: translateY(-1px);
+}
+
+/* Add subscriber between cards button */
+.add-subscriber-between-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin: 0.5rem auto;
+    padding: 0;
+    background: var(--primary-blue);
+    border: 2px dashed var(--primary-blue);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.6;
+}
+
+.add-subscriber-between-btn:hover {
+    opacity: 1;
+    background: #5DADE2;
+    border-color: #5DADE2;
+    transform: scale(1.1);
+}
+
+.add-subscriber-between-btn .icon {
+    width: 20px;
+    height: 20px;
+    stroke: white;
+}
+
+/* First button at top of list */
+.building-group .add-subscriber-between-btn:first-child {
+    margin-top: 0.25rem;
+}
+
+/* Last button at bottom of list */
+.building-group .add-subscriber-between-btn:last-child {
+    margin-bottom: 0.25rem;
+}
+
+/* Circuit Selection Dialog (Dashboard Reports) */
+.custom-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.custom-dialog {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+}
+
+.custom-dialog h3 {
+    margin: 0 0 1rem 0;
+    color: var(--text-color);
+    font-size: 1.25rem;
+}
+
+.circuit-checkbox-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem;
+}
+
+.circuit-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-bottom: 0.5rem;
+}
+
+.circuit-checkbox-item:hover {
+    background: var(--hover-bg);
+}
+
+.circuit-checkbox-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.circuit-checkbox-item span {
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+.custom-dialog-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.custom-dialog-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.custom-dialog-btn.cancel-btn {
+    background: var(--border-color);
+    color: var(--text-color);
+}
+
+.custom-dialog-btn.cancel-btn:hover {
+    background: var(--hover-bg);
+}
+
+.custom-dialog-btn.confirm-btn {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.custom-dialog-btn.confirm-btn:hover {
     background: #5DADE2;
     transform: translateY(-1px);
 }

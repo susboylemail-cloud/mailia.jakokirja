@@ -2159,8 +2159,8 @@ function renderCoverSheet(circuitId, subscribers) {
         background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
         color: white;
         border: none;
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
         font-size: 1rem;
         font-weight: 600;
         cursor: pointer;
@@ -2513,6 +2513,13 @@ function renderSubscriberList(circuitId, subscribers) {
                                    currentStaircase && previousStaircase && 
                                    currentStaircase !== previousStaircase;
             
+            // Add + button before each card (admin only)
+            const userRole = localStorage.getItem('mailiaUserRole');
+            if (userRole === 'admin') {
+                const addButton = createAddSubscriberButton(circuitId, sub.orderIndex);
+                buildingGroup.appendChild(addButton);
+            }
+            
             const card = createSubscriberCard(circuitId, sub, buildingIndex, subIndex, 
                 buildingIndex === buildings.length - 1 && subIndex === buildingSubscribers.length - 1,
                 buildings, buildingIndex, subIndex, hasMultipleDeliveries, isNewStaircase);
@@ -2521,8 +2528,33 @@ function renderSubscriberList(circuitId, subscribers) {
             previousStaircase = currentStaircase;
         });
         
+        // Add final + button at the end of each building group (admin only)
+        const userRole = localStorage.getItem('mailiaUserRole');
+        if (userRole === 'admin' && buildingSubscribers.length > 0) {
+            const lastSub = buildingSubscribers[buildingSubscribers.length - 1];
+            const addButton = createAddSubscriberButton(circuitId, lastSub.orderIndex + 1);
+            buildingGroup.appendChild(addButton);
+        }
+        
         listContainer.appendChild(buildingGroup);
     });
+}
+
+// Create add subscriber button between cards
+function createAddSubscriberButton(circuitId, orderIndex) {
+    const button = document.createElement('button');
+    button.className = 'add-subscriber-between-btn';
+    button.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    `;
+    button.setAttribute('aria-label', 'Lisää tilaaja tähän');
+    button.addEventListener('click', () => {
+        openAddSubscriberModal(circuitId, orderIndex);
+    });
+    return button;
 }
 
 function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, isLast, buildings, currentBuildingIndex, currentSubIndex, hasMultipleDeliveries, isNewStaircase) {
@@ -4662,23 +4694,10 @@ function initializeAddSubscriberModal() {
     const addBtn = document.getElementById('addSubscriberBtn');
     const modal = document.getElementById('addSubscriberModal');
     const form = document.getElementById('addSubscriberForm');
-    const circuitSelect = document.getElementById('subscriberCircuit');
-    const productCheckboxes = document.getElementById('productCheckboxes');
 
-    // Show button only for admins
-    const userRole = localStorage.getItem('mailiaUserRole');
-    if (userRole === 'admin' && addBtn) {
-        addBtn.style.display = 'flex';
-    }
-
-    // Open modal
+    // Hide the settings button (now using + buttons between cards)
     if (addBtn) {
-        addBtn.addEventListener('click', () => {
-            populateCircuitOptions();
-            populateProductCheckboxes();
-            modal.style.display = 'block';
-            document.getElementById('settingsDropdown').style.display = 'none';
-        });
+        addBtn.style.display = 'none';
     }
 
     // Form submission
@@ -4688,6 +4707,28 @@ function initializeAddSubscriberModal() {
             await handleAddSubscriber();
         });
     }
+}
+
+// Open modal with optional pre-filled circuit and order index
+function openAddSubscriberModal(circuitId = null, orderIndex = null) {
+    const modal = document.getElementById('addSubscriberModal');
+    const circuitSelect = document.getElementById('subscriberCircuit');
+    const orderIndexInput = document.getElementById('subscriberOrderIndex');
+    
+    populateCircuitOptions();
+    populateProductCheckboxes();
+    
+    // Pre-fill circuit if provided
+    if (circuitId && circuitSelect) {
+        circuitSelect.value = circuitId;
+    }
+    
+    // Pre-fill order index if provided
+    if (orderIndex !== null && orderIndexInput) {
+        orderIndexInput.value = orderIndex;
+    }
+    
+    modal.style.display = 'block';
 }
 
 // Populate circuit dropdown
@@ -4745,6 +4786,8 @@ async function handleAddSubscriber() {
     const building = document.getElementById('subscriberBuilding').value.trim();
     const apartment = document.getElementById('subscriberApartment').value.trim();
     const name = document.getElementById('subscriberName').value.trim();
+    const orderIndexInput = document.getElementById('subscriberOrderIndex').value.trim();
+    const orderIndex = orderIndexInput ? parseInt(orderIndexInput) : null;
 
     // Get selected products
     const selectedProducts = Array.from(document.querySelectorAll('#productCheckboxes input[type="checkbox"]:checked'))
@@ -4779,7 +4822,8 @@ async function handleAddSubscriber() {
                 building,
                 apartment,
                 name,
-                products: selectedProducts
+                products: selectedProducts,
+                orderIndex
             })
         });
 

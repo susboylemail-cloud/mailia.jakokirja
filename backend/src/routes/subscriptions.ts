@@ -91,7 +91,7 @@ router.post('/subscriber',
     authorize('admin'),
     async (req, res) => {
         try {
-            const { circuitId, street, number, building, apartment, name, products } = req.body;
+            const { circuitId, street, number, building, apartment, name, products, orderIndex } = req.body;
 
             // Validate required fields
             if (!circuitId || !street || !products || products.length === 0) {
@@ -139,19 +139,34 @@ router.post('/subscriber',
                 // Delete existing products
                 await query('DELETE FROM subscriber_products WHERE subscriber_id = $1', [subscriberId]);
             } else {
-                // Get max order_index for the circuit
-                const maxOrderResult = await query(
-                    'SELECT COALESCE(MAX(order_index), 0) as max_order FROM subscribers WHERE circuit_id = $1',
-                    [circuitDbId]
-                );
-                const orderIndex = maxOrderResult.rows[0].max_order + 1;
+                // Determine order_index
+                let finalOrderIndex;
+                if (orderIndex !== null && orderIndex !== undefined) {
+                    // Use provided order index
+                    finalOrderIndex = orderIndex;
+                    
+                    // Shift existing subscribers to make room
+                    await query(
+                        `UPDATE subscribers 
+                        SET order_index = order_index + 1 
+                        WHERE circuit_id = $1 AND order_index >= $2`,
+                        [circuitDbId, orderIndex]
+                    );
+                } else {
+                    // Get max order_index for the circuit and add to end
+                    const maxOrderResult = await query(
+                        'SELECT COALESCE(MAX(order_index), 0) as max_order FROM subscribers WHERE circuit_id = $1',
+                        [circuitDbId]
+                    );
+                    finalOrderIndex = maxOrderResult.rows[0].max_order + 1;
+                }
 
                 // Insert new subscriber
                 const insertResult = await query(
                     `INSERT INTO subscribers (circuit_id, address, building_address, name, order_index)
                     VALUES ($1, $2, $3, $4, $5)
                     RETURNING id`,
-                    [circuitDbId, address, buildingAddress, name || '', orderIndex]
+                    [circuitDbId, address, buildingAddress, name || '', finalOrderIndex]
                 );
                 subscriberId = insertResult.rows[0].id;
             }

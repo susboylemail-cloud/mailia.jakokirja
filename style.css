@@ -1,22 +1,49 @@
 /* CSS Variables */
 :root {
-    --primary-blue: #0066cc;
-    --accent-cyan: #00aacc;
-    --bg-color: #ffffff;
-    --text-color: #333333;
-    --card-bg: #f9f9f9;
-    --border-color: #e0e0e0;
-    --building-bg: #e3f2fd;
-    --shadow: rgba(0, 0, 0, 0.1);
+    /* New Dark Theme Color Palette */
+    --primary-blue: #4A90E2;        /* Action Blue for primary button */
+    --accent-blue: #5DADE2;         /* ES - Clear accessible blue */
+    --primary-green: #58D68D;       /* HS - Success green */
+    --accent-green: #8FBC8F;
+    --navy: #2C3E50;
+    --red-accent: #E07856;
+    --yellow-accent: #F9A825;       /* UV - Rich gold/yellow */
+    --orange-accent: #FF6B35;       /* STF - Bright red-orange to differ from UV */
+    --light-purple: #AF7AC5;        /* Alternative for UV - purple for distinction */
+    --warm-gray: #F5F5F0;
+    --medium-gray: #9E9E9E;         /* Secondary text */
+    --dark-gray: #6C757D;
+    
+    /* Typography */
+    --base-font-size: 16px;
+    
+    /* Background and text colors - Default Light Mode */
+    --bg-color: #FAFAFA;
+    --text-color: #2C3E50;
+    --card-bg: #FFFFFF;
+    --border-color: #E8EAE6;
+    --building-bg: #F0F4F8;
+    --shadow: rgba(44, 62, 80, 0.08);
+    --z-dropdown: 1000;
 }
 
 body.dark-mode {
-    --bg-color: #1a1a1a;
-    --text-color: #e0e0e0;
-    --card-bg: #2a2a2a;
+    /* Dark Theme Colors */
+    --bg-color: #1A1D21;            /* Dark Charcoal - main background */
+    --text-color: #F0F0F0;          /* Off-White - primary text */
+    --card-bg: #2C2F36;             /* Dark Gray - card background */
     --border-color: #404040;
-    --building-bg: #1e3a5f;
+    --building-bg: #2C2F36;         /* Dark Gray for building headers */
     --shadow: rgba(0, 0, 0, 0.3);
+    --warm-gray: #3a3a3a;
+    --medium-gray: #9E9E9E;         /* Secondary text color */
+    --navy: #4A90E2;                /* Action Blue in dark mode */
+    
+    /* Product colors optimized for dark theme */
+    --accent-blue: #5DADE2;         /* ES */
+    --primary-green: #58D68D;       /* HS */
+    --orange-accent: #FF6B35;       /* STF */
+    --yellow-accent: #F9A825;       /* UV */
 }
 
 /* Reset */
@@ -32,98 +59,956 @@ body {
     color: var(--text-color);
     line-height: 1.6;
     transition: background-color 0.3s, color 0.3s;
-    font-size: 110%; /* 10% increase in base font size */
+    font-size: var(--base-font-size);
+    font-weight: 400;
+    letter-spacing: 0.01em;
 }
 
-/* Login Screen */
+/* Login Screen - Navy Monochromatic Background with Geometric Pattern */
 .login-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100vh;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    background: linear-gradient(135deg, #1a2332 0%, #0f1419 50%, #1a2332 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999;
+    overflow: hidden;
 }
 
-.login-container {
-    background: white;
-    border-radius: 16px;
-    padding: 3rem 2.5rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    max-width: 400px;
+/* Pulsating background glow - subtle animation */
+.login-screen::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(74, 144, 226, 0.08) 0%, transparent 65%);
+    border-radius: 50%;
+    animation: pulse 6s ease-in-out infinite;
+    pointer-events: none;
 }
 
-body.dark-mode .login-container {
-    background: #2a2a2a;
+@keyframes pulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.8;
+    }
 }
 
-.login-header {
-    text-align: center;
-    margin-bottom: 2rem;
+/* Diagonal Lines for Added Depth */
+.login-screen::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 100px,
+            rgba(74, 144, 226, 0.02) 100px,
+            rgba(74, 144, 226, 0.02) 101px
+        );
+    opacity: 0.5;
+    pointer-events: none;
 }
 
-.login-logo {
-    font-size: 2.5rem;
-    font-weight: bold;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
+/* Pulsing Glow Behind Phone - Light Bulb Effect */
+.phone-glow-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(
+        circle,
+        rgba(74, 144, 226, 0.3) 0%,
+        rgba(74, 144, 226, 0.15) 30%,
+        rgba(74, 144, 226, 0.08) 50%,
+        transparent 70%
+    );
+    border-radius: 50%;
+    animation: glowPulse 2s ease-in-out infinite, hueShift 8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+    will-change: transform, opacity, background;
 }
 
-.login-subtitle {
-    color: #666;
-    font-size: 1.1rem;
+@keyframes glowPulse {
+    0%, 100% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) rotate(-15deg) scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) rotate(-15deg) scale(1.05);
+    }
 }
 
-body.dark-mode .login-subtitle {
-    color: #999;
+@keyframes hueShift {
+    0% {
+        background: radial-gradient(
+            circle,
+            rgba(74, 144, 226, 0.3) 0%,    /* primary-blue */
+            rgba(74, 144, 226, 0.15) 30%,
+            rgba(74, 144, 226, 0.08) 50%,
+            transparent 70%
+        );
+    }
+    20% {
+        background: radial-gradient(
+            circle,
+            rgba(93, 173, 226, 0.3) 0%,    /* accent-blue */
+            rgba(93, 173, 226, 0.15) 30%,
+            rgba(93, 173, 226, 0.08) 50%,
+            transparent 70%
+        );
+    }
+    40% {
+        background: radial-gradient(
+            circle,
+            rgba(88, 214, 141, 0.3) 0%,    /* primary-green */
+            rgba(88, 214, 141, 0.15) 30%,
+            rgba(88, 214, 141, 0.08) 50%,
+            transparent 70%
+        );
+    }
+    60% {
+        background: radial-gradient(
+            circle,
+            rgba(249, 168, 37, 0.3) 0%,    /* yellow-accent */
+            rgba(249, 168, 37, 0.15) 30%,
+            rgba(249, 168, 37, 0.08) 50%,
+            transparent 70%
+        );
+    }
+    80% {
+        background: radial-gradient(
+            circle,
+            rgba(255, 107, 53, 0.3) 0%,    /* orange-accent */
+            rgba(255, 107, 53, 0.15) 30%,
+            rgba(255, 107, 53, 0.08) 50%,
+            transparent 70%
+        );
+    }
+    100% {
+        background: radial-gradient(
+            circle,
+            rgba(74, 144, 226, 0.3) 0%,    /* back to primary-blue */
+            rgba(74, 144, 226, 0.15) 30%,
+            rgba(74, 144, 226, 0.08) 50%,
+            transparent 70%
+        );
+    }
 }
 
-.login-form {
+/* Floating Phone Container with Blue Ambient Glow */
+.phone-container {
+    position: relative;
+    perspective: 1000px;
+    z-index: 1;
+    /* Removed floating animation */
+    filter: drop-shadow(0 0 60px rgba(74, 144, 226, 0.4)) 
+            drop-shadow(0 0 30px rgba(74, 144, 226, 0.3));
+}
+
+/* Removed floatPhone animation */
+
+/* Phone Device */
+.phone-device {
+    position: relative;
+    width: 370px;
+    height: 760px;
+    transform-style: preserve-3d;
+    /* Removed rotation animation */
+}
+
+/* Scale down phone on desktop/laptop screens */
+@media (min-width: 769px) {
+    .phone-device {
+        width: 300px;
+        height: 615px;
+    }
+    
+    .phone-logo-img {
+        max-width: 140px;
+    }
+    
+    .phone-input {
+        font-size: 0.95rem;
+        padding: 0.85rem 1.1rem;
+    }
+    
+    .phone-login-button {
+        font-size: 0.95rem;
+        padding: 0.85rem 1.5rem;
+    }
+}
+
+/* Wiggle animation for wrong password */
+@keyframes wiggle {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+.phone-device.wiggle {
+    animation: wiggle 0.5s ease-in-out;
+}
+
+/* Phone Frame with Enhanced Shadow and Glow */
+.phone-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+    border-radius: 40px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 0 8px #1a1a1a,
+        0 0 0 10px #2c3e50,
+        0 0 40px rgba(74, 144, 226, 0.2),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+/* Phone Screen */
+.phone-screen {
+    position: absolute;
+    top: 20px;
+    left: 12px;
+    right: 12px;
+    bottom: 20px;
+    background: linear-gradient(180deg, #1e2836 0%, #14171f 100%);
+    border-radius: 30px;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    align-items: center;
+    justify-content: center;
 }
 
-.form-group {
+/* Phone Status Bar */
+.phone-status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem;
+    padding-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.75rem;
+    font-weight: 500;
+    z-index: 100;
+}
+    align-items: center;
+    padding: 0 1.5rem;
+    padding-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.75rem;
+    font-weight: 500;
+    z-index: 100;
+}
+
+.status-bar-left {
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
 }
 
-.form-group label {
+.status-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.9;
+}
+
+.status-battery {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.battery-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* iPhone-style Notification - Compact & Dark Theme - Middle Position */
+.iphone-notification {
+    position: relative;
+    width: calc(100% - 2rem);
+    margin: 0 auto 1.5rem;
+    background: rgba(30, 40, 54, 0.75);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    padding: 0.5rem 0.6rem;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(74, 144, 226, 0.2);
+    animation: notificationSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation-delay: 0.5s;
+    animation-fill-mode: both;
+}
+
+@keyframes notificationSlideIn {
+    0% {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+    60% {
+        transform: translateY(5px);
+        opacity: 1;
+    }
+    80% {
+        transform: translateY(-2px);
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
+}
+
+.notification-icon {
+    width: 14px;
+    height: 14px;
+    stroke: #6bb6ff;
+    flex-shrink: 0;
+}
+
+.notification-app {
+    font-size: 0.7rem;
     font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    flex-grow: 1;
+}
+
+.notification-time {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.notification-content {
+    padding-left: 0.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.notification-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+}
+
+.notification-message {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+}
+
+/* Login Form on Phone Screen */
+.phone-login-form {
+    width: 100%;
+    padding: 2rem 1.5rem;
+    padding-top: 3rem; /* Extra padding for status bar */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: auto;
+    margin-bottom: auto;
+    position: relative;
+    z-index: 10;
+}
+
+.phone-header-widgets {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+    margin-top: 2rem;
+    gap: 1.5rem;
+    padding-left: 0.5rem;
+}
+
+/* Logo Text - White with Subtle Blue Hue */
+.phone-logo {
+    position: relative;
+    width: auto;
+    height: auto;
+    opacity: 0;
+    flex: 0 0 auto;
+    animation: logoFadeIn 1.5s ease-out 0.5s forwards;
+    /* Add subtle blue hue behind logo - reduced intensity */
+    filter: drop-shadow(0 0 8px rgba(93, 173, 226, 0.2)) 
+            drop-shadow(0 0 15px rgba(93, 173, 226, 0.15));
+}
+
+.phone-logo-text {
+    font-size: 2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 
+        0 0 8px rgba(93, 173, 226, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.05em;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* Make it blend like a wallpaper element */
+    opacity: 0.95;
+}
+
+.phone-logo-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* Accent blue color tint to match app color scheme */
+    filter: brightness(1.3) contrast(1.1) saturate(1.2) 
+            hue-rotate(-10deg) drop-shadow(0 0 8px rgba(93, 173, 226, 0.6));
+    /* Add slight opacity for wallpaper effect */
+    opacity: 0.92;
+    /* Blend into phone background like a wallpaper */
+    mix-blend-mode: screen;
+}
+
+/* Logo Fade In Animation */
+@keyframes logoFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.phone-widgets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+    flex: 1;
+    margin-left: auto;
+}
+
+/* Weather Widget - Pill Shape */
+.weather-widget {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+}
+
+.weather-widget .weather-icon {
+    width: 18px;
+    height: 18px;
+    stroke: rgba(255, 255, 255, 0.95);
+    flex-shrink: 0;
+}
+
+.weather-temp {
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* Input Groups and Labels for Better Touch Targets */
+.input-group {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.input-label {
+    display: block;
+    width: 100%;
+    cursor: text;
+    position: relative;
+}
+
+/* Phone Input Fields */
+.phone-input {
+    width: 100%;
+    padding: 0.875rem 1.25rem;
     font-size: 0.95rem;
-    color: var(--text-color);
-}
-
-.form-group input {
-    padding: 0.875rem;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 1rem;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    transition: border-color 0.3s;
-}
-
-.form-group input:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: #fff;
     outline: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    min-height: 48px; /* Ensure touch target is large enough */
+}
+
+.phone-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.phone-input:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #4A90E2;
+    box-shadow: 
+        0 0 0 3px rgba(74, 144, 226, 0.3),
+        0 0 15px rgba(74, 144, 226, 0.4),
+        inset 0 0 10px rgba(74, 144, 226, 0.1);
+}
+
+/* Password Container in Phone */
+.phone-login-form .password-container {
+    position: relative;
+    width: 100%;
+    display: block;
+}
+
+.phone-login-form .password-container input {
+    padding-right: 3rem;
+}
+
+.phone-login-form .input-label.password-container {
+    display: block;
+}
+
+.phone-login-form .password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.75rem; /* Larger touch target */
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.3s ease;
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.phone-login-form .password-toggle:hover {
+    color: #fff;
+}
+
+.phone-login-form .eye-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Phone Login Button with Enhanced Gradient */
+.phone-login-button {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #5DADE2 0%, #4A90E2 50%, #2E5F8A 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 4px 15px rgba(74, 144, 226, 0.4),
+        0 2px 5px rgba(0, 0, 0, 0.2);
+    min-height: 48px; /* Ensure touch target is large enough */
+}
+
+.phone-login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(74, 144, 226, 0.5),
+        0 3px 8px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #6BBEF3 0%, #5DADE2 50%, #357ABD 100%);
+}
+
+/* Remember Me Toggle - Small and Non-intrusive */
+.remember-me-container {
+    width: 100%;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.remember-me-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.2s ease;
+    user-select: none;
+}
+
+.remember-me-label:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.remember-me-checkbox {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.remember-me-checkbox:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.remember-me-checkbox:checked {
+    background: var(--primary-blue);
     border-color: var(--primary-blue);
+}
+
+.remember-me-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.remember-me-text {
+    line-height: 1.2;
+}
+
+.phone-login-button:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 2px 10px rgba(74, 144, 226, 0.4),
+        0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Login Error on Phone */
+.phone-login-form .login-error {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(220, 53, 69, 0.15);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+    color: #ff6b7a;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .phone-device {
+        width: 280px;
+        height: 570px;
+    }
+    
+    .phone-logo-img {
+        max-width: 160px;
+    }
+    
+    .phone-input {
+        font-size: 0.9rem;
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* Phone Rise Up Transition Animation */
+@keyframes phoneRiseUp {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-120%) scale(0.8);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeOutBackground {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.login-screen.zoom-transition .phone-device {
+    animation: phoneRiseUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.login-screen.zoom-transition .phone-container {
+    animation: none;
+}
+
+.login-screen.zoom-transition {
+    animation: fadeOutBackground 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+#mainApp {
+    opacity: 0;
+    transform: translateY(100%);
+}
+
+#mainApp.zoom-in {
+    opacity: 1;
+    animation: slideUpFromBottom 1.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.3s;
+}
+
+@keyframes slideUpFromBottom {
+    0% {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hide old login elements */
+.login-bg-video,
+.landing-content,
+.tap-to-login,
+.login-form-container {
+    display: none !important;
+    }
+}
+
+/* Fade and blur background when login form is visible */
+.login-screen.form-active .login-bg-video {
+    opacity: 0.3;
+    filter: blur(8px);
+}
+
+/* Landing Page Content */
+.landing-content {
+    position: absolute;
+    bottom: 8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 1;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+}
+
+.landing-content.hide {
+    transform: translateX(-50%) translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Swipe Indicator */
+/* Tap to Login Indicator */
+.tap-to-login {
+    position: fixed;
+    bottom: 8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    z-index: 10;
+}
+
+.tap-to-login:hover {
+    transform: translateX(-50%) scale(1.05);
+}
+
+.tap-to-login:active {
+    transform: translateX(-50%) scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .tap-to-login {
+        bottom: 6rem;
+    }
+}
+
+.tap-text {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    font-weight: 500;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
+}
+
+/* Login Form Container */
+.login-form-container {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 90%;
+    max-width: 320px;
+    z-index: 2;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    padding-bottom: 1.5rem;
+}
+
+.login-form-container.show {
+    transform: translateX(-50%) translateY(-50vh);
+}
+
+/* Mobile: lift form even higher for better visibility */
+@media (max-width: 768px) {
+    .login-form-container.show {
+        transform: translateX(-50%) translateY(-55vh);
+    }
+}
+
+/* Minimalistic Floating Login Form - No background, just pill shapes */
+.login-form {
+    background: transparent;
+    border-radius: 20px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+}
+
+body.dark-mode .login-form {
+    background: transparent;
+}
+
+/* Pill-shaped Input Fields */
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    padding: 0.875rem 1.25rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50px;
+    font-size: 1rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #2C3E50;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+/* Password field container for toggle button */
+.password-container {
+    position: relative;
+    width: 100%;
+}
+
+.password-container input {
+    padding-right: 3rem;
+    width: 100%;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #2C3E50;
+    padding: 0.25rem;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle .eye-icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.password-toggle:hover {
+    opacity: 1;
+}
+
+body.dark-mode .password-toggle {
+    color: #e0e0e0;
+}
+
+body.dark-mode .login-form input[type="text"],
+body.dark-mode .login-form input[type="password"] {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus {
+    border-color: var(--primary-blue);
+    background-color: white;
+    box-shadow: 0 0 0 4px rgba(91, 143, 185, 0.1);
+}
+
+body.dark-mode .login-form input[type="text"]:focus,
+body.dark-mode .login-form input[type="password"]:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary-blue);
+}
+
+.login-form input::placeholder {
+    color: rgba(44, 62, 80, 0.5);
+    font-weight: 400;
+}
+
+body.dark-mode .login-form input::placeholder {
+    color: rgba(224, 224, 224, 0.5);
 }
 
 .login-error {
     padding: 0.75rem;
     background-color: #fee;
     color: #c00;
-    border-radius: 8px;
+    border-radius: 20px;
     font-size: 0.9rem;
     text-align: center;
 }
@@ -135,19 +1020,28 @@ body.dark-mode .login-error {
 
 .login-button {
     padding: 1rem;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    background: var(--red-accent);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 50px;
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.3s;
+    transition: transform 0.2s, box-shadow 0.3s, background 0.3s;
+    margin-top: 0.5rem;
+}
+
+.login-button.correct-password {
+    background: #28a745;
 }
 
 .login-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 102, 204, 0.3);
+    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+}
+
+.login-button.correct-password:hover {
+    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
 }
 
 .login-button:active {
@@ -156,14 +1050,20 @@ body.dark-mode .login-error {
 
 /* Header */
 header {
-    background: var(--bg-color);
-    color: var(--text-color);
-    padding: 1rem;
+    background: var(--card-bg);
+    color: var(--navy);
+    padding: 1.5rem 2rem;
     box-shadow: 0 2px 8px var(--shadow);
+    border-bottom: none;
+}
+
+body.dark-mode header {
+    background: #2a2a2a;
+    border-bottom: 1px solid #404040;
 }
 
 .header-content {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -171,14 +1071,10 @@ header {
 }
 
 .logo {
-    font-size: 1.8rem;
-    font-weight: bold;
-    letter-spacing: 1px;
-    color: #001f3f; /* Navy blue */
-}
-
-body.dark-mode .logo {
-    color: #4a90e2; /* Lighter navy for dark mode */
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--navy);
 }
 
 .header-right {
@@ -187,53 +1083,147 @@ body.dark-mode .logo {
     gap: 1rem;
 }
 
+/* Icon Button Base Styles */
+.icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+    transform: scale(1.1);
+}
+
+.icon-button .icon {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-button .icon-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* Quick dial and icon buttons */
 .quick-dial {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--card-bg);
-    border: 2px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
     text-decoration: none;
-    transition: all 0.3s;
+    color: var(--text-color);
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    transition: all 0.2s ease;
     cursor: pointer;
 }
 
 .quick-dial:hover {
-    background: var(--primary-blue);
-    border-color: var(--primary-blue);
-    transform: scale(1.05);
+    transform: scale(1.1);
 }
 
-.quick-dial-icon {
-    font-size: 1.2rem;
+.quick-dial .icon {
+    width: 24px;
+    height: 24px;
 }
 
-.dark-mode-toggle {
-    background: var(--card-bg);
-    border: 2px solid var(--border-color);
+/* Help Button */
+.help-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
     color: var(--text-color);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    transition: all 0.2s ease;
     cursor: pointer;
-    font-size: 1.2rem;
-    transition: all 0.3s;
 }
 
-.dark-mode-toggle:hover {
-    background: var(--primary-blue);
-    color: white;
-    border-color: var(--primary-blue);
+.help-button:hover {
+    transform: scale(1.1);
+}
+
+.help-button .icon {
+    width: 24px;
+    height: 24px;
+}
+
+
+/* Settings Container */
+.settings-container {
+    position: relative;
+}
+
+/* Logout Button */
+.logout-button {
+    border-color: var(--red-accent) !important;
+    color: var(--red-accent) !important;
+}
+
+.logout-button:hover {
+    background: rgba(224, 120, 86, 0.1) !important;
+    border-color: var(--red-accent) !important;
+}
+
+/* Settings Dropdown */
+.settings-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.75rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 8px 24px var(--shadow);
+    min-width: 260px;
+    z-index: var(--z-dropdown);
+}
+
+.settings-dropdown.show {
+    display: block;
+}
+
+.settings-dropdown label {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 0.75rem 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.settings-dropdown label:hover {
+    background: var(--warm-gray);
+}
+
+.settings-dropdown input[type="checkbox"] {
+    margin-right: 0.75rem;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
 }
 
 /* Tabs */
 .tab-container {
     display: flex;
     gap: 1rem;
-    padding: 1rem;
-    background-color: var(--bg-color);
-    max-width: 1200px;
+    padding: 1.5rem 2rem;
+    background-color: transparent;
+    border-bottom: none;
+    max-width: 1400px;
     margin: 0 auto;
     justify-content: center;
 }
@@ -248,28 +1238,29 @@ body.dark-mode .logo {
     cursor: pointer;
     border-radius: 25px;
     transition: all 0.3s;
-    min-width: 150px;
+    box-shadow: 0 2px 4px var(--shadow);
 }
 
 .tab-button:hover {
     background-color: var(--primary-blue);
     color: white;
     border-color: var(--primary-blue);
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--shadow);
 }
 
 .tab-button.active {
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    background-color: var(--primary-blue);  /* Action Blue for active tab */
     color: white;
-    border-color: transparent;
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    border-color: var(--primary-blue);
+    box-shadow: 0 4px 8px var(--shadow);
 }
 
 /* Main Content */
 main {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 1rem;
+    padding: 2rem;
 }
 
 .tab-content {
@@ -282,116 +1273,239 @@ main {
 
 /* Circuit Selector */
 .circuit-selector-container {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 0 2rem;
 }
 
 .circuit-selector-container label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--dark-gray);
 }
 
-#circuitSelect {
+/* Custom Circuit Selector */
+.custom-circuit-select {
+    position: relative;
     width: 100%;
-    padding: 0.75rem;
+}
+
+.circuit-select-display {
+    width: 100%;
+    padding: 1rem;
     font-size: 1rem;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
     background-color: var(--card-bg);
     color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.circuit-select-display:hover {
+    border-color: var(--primary-blue);
+}
+
+.dropdown-arrow {
+    transition: transform 0.2s ease;
+}
+
+.custom-circuit-select.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.circuit-select-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background-color: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px var(--shadow);
+    z-index: 1000;
+    max-height: 400px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.circuit-search {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-bottom: 1.5px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    outline: none;
+}
+
+.circuit-search::placeholder {
+    color: var(--medium-gray);
+}
+
+.circuit-options {
+    overflow-y: auto;
+    max-height: 350px;
+}
+
+.circuit-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color);
+}
+
+.circuit-option:hover {
+    background-color: var(--hover-bg);
+}
+
+.circuit-option.favorited {
+    background-color: rgba(74, 144, 226, 0.1);
+}
+
+.favorite-star {
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: transform 0.15s ease;
+    user-select: none;
+}
+
+.favorite-star:hover {
+    transform: scale(1.2);
+}
+
+.favorite-star.active {
+    color: #FFD700;
+}
+
+.favorite-star.inactive {
+    color: var(--medium-gray);
+    opacity: 0.5;
+}
+
+/* Old select (kept for compatibility) */
+#circuitSelect {
+    display: none;
 }
 
 /* Cover Sheet */
 .cover-sheet {
     background-color: var(--card-bg);
-    border: 3px solid var(--primary-blue);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 6px var(--shadow);
+    border: 2px solid var(--primary-blue);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 12px var(--shadow);
 }
 
 .cover-sheet h2 {
-    color: var(--primary-blue);
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
+    color: var(--text-color);         /* Primary text color (Off-White in dark mode) */
+    margin-bottom: 1.25rem;
+    font-size: 1.4rem;
+    font-weight: 600;
 }
 
 .date-display {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+    color: var(--medium-gray);        /* Secondary text (Medium Gray) */
 }
 
 .product-counts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+    margin-bottom: 1.5rem;
+    max-width: 400px;
 }
 
 .product-badge {
     display: inline-flex;
     align-items: center;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    justify-content: space-between;
+    background: var(--primary-blue);
     color: white;
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.75rem;
     border-radius: 20px;
-    font-weight: 700;
-    font-size: 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
 }
 
 /* Product-specific colors for badges */
 .product-badge.product-ES {
-    background: #17a2b8;
+    background: #5DADE2;            /* Clear accessible blue */
     color: white;
 }
 
 .product-badge.product-UV {
-    background: #fff9c4;
-    color: #333;
+    background: #F9A825;            /* Rich gold/yellow */
+    color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-badge.product-HS {
-    background: #c8e6c9;
-    color: #333;
+    background: #58D68D;            /* Success green */
+    color: white;
 }
 
 .product-badge.product-STF {
-    background: #ff7f50;
+    background: #FF6B35;            /* Bright red-orange to differ from UV */
+    color: white;
+}
+
+.product-badge.product-JO {
+    background: #AF7AC5;            /* Purple for distinction */
+    color: white;
+}
+
+.product-badge.product-LU {
+    background: #FFA726;
     color: white;
 }
 
 .product-badge .count {
-    margin-left: 0.5rem;
+    margin-left: 0.4rem;
     background: rgba(255, 255, 255, 0.3);
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.8rem;
 }
 
 body.dark-mode .product-badge.product-UV .count,
-body.dark-mode .product-badge.product-HS .count {
+body.dark-mode .product-badge.product-STF .count {
     background: rgba(0, 0, 0, 0.2);
 }
 
 /* Route Buttons */
 .route-button {
     width: 100%;
-    padding: 1rem;
-    font-size: 1.1rem;
+    padding: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 600;
-    border: none;
-    border-radius: 8px;
+    border: 2px solid var(--primary-blue);    /* Action Blue */
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.3s;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    transition: all 0.2s;
+    background: var(--primary-blue);          /* Action Blue for "Aloita reitti" */
     color: white;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
 }
 
 .route-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--shadow);
+    background: #5DADE2;                      /* Lighter blue on hover */
+    border-color: #5DADE2;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
 }
 
 .route-button:active {
@@ -413,6 +1527,109 @@ body.dark-mode .product-badge.product-HS .count {
 body.dark-mode .route-time {
     color: var(--accent-cyan);
 }
+
+/* Route Complete Success Animation */
+.route-complete-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(26, 29, 33, 0.95);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 20vh;
+    z-index: 2000;
+    backdrop-filter: blur(6px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.success-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.checkmark-circle-only {
+    width: 120px;
+    height: 120px;
+    animation: checkmarkAppear 0.5s ease-out both;
+}
+
+@keyframes checkmarkAppear {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.checkmark-circle-only svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 8px 16px rgba(40, 167, 69, 0.4));
+}
+
+.checkmark-circle-only circle {
+    animation: circlePulse 0.3s ease-out;
+}
+
+@keyframes circlePulse {
+    0% {
+        r: 0;
+    }
+    50% {
+        r: 28;
+    }
+    100% {
+        r: 25;
+    }
+}
+
+.checkmark {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    animation: checkmarkDraw 0.3s ease-out 0.2s forwards;
+}
+
+@keyframes checkmarkDraw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
 
 /* Filter Container */
 .filter-container {
@@ -441,41 +1658,105 @@ body.dark-mode .route-time {
 
 /* Subscriber List */
 .building-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .building-header {
     background-color: var(--building-bg);
-    padding: 0.75rem 1rem;
-    border-radius: 8px 8px 0 0;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--primary-blue);
+    padding: 1rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--text-color);         /* Use primary text color */
+    letter-spacing: -0.01em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.building-name {
+    flex: 1;
+    color: #ff8c42; /* Soft orange to differentiate building addresses */
+}
+
+.building-delivery-count {
+    background: var(--primary-blue);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 body.dark-mode .building-header {
-    color: var(--accent-cyan);
+    color: var(--text-color);         /* Off-White in dark mode */
+}
+
+/* Cascading animation for subscriber cards */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .subscriber-card {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     border-top: none;
-    padding: 1rem;
+    padding: 1.25rem 1.5rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
+    transition: max-height 0.5s ease-out, opacity 0.4s ease-out, margin 0.4s ease-out, padding 0.4s ease-out;
+    max-height: 500px;
+    opacity: 1;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: pan-y; /* Allow vertical scrolling while handling horizontal swipes */
+}
+
+/* Add spacing for new staircase within same building */
+.subscriber-card.new-staircase {
+    margin-top: 0.75rem;
+}
+
+.subscriber-card:active {
+    cursor: grabbing;
+}
+
+.subscriber-card.hiding {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
 }
 
 .subscriber-card:last-child {
     border-radius: 0 0 8px 8px;
 }
 
+/* Checkbox visibility control - hidden by default, swipe is primary method */
 .subscriber-card input[type="checkbox"] {
     width: 24px;
     height: 24px;
     cursor: pointer;
     flex-shrink: 0;
+    display: none; /* Hidden by default */
+}
+
+/* Show checkboxes when user enables the setting */
+.subscriber-card.show-checkboxes input[type="checkbox"] {
+    display: block;
 }
 
 .subscriber-info {
@@ -484,9 +1765,16 @@ body.dark-mode .building-header {
 
 .subscriber-address {
     font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
-    color: var(--text-color);
+    font-size: 1.1rem; /* Increased for better readability */
+    margin-bottom: 0.5rem; /* Increased spacing between address and name */
+    color: #ff8c42; /* Soft orange to differentiate from name */
+}
+
+.subscriber-apartment {
+    font-weight: 700;
+    font-size: 1.1rem; /* Increased for better readability */
+    margin-bottom: 0.5rem; /* Increased spacing between apartment and name */
+    color: var(--text-color); /* Default color - apartment is not a street address */
 }
 
 .subscriber-name {
@@ -508,51 +1796,116 @@ body.dark-mode .subscriber-name {
 
 .product-tag {
     display: inline-block;
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+    background: var(--primary-blue);
     color: white;
-    padding: 0.3rem 0.7rem;
+    padding: 0.25rem 0.6rem;
     border-radius: 12px;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    position: relative;
+}
+
+/* Quantity badge for products (e.g., UV2, ES2, HS2) */
+.quantity-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: rgba(255, 0, 0, 0.9);
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
     font-weight: 700;
+    border: 2px solid var(--card-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Product-specific colors for tags */
 .product-tag.product-ES {
-    background: #17a2b8;
+    background: #5DADE2;            /* Clear accessible blue */
     color: white;
 }
 
 .product-tag.product-UV {
-    background: #fff9c4;
-    color: #333;
+    background: #F9A825;            /* Rich gold/yellow */
+    color: #1A1D21;                 /* Dark text for contrast */
 }
 
 .product-tag.product-HS {
-    background: #c8e6c9;
-    color: #333;
+    background: #58D68D;            /* Success green */
+    color: white;
 }
 
 .product-tag.product-STF {
-    background: #ff7f50;
+    background: #FF6B35;            /* Bright red-orange to differ from UV */
+    color: white;
+}
+
+.product-tag.product-JO {
+    background: #AF7AC5;            /* Purple for distinction */
+    color: white;
+}
+
+.product-tag.product-LU {
+    background: #FFA726;
     color: white;
 }
 
 .nav-link {
     display: inline-flex;
     align-items: center;
-    background-color: var(--primary-blue);
-    color: white;
-    padding: 0.5rem 1rem;
+    justify-content: center;
+    background: transparent;
+    color: var(--text-color);
+    padding: 0.5rem;
     border-radius: 8px;
     text-decoration: none;
-    font-weight: 600;
-    font-size: 1.2rem;
-    transition: all 0.3s;
+    transition: all 0.2s;
     flex-shrink: 0;
+    width: 38px;
+    height: 38px;
 }
 
 .nav-link:hover {
-    background-color: var(--accent-cyan);
+    background: rgba(74, 144, 226, 0.1);
+    transform: scale(1.1);
+}
+
+.nav-link .icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+/* Report Button */
+.report-button {
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    width: 38px;
+    height: 38px;
+}
+
+.report-button .icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.report-button:hover {
+    background: rgba(74, 144, 226, 0.1);
     transform: scale(1.1);
 }
 
@@ -560,79 +1913,172 @@ body.dark-mode .subscriber-name {
 .circuit-tracker {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .circuit-item {
     background-color: var(--card-bg);
     border: 2px solid var(--border-color);
     border-radius: 12px;
+    padding: 0;
+    display: flex;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Status bar on the left - Traffic light system */
+.circuit-status-bar {
+    width: 8px;
+    min-height: 100%;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.circuit-status-bar.not-started {
+    background: linear-gradient(180deg, #DC3545 0%, #C82333 100%);
+}
+
+.circuit-status-bar.in-progress {
+    background: linear-gradient(180deg, #FFA726 0%, #FF9800 100%);
+}
+
+.circuit-status-bar.completed {
+    background: linear-gradient(180deg, #28a745 0%, #218838 100%);
+}
+
+.circuit-content {
+    flex: 1;
     padding: 1rem;
-    box-shadow: 0 2px 4px var(--shadow);
+    transition: all 0.3s ease;
+}
+
+/* Add card glows based on status for quick glance */
+.circuit-item.not-started-item {
+    background: linear-gradient(90deg, rgba(220, 53, 69, 0.08) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 30px rgba(220, 53, 69, 0.5), 0 2px 4px var(--shadow);
+}
+
+.circuit-item.in-progress-item {
+    background: linear-gradient(90deg, rgba(255, 167, 38, 0.12) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 30px rgba(255, 167, 38, 0.6), 0 2px 4px var(--shadow);
+}
+
+.circuit-item.completed-item {
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.08) 0%, var(--card-bg) 15%);
+    box-shadow: 0 0 30px rgba(40, 167, 69, 0.5), 0 2px 4px var(--shadow);
 }
 
 .circuit-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 0.75rem;
-}
-
-.status-indicator {
-    font-size: 1.5rem;
-    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+    justify-content: space-between;
 }
 
 .circuit-name {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.1rem;
+    color: var(--text-color);
     flex: 1;
+}
+
+/* Circuit Menu (3-dot menu) */
+.circuit-menu-container {
+    position: relative;
+}
+
+.circuit-menu-button {
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+    color: var(--text-color);
+}
+
+.circuit-menu-button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .circuit-menu-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.circuit-menu-button .icon {
+    width: 18px;
+    height: 18px;
+}
+
+.circuit-menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--shadow);
+    min-width: 200px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.circuit-menu-dropdown.show {
+    display: block;
+}
+
+.circuit-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.circuit-menu-item:hover {
+    background: rgba(74, 144, 226, 0.1);
+}
+
+.circuit-menu-item.reset-route {
+    color: var(--red-accent);
+}
+
+.circuit-menu-item.reset-route:hover {
+    background: rgba(224, 120, 86, 0.1);
+}
+
+.circuit-menu-item .icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
 .circuit-status {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--medium-gray);
     margin-bottom: 0.75rem;
 }
 
-body.dark-mode .circuit-status {
-    color: #999;
+.circuit-progress-bar {
+    margin-top: 0.75rem;
 }
 
+/* Remove old circuit controls and buttons */
 .circuit-controls {
-    display: flex;
-    gap: 0.5rem;
+    display: none;
 }
 
 .circuit-btn {
-    flex: 1;
-    padding: 0.6rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.circuit-btn.start {
-    background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
-    color: white;
-}
-
-.circuit-btn.complete {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    color: white;
-}
-
-.circuit-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.circuit-btn:not(:disabled):hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--shadow);
+    display: none;
 }
 
 .route-complete-container {
@@ -685,5 +2131,195 @@ body.dark-mode .circuit-status {
     .product-tag {
         font-size: 0.8rem;
         padding: 0.3rem 0.6rem;
+    }
+}
+
+/* Route Messages Panel */
+.messages-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    gap: 2rem;
+}
+
+.messages-header h2 {
+    margin: 0;
+}
+
+.messages-controls {
+    margin-bottom: 2rem;
+}
+
+.danger-button {
+    background: var(--red-accent);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.danger-button:hover {
+    background: #d06846;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(224, 120, 86, 0.3);
+}
+
+.route-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.no-messages {
+    text-align: center;
+    padding: 3rem;
+    color: var(--dark-gray);
+    font-size: 1.1rem;
+}
+
+.message-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-left: 4px solid var(--red-accent);
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.message-circuit {
+    font-weight: 700;
+    color: var(--primary-blue);
+    font-size: 1.1rem;
+}
+
+.message-timestamp {
+    color: var(--dark-gray);
+    font-size: 0.9rem;
+}
+
+.message-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.message-body > div {
+    line-height: 1.6;
+}
+
+.message-reason {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: var(--warm-gray);
+    border-radius: 6px;
+    font-style: italic;
+}
+
+/* Custom Confirmation Dialog */
+.custom-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    /* Remove flex centering - content will be positioned dynamically */
+}
+
+.custom-dialog-content {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    /* Position will be set dynamically by JavaScript */
+}
+
+.custom-dialog-message {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.custom-dialog-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.custom-dialog-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancel-btn {
+    background: transparent;
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+    background: var(--warm-gray);
+}
+
+.confirm-btn {
+    background: var(--primary-blue);
+    color: white;
+    box-shadow: 0 2px 8px rgba(93, 173, 226, 0.3);
+}
+
+.confirm-btn:hover {
+    background: #4a9ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(93, 173, 226, 0.4);
+}
+
+
+/* Message swipe animations */
+@keyframes checkmarkPopIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes circlePulse {
+    0% {
+        r: 0;
+    }
+    50% {
+        r: 28;
+    }
+    100% {
+        r: 25;
     }
 }

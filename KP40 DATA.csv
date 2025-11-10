@@ -1,159 +1,158 @@
-"Sivu","Katu","Osoite","Nimi","Merkinnät"
-"Sivu 1-2 (PDF sivu 1)","TIMONKATU","TIMONKATU 13","Kontio Ulla","STF"
-"Sivu 1-2 (PDF sivu 1)","AARONKATU","AARONKATU 34","Kohonen Kerttu","UV"
-"Sivu 1-2 (PDF sivu 1)","AARONKATU","AARONKATU 25","Anssi Turunen","STF"
-"Sivu 1-2 (PDF sivu 1)","AARONKATU","AARONKATU 28 A","Kauppila Jorma","UV, MALA"
-"Sivu 1-2 (PDF sivu 1)","AARONKATU","AARONKATU 23","Estola Marja","UV, HS, ES"
-"Sivu 1-2 (PDF sivu 1)","AARONKATU","AARONKATU 21","Lassi Loikkanen","STF"
-"Sivu 1-2 (PDF sivu 1)","AARONKATU","AARONKATU 22","Purhonen Leena","UV"
-"Sivu 3-4 (PDF sivu 2)","AARONKATU","AARONKATU 2","Ahponen Anni","UV"
-"Sivu 3-4 (PDF sivu 2)","AARONKATU","AARONKATU 4","Sipolainen Arto","HS"
-"Sivu 3-4 (PDF sivu 2)","AARONKATU","AARONKATU 7","Mikko Piili","STF"
-"Sivu 3-4 (PDF sivu 2)","AARONKATU","AARONKATU 8","Hannu Kekäläinen","STF"
-"Sivu 3-4 (PDF sivu 2)","AARONKATU","AARONKATU 16","Veijalainen Helli","UV"
-"Sivu 3-4 (PDF sivu 2)","TIMONKATU","TIMONKATU 19","Jouni Lonka","STF"
-"Sivu 3-4 (PDF sivu 2)","TIMONKATU","TIMONKATU 24","Paakkunainen Pentti","ES"
-"Sivu 3-4 (PDF sivu 2)","VEIKONPOLKU","VEIKONPOLKU 6","Hirvonen Kristen","ES"
-"Sivu 3-4 (PDF sivu 2)","VEIKONPOLKU","VEIKONPOLKU 16","Pärssinen Eva","STF"
-"Sivu 3-4 (PDF sivu 2)","ESKONKATU","ESKONKATU 27","Kari Kokko","STF"
-"Sivu 3-4 (PDF sivu 2)","ESKONKATU","ESKONKATU 25","Salakka Pertti","HS"
-"Sivu 3-4 (PDF sivu 2)","MARTINPOLKU","MARTINPOLKU 2","Miettinen Virpi","ES"
-"Sivu 3-4 (PDF sivu 2)","MARTINPOLKU","MARTINPOLKU 15","Rinkinen Pekka","ES"
-"Sivu 3-4 (PDF sivu 2)","MARTINPOLKU","MARTINPOLKU 5","Aitala Olli","STF"
-"Sivu 3-4 (PDF sivu 2)","MARTINPOLKU","MARTINPOLKU 3","Koikkalainen Anssi","HS"
-"Sivu 3-4 (PDF sivu 2)","ESKONKATU","ESKONKATU 24","Honkanen Pekka","HSP"
-"Sivu 3-4 (PDF sivu 2)","ESKONKATU","ESKONKATU 17","Haataja Mauri","STF"
-"Sivu 3-4 (PDF sivu 2)","ESKONKATU","ESKONKATU 11","Kirsi Issakainen","UV, STF"
-"Sivu 3-4 (PDF sivu 2)","ESKONKATU","ESKONKATU 7","Ruokonen Olli","UV, HS"
-"Sivu 3-4 (PDF sivu 2)","ESKONKATU","ESKONKATU 3","Petri Kangaspunta","STF"
-"Sivu 3-4 (PDF sivu 2)","AAPONKATU","AAPONKATU 4","Petri Kenttämaa","STF"
-"Sivu 3-4 (PDF sivu 2)","AAPONKATU","AAPONKATU 6","Lampinen Anssi","UV"
-"Sivu 5-6 (PDF sivu 3)","LAURINKATU","LAURINKATU 4 B","Jani Nousiainen","STF"
-"Sivu 5-6 (PDF sivu 3)","LAURINKATU","LAURINKATU 5","Riikonen Maija","MALA, UV"
-"Sivu 5-6 (PDF sivu 3)","ESKONKATU","ESKONKATU 12 as 2","Varis Pentti","ES"
-"Sivu 5-6 (PDF sivu 3)","ESKONKATU","ESKONKATU 14","Raatema Liisa","MALA, UV"
-"Sivu 5-6 (PDF sivu 3)","AAPONKATU","AAPONKATU 29","Linnahalme Kaija","HS, ES"
-"Sivu 5-6 (PDF sivu 3)","AAPONKATU","AAPONKATU 8 A","Salonen Pekka","ES"
-"Sivu 5-6 (PDF sivu 3)","AAPONKATU","AAPONKATU 9","Esa Piispa","STF"
-"Sivu 5-6 (PDF sivu 3)","AAPONKATU","AAPONKATU 12","Tapola Anne-maj","HS, STF"
-"Sivu 5-6 (PDF sivu 3)","AAPONKATU","AAPONKATU 14","Lifländer Pirkko","UV"
-"Sivu 5-6 (PDF sivu 3)","KOULUKATU","KOULUKATU 36","Varis Pirjo","ES"
-"Sivu 5-6 (PDF sivu 3)","LAURINKATU","LAURINKATU 16 A","Reetta Virtanen","STF"
-"Sivu 5-6 (PDF sivu 3)","LAURINKATU","LAURINKATU 21 B","Salo Maritta","UV"
-"Sivu 5-6 (PDF sivu 3)","LAURINKATU","LAURINKATU 19 A","Jumppanen Kai","STF"
-"Sivu 5-6 (PDF sivu 3)","LAURINKATU","LAURINKATU 19 B","Myllärinen Päivi","STF2"
-"Sivu 5-6 (PDF sivu 3)","IIVARINKATU","IIVARINKATU 3","Lappalainen Aino","UV"
-"Sivu 5-6 (PDF sivu 3)","IIVARINKATU","IIVARINKATU 1","Piiparinen Erkki","UV"
-"Sivu 5-6 (PDF sivu 3)","IIVARINKATU","IIVARINKATU 4","Mikko Sipiläinen","STF"
-"Sivu 5-6 (PDF sivu 3)","IIVARINKATU","IIVARINKATU 5","Haakana Pauli","UV"
-Sivu 5-6 (PDF sivu 3),"IIVARINKATU","IIVARINKATU 10","Kajasoja Olavi","MALA, ESLS"
-"Sivu 5-6 (PDF sivu 3)","SIMEONINKATU","SIMEONINKATU 32 A","Pirkka Erkki","HSLS"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 26","<8 Ilm.> Elomäki Martt","ES, UV"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 36","Hallikainen Antero","UV"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 46","Päivi Hannonen","STF"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 48 as 3","Koponen Erkki","UV, STF"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 50 as 9","Pirhonen Pirkko","UV"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 52 as 10","Saajanlehto Pasi","UV, ES"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 52 as 12","Jouni Kilpeläinen","STF"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 41 a 3","Virpi Semi","STF"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 41 a 4","Lehvonen Vuokko","UV"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 41 e 19","Salmi Timo","ES, HS"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 39 D 17","Niemelä Pekka","UV"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 39 C 15","Raijas Hanna","UV"
-"Sivu 7-8 (PDF sivu 4)","VENLANKUJA","VENLANKUJA 12","Virkkukoukkunen Oy Kär","ES"
-"Sivu 7-8 (PDF sivu 4)","VENLANKUJA","VENLANKUJA 11","Tuula Sokka","ES, STF"
-"Sivu 7-8 (PDF sivu 4)","VENLANKUJA","VENLANKUJA 9","Tiina Karvonen","STF"
-"Sivu 7-8 (PDF sivu 4)","VENLANKUJA","VENLANKUJA 6","Pirttinen Kalevi","STF"
-"Sivu 7-8 (PDF sivu 4)","VENLANKUJA","VENLANKUJA 7","Mika Joronen","STF"
-"Sivu 7-8 (PDF sivu 4)","VENLANKUJA","VENLANKUJA 3","Manskinen Harri","UV ES"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 37 A 1","Rautio Pekka","STF"
-"Sivu 7-8 (PDF sivu 4)","ESTERINKATU","ESTERINKATU 37 B 6","Bom Sirpa","STF"
-"Sivu 7-8 (PDF sivu 4)","SIMEONINKATU","SIMEONINKATU 5 A","Kurki Asko","ESLS2"
-"Sivu 7-8 (PDF sivu 4)","SIMEONINKATU","SIMEONINKATU 20 as 1","Kaplas Lasse","ES"
-"Sivu 7-8 (PDF sivu 4)","SIMEONINKATU","SIMEONINKATU 32 A","Pirkka Erkki","HSLS"
-"Sivu 9-10 (PDF sivu 5)","KOULUKATU","KOULUKATU 47","<2 Ilm> Tuure Kaisa","HS"
-"Sivu 9-10 (PDF sivu 5)","KOULUKATU","KOULUKATU 43","Jori Könönen","STF"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 A 4","Lankinen Pirjo","UV"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 B 10","Piiparinen Pekka","STF"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 C 21","Kallio Aleksi","STF"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 C 24","Räisänen Juha","MALA"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 E 38","Jenni Vesterinen","STF"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 E 45","Soininen Seppo","STF"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 F 52","Lankinen Seija","UV"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 G 57","Hytönen Anja","HS"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 H 62","Piiparinen Pekka","ES"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 H 64","Hänninen Jouni","UV"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 H 65","Sutinen Kirsti","UV"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 H 66","Tiainen Unto","UV, HS"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 68","Tiia Jäppinen","STF"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 J 79","<1070> Teräväinen Mair","UV"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 J 80","Puhakka Jorma","UV, HS"
-"Sivu 9-10 (PDF sivu 5)","HEIKINKATU","HEIKINKATU 15 J 82","Nykänen Harri","STF"
-"Sivu 9-10 (PDF sivu 5)","KOULUKATU","KOULUKATU 54 as 1","Patila Risto","HS"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 54 as 3","Vilkka Vesa","UV, ES"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 54 as 4","Väyrynen Raili","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 54 as 5","Tiussa Kaarina","UV, HS"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 54 as 10","Uotinen liris","UV, HS"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 3","Finni Aili","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 4","Grönberg Marja","UV, ESLS"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 8","Andersson Gunilla","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 11","Sepponen Kaino","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 12","Ronkonen Senja","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 16","Villanen Veli","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 20","Rapanen Mauno","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 21","Piipponen Eija","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 56 as 22","Kärkkäinen Leena","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 60 as 18","Karjalainen Aino","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 60 as 13","Nikkanen Seija","UV, HS"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 60 as 10","Pitkonen Taito","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 60 as 12","Vento Kyllikki","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 60 as 7","Pietiläinen Lauri","HS"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 60 as 1","Lintunen Eila","UV"
-"Sivu 11-12 (PDF sivu 6)","KOULUKATU","KOULUKATU 60 as 2","<alas> Matikainen Pert","STF"
-"Sivu 11-12 (PDF sivu 6)","TUOMAANKUJA","TUOMAANKUJA 1 as 1","Konsta Hakman","STF"
-"Sivu 11-12 (PDF sivu 6)","TUOMAANKUJA","TUOMAANKUJA 1 as 2","Minimani","UV"
-"Sivu 11-12 (PDF sivu 6)","TUOMAANKUJA","TUOMAANKUJA 6","Saimaan Auto-arita Oy","UV,
+Sivu,Katu,Osoite,Nimi,Merkinnät
+Sivu 1-2 (PDF sivu 1),TIMONKATU,TIMONKATU 13,Kontio Ulla,STF
+Sivu 1-2 (PDF sivu 1),AARONKATU,AARONKATU 34,Kohonen Kerttu,UV
+Sivu 1-2 (PDF sivu 1),AARONKATU,AARONKATU 25,Anssi Turunen,STF
+Sivu 1-2 (PDF sivu 1),AARONKATU,AARONKATU 28 A,Kauppila Jorma,"UV, MALA"
+Sivu 1-2 (PDF sivu 1),AARONKATU,AARONKATU 23,Estola Marja,"UV, HS, ES"
+Sivu 1-2 (PDF sivu 1),AARONKATU,AARONKATU 21,Lassi Loikkanen,STF
+Sivu 1-2 (PDF sivu 1),AARONKATU,AARONKATU 22,Purhonen Leena,UV
+Sivu 3-4 (PDF sivu 2),AARONKATU,AARONKATU 2,Ahponen Anni,UV
+Sivu 3-4 (PDF sivu 2),AARONKATU,AARONKATU 4,Sipolainen Arto,HS
+Sivu 3-4 (PDF sivu 2),AARONKATU,AARONKATU 7,Mikko Piili,STF
+Sivu 3-4 (PDF sivu 2),AARONKATU,AARONKATU 8,Hannu Kekäläinen,STF
+Sivu 3-4 (PDF sivu 2),AARONKATU,AARONKATU 16,Veijalainen Helli,UV
+Sivu 3-4 (PDF sivu 2),TIMONKATU,TIMONKATU 19,Jouni Lonka,STF
+Sivu 3-4 (PDF sivu 2),TIMONKATU,TIMONKATU 24,Paakkunainen Pentti,ES
+Sivu 3-4 (PDF sivu 2),VEIKONPOLKU,VEIKONPOLKU 6,Hirvonen Kristen,ES
+Sivu 3-4 (PDF sivu 2),VEIKONPOLKU,VEIKONPOLKU 16,Pärssinen Eva,STF
+Sivu 3-4 (PDF sivu 2),ESKONKATU,ESKONKATU 27,Kari Kokko,STF
+Sivu 3-4 (PDF sivu 2),ESKONKATU,ESKONKATU 25,Salakka Pertti,HS
+Sivu 3-4 (PDF sivu 2),MARTINPOLKU,MARTINPOLKU 2,Miettinen Virpi,ES
+Sivu 3-4 (PDF sivu 2),MARTINPOLKU,MARTINPOLKU 15,Rinkinen Pekka,ES
+Sivu 3-4 (PDF sivu 2),MARTINPOLKU,MARTINPOLKU 5,Aitala Olli,STF
+Sivu 3-4 (PDF sivu 2),MARTINPOLKU,MARTINPOLKU 3,Koikkalainen Anssi,HS
+Sivu 3-4 (PDF sivu 2),ESKONKATU,ESKONKATU 24,Honkanen Pekka,HSP
+Sivu 3-4 (PDF sivu 2),ESKONKATU,ESKONKATU 17,Haataja Mauri,STF
+Sivu 3-4 (PDF sivu 2),ESKONKATU,ESKONKATU 11,Kirsi Issakainen,"UV, STF"
+Sivu 3-4 (PDF sivu 2),ESKONKATU,ESKONKATU 7,Ruokonen Olli,"UV, HS"
+Sivu 3-4 (PDF sivu 2),ESKONKATU,ESKONKATU 3,Petri Kangaspunta,STF
+Sivu 3-4 (PDF sivu 2),AAPONKATU,AAPONKATU 4,Petri Kenttämaa,STF
+Sivu 3-4 (PDF sivu 2),AAPONKATU,AAPONKATU 6,Lampinen Anssi,UV
+Sivu 5-6 (PDF sivu 3),LAURINKATU,LAURINKATU 4 B,Jani Nousiainen,STF
+Sivu 5-6 (PDF sivu 3),LAURINKATU,LAURINKATU 5,Riikonen Maija,"MALA, UV"
+Sivu 5-6 (PDF sivu 3),ESKONKATU,ESKONKATU 12 as 2,Varis Pentti,ES
+Sivu 5-6 (PDF sivu 3),ESKONKATU,ESKONKATU 14,Raatema Liisa,"MALA, UV"
+Sivu 5-6 (PDF sivu 3),AAPONKATU,AAPONKATU 29,Linnahalme Kaija,"HS, ES"
+Sivu 5-6 (PDF sivu 3),AAPONKATU,AAPONKATU 8 A,Salonen Pekka,ES
+Sivu 5-6 (PDF sivu 3),AAPONKATU,AAPONKATU 9,Esa Piispa,STF
+Sivu 5-6 (PDF sivu 3),AAPONKATU,AAPONKATU 12,Tapola Anne-maj,"HS, STF"
+Sivu 5-6 (PDF sivu 3),AAPONKATU,AAPONKATU 14,Lifländer Pirkko,UV
+Sivu 5-6 (PDF sivu 3),KOULUKATU,KOULUKATU 36,Varis Pirjo,ES
+Sivu 5-6 (PDF sivu 3),LAURINKATU,LAURINKATU 16 A,Reetta Virtanen,STF
+Sivu 5-6 (PDF sivu 3),LAURINKATU,LAURINKATU 21 B,Salo Maritta,UV
+Sivu 5-6 (PDF sivu 3),LAURINKATU,LAURINKATU 19 A,Jumppanen Kai,STF
+Sivu 5-6 (PDF sivu 3),LAURINKATU,LAURINKATU 19 B,Myllärinen Päivi,STF2
+Sivu 5-6 (PDF sivu 3),IIVARINKATU,IIVARINKATU 3,Lappalainen Aino,UV
+Sivu 5-6 (PDF sivu 3),IIVARINKATU,IIVARINKATU 1,Piiparinen Erkki,UV
+Sivu 5-6 (PDF sivu 3),IIVARINKATU,IIVARINKATU 4,Mikko Sipiläinen,STF
+Sivu 5-6 (PDF sivu 3),IIVARINKATU,IIVARINKATU 5,Haakana Pauli,UV
+Sivu 5-6 (PDF sivu 3),IIVARINKATU,IIVARINKATU 10,Kajasoja Olavi,"MALA, ESLS"
+Sivu 5-6 (PDF sivu 3),SIMEONINKATU,SIMEONINKATU 32 A,Pirkka Erkki,HSLS
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 26,<8 Ilm.> Elomäki Martt,"ES, UV"
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 36,Hallikainen Antero,UV
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 46,Päivi Hannonen,STF
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 48 as 3,Koponen Erkki,"UV, STF"
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 50 as 9,Pirhonen Pirkko,UV
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 52 as 10,Saajanlehto Pasi,"UV, ES"
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 52 as 12,Jouni Kilpeläinen,STF
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 41 a 3,Virpi Semi,STF
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 41 a 4,Lehvonen Vuokko,UV
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 41 e 19,Salmi Timo,"ES, HS"
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 39 D 17,Niemelä Pekka,UV
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 39 C 15,Raijas Hanna,UV
+Sivu 7-8 (PDF sivu 4),VENLANKUJA,VENLANKUJA 12,Virkkukoukkunen Oy Kär,ES
+Sivu 7-8 (PDF sivu 4),VENLANKUJA,VENLANKUJA 11,Tuula Sokka,"ES, STF"
+Sivu 7-8 (PDF sivu 4),VENLANKUJA,VENLANKUJA 9,Tiina Karvonen,STF
+Sivu 7-8 (PDF sivu 4),VENLANKUJA,VENLANKUJA 6,Pirttinen Kalevi,STF
+Sivu 7-8 (PDF sivu 4),VENLANKUJA,VENLANKUJA 7,Mika Joronen,STF
+Sivu 7-8 (PDF sivu 4),VENLANKUJA,VENLANKUJA 3,Manskinen Harri,UV ES
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 37 A 1,Rautio Pekka,STF
+Sivu 7-8 (PDF sivu 4),ESTERINKATU,ESTERINKATU 37 B 6,Bom Sirpa,STF
+Sivu 7-8 (PDF sivu 4),SIMEONINKATU,SIMEONINKATU 5 A,Kurki Asko,ESLS2
+Sivu 7-8 (PDF sivu 4),SIMEONINKATU,SIMEONINKATU 20 as 1,Kaplas Lasse,ES
+Sivu 9-10 (PDF sivu 5),KOULUKATU,KOULUKATU 47,<2 Ilm> Tuure Kaisa,HS
+Sivu 9-10 (PDF sivu 5),KOULUKATU,KOULUKATU 43,Jori Könönen,STF
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 A 4,Lankinen Pirjo,UV
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 B 10,Piiparinen Pekka,STF
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 C 21,Kallio Aleksi,STF
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 C 24,Räisänen Juha,MALA
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 E 38,Jenni Vesterinen,STF
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 E 45,Soininen Seppo,STF
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 F 52,Lankinen Seija,UV
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 G 57,Hytönen Anja,HS
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 H 62,Piiparinen Pekka,ES
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 H 64,Hänninen Jouni,UV
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 H 65,Sutinen Kirsti,UV
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 H 66,Tiainen Unto,"UV, HS"
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 68,Tiia Jäppinen,STF
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 J 79,<1070> Teräväinen Mair,UV
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 J 80,Puhakka Jorma,"UV, HS"
+Sivu 9-10 (PDF sivu 5),HEIKINKATU,HEIKINKATU 15 J 82,Nykänen Harri,STF
+Sivu 9-10 (PDF sivu 5),KOULUKATU,KOULUKATU 54 as 1,Patila Risto,HS
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 54 as 3,Vilkka Vesa,"UV, ES"
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 54 as 4,Väyrynen Raili,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 54 as 5,Tiussa Kaarina,"UV, HS"
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 54 as 10,Uotinen liris,"UV, HS"
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 3,Finni Aili,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 4,Grönberg Marja,"UV, ESLS"
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 8,Andersson Gunilla,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 11,Sepponen Kaino,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 12,Ronkonen Senja,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 16,Villanen Veli,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 20,Rapanen Mauno,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 21,Piipponen Eija,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 56 as 22,Kärkkäinen Leena,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 60 as 18,Karjalainen Aino,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 60 as 13,Nikkanen Seija,"UV, HS"
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 60 as 10,Pitkonen Taito,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 60 as 12,Vento Kyllikki,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 60 as 7,Pietiläinen Lauri,HS
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 60 as 1,Lintunen Eila,UV
+Sivu 11-12 (PDF sivu 6),KOULUKATU,KOULUKATU 60 as 2,<alas> Matikainen Pert,STF
+Sivu 11-12 (PDF sivu 6),TUOMAANKUJA,TUOMAANKUJA 1 as 1,Konsta Hakman,STF
+Sivu 11-12 (PDF sivu 6),TUOMAANKUJA,TUOMAANKUJA 1 as 2,Minimani,UV
+Sivu 11-12 (PDF sivu 6),TUOMAANKUJA,TUOMAANKUJA 6,Saimaan Auto-arita Oy,"UV,
 ES"
-"Sivu 11-12 (PDF sivu 6)","TUOMAANKUJA","TUOMAANKUJA 11","Kosken Kiinteistöpalve","ES"
-"Sivu 13-14 (PDF sivu 7)","NEULEKATU","NEULEKATU 2","Tahvanainen Lvis-proje","ES"
-"Sivu 13-14 (PDF sivu 7)","POHJATUULENKATU","POHJATUULENKATU 2","Huurinainen
-Petri","HS"
-"Sivu 13-14 (PDF sivu 7)","POHJATUULENKATU","POHJATUULENKATU 1","Pyykkö Paavo","STF"
-"Sivu 13-14 (PDF sivu 7)","POHJATUULENKATU","POHJATUULENKATU 10","Hanne
-Nousiainen","STF"
-"Sivu 13-14 (PDF sivu 7)","POHJATUULENKATU","POHJATUULENKATU 7","Timo
-Luukkanen","STF"
-"Sivu 13-14 (PDF sivu 7)","POHJATUULENKATU","POHJATUULENKATU 14","Lepistö Vesa","UV"
-"Sivu 13-14 (PDF sivu 7)","POHJATUULENKATU","POHJATUULENKATU 16","Solasaari
-Veikko","STF"
-"Sivu 13-14 (PDF sivu 7)","POHJATUULENKATU","POHJATUULENKATU 18","Heidi Vainio","STF"
-"Sivu 13-14 (PDF sivu 7)","POHJATUULENKATU","POHJATUULENKATU 13","Wallenius Ari","HS,
+Sivu 11-12 (PDF sivu 6),TUOMAANKUJA,TUOMAANKUJA 11,Kosken Kiinteistöpalve,ES
+Sivu 13-14 (PDF sivu 7),NEULEKATU,NEULEKATU 2,Tahvanainen Lvis-proje,ES
+Sivu 13-14 (PDF sivu 7),POHJATUULENKATU,POHJATUULENKATU 2,"Huurinainen
+Petri",HS
+Sivu 13-14 (PDF sivu 7),POHJATUULENKATU,POHJATUULENKATU 1,Pyykkö Paavo,STF
+Sivu 13-14 (PDF sivu 7),POHJATUULENKATU,POHJATUULENKATU 10,"Hanne
+Nousiainen",STF
+Sivu 13-14 (PDF sivu 7),POHJATUULENKATU,POHJATUULENKATU 7,"Timo
+Luukkanen",STF
+Sivu 13-14 (PDF sivu 7),POHJATUULENKATU,POHJATUULENKATU 14,Lepistö Vesa,UV
+Sivu 13-14 (PDF sivu 7),POHJATUULENKATU,POHJATUULENKATU 16,"Solasaari
+Veikko",STF
+Sivu 13-14 (PDF sivu 7),POHJATUULENKATU,POHJATUULENKATU 18,Heidi Vainio,STF
+Sivu 13-14 (PDF sivu 7),POHJATUULENKATU,POHJATUULENKATU 13,Wallenius Ari,"HS,
 STF"
-"Sivu 13-14 (PDF sivu 7)","ILTARUSKONKUJA","ILTARUSKONKUJA 5","Hirvonen Tapani","HS,
+Sivu 13-14 (PDF sivu 7),ILTARUSKONKUJA,ILTARUSKONKUJA 5,Hirvonen Tapani,"HS,
 STF"
-"Sivu 13-14 (PDF sivu 7)","ILTARUSKONKUJA","ILTARUSKONKUJA 4","Eila Varis","STF"
-"Sivu 13-14 (PDF sivu 7)","LÄNSITUULENKUJA","LÄNSITUULENKUJA 4","Ketolainen Tuula","UV,
+Sivu 13-14 (PDF sivu 7),ILTARUSKONKUJA,ILTARUSKONKUJA 4,Eila Varis,STF
+Sivu 13-14 (PDF sivu 7),LÄNSITUULENKUJA,LÄNSITUULENKUJA 4,Ketolainen Tuula,"UV,
 HS"
-"Sivu 13-14 (PDF sivu 7)","LÄNSITUULENKUJA","LÄNSITUULENKUJA 7","Lassila Tuomo","UV"
-"Sivu 13-14 (PDF sivu 7)","RITVANKUJA","RITVANKUJA 1","Hallikainen Markku","ES, UV"
-"Sivu 13-14 (PDF sivu 7)","RITVANKUJA","RITVANKUJA 8","Ehrling Jari","ES"
-"Sivu 13-14 (PDF sivu 7)","RITVANKUJA","RITVANKUJA 7","Sami Koski","STF"
-"Sivu 13-14 (PDF sivu 7)","RITVANKUJA","RITVANKUJA 14","Nuutinen Maija","ESLS"
-"Sivu 13-14 (PDF sivu 7)","RITVANKUJA","RITVANKUJA 16","Savolainen Markku","ES"
-"Sivu 13-14 (PDF sivu 7)","SUKKULAKATU","SUKKULAKATU 3 lii 2","<metso> Comatec
-Proces","UV ES"
-"Sivu 13-14 (PDF sivu 7)","SUKKULAKATU","SUKKULAKATU 4 A","Kosken Metalli Oy","UV"
-"Sivu 15-16 (PDF sivu 8)","SUKKULAKATU","SUKKULAKATU 6 B","Bohm Ville","UV, ES"
-"Sivu 15-16 (PDF sivu 8)","SUKKULAKATU","SUKKULAKATU 7 B","<jukan Lasi> Lasipalve","UV"
-"Sivu 15-16 (PDF sivu 8)","SUKKULAKATU","SUKKULAKATU 9","Rosu Victor","ES"
-"Sivu 15-16 (PDF sivu 8)","IRMANKATU","IRMANKATU 1 as 24","Taalikka lida","STF"
-"Sivu 15-16 (PDF sivu 8)","IRMANKATU","IRMANKATU 3 A","Aarnio Hannu","HS"
-"Sivu 15-16 (PDF sivu 8)","IRMANKATU","IRMANKATU 3 B","Ikävalko Marja Ikävalk","ES"
-"Sivu 17-18 (PDF sivu 9)","IRMANKATU","IRMANKATU 11","Penttilä Toivo","STF"
-"Sivu 17-18 (PDF sivu 9)","IRMANKATU","IRMANKATU 6","Rinkinen Eino","UV"
-"Sivu 17-18 (PDF sivu 9)","SEIJANKATU","SEIJANKATU 10","Horttanainen Ari","ES"
-"Sivu 17-18 (PDF sivu 9)","SEIJANKATU","SEIJANKATU 17","lida Tiihonen","STF"
-"Sivu 17-18 (PDF sivu 9)","SEIJANKATU","SEIJANKATU 12","Vesikivi Raimo","ES"
-"Sivu 17-18 (PDF sivu 9)","SEIJANKATU","SEIJANKATU 21","Katri-helena Ovaska","STF"
-"Sivu 17-18 (PDF sivu 9)","SEIJANKATU","SEIJANKATU 9","Antti Heikkonen","STF"
-"Sivu 17-18 (PDF sivu 9)","SEIJANKATU","SEIJANKATU 7","Miettinen Pirjo","STF"
+Sivu 13-14 (PDF sivu 7),LÄNSITUULENKUJA,LÄNSITUULENKUJA 7,Lassila Tuomo,UV
+Sivu 13-14 (PDF sivu 7),RITVANKUJA,RITVANKUJA 1,Hallikainen Markku,"ES, UV"
+Sivu 13-14 (PDF sivu 7),RITVANKUJA,RITVANKUJA 8,Ehrling Jari,ES
+Sivu 13-14 (PDF sivu 7),RITVANKUJA,RITVANKUJA 7,Sami Koski,STF
+Sivu 13-14 (PDF sivu 7),RITVANKUJA,RITVANKUJA 14,Nuutinen Maija,ESLS
+Sivu 13-14 (PDF sivu 7),RITVANKUJA,RITVANKUJA 16,Savolainen Markku,ES
+Sivu 13-14 (PDF sivu 7),SUKKULAKATU,SUKKULAKATU 3 lii 2,"<metso> Comatec
+Proces",UV ES
+Sivu 13-14 (PDF sivu 7),SUKKULAKATU,SUKKULAKATU 4 A,Kosken Metalli Oy,UV
+Sivu 15-16 (PDF sivu 8),SUKKULAKATU,SUKKULAKATU 6 B,Bohm Ville,"UV, ES"
+Sivu 15-16 (PDF sivu 8),SUKKULAKATU,SUKKULAKATU 7 B,<jukan Lasi> Lasipalve,UV
+Sivu 15-16 (PDF sivu 8),SUKKULAKATU,SUKKULAKATU 9,Rosu Victor,ES
+Sivu 15-16 (PDF sivu 8),IRMANKATU,IRMANKATU 1 as 24,Taalikka lida,STF
+Sivu 15-16 (PDF sivu 8),IRMANKATU,IRMANKATU 3 A,Aarnio Hannu,HS
+Sivu 15-16 (PDF sivu 8),IRMANKATU,IRMANKATU 3 B,Ikävalko Marja Ikävalk,ES
+Sivu 17-18 (PDF sivu 9),IRMANKATU,IRMANKATU 11,Penttilä Toivo,STF
+Sivu 17-18 (PDF sivu 9),IRMANKATU,IRMANKATU 6,Rinkinen Eino,UV
+Sivu 17-18 (PDF sivu 9),SEIJANKATU,SEIJANKATU 10,Horttanainen Ari,ES
+Sivu 17-18 (PDF sivu 9),SEIJANKATU,SEIJANKATU 17,lida Tiihonen,STF
+Sivu 17-18 (PDF sivu 9),SEIJANKATU,SEIJANKATU 12,Vesikivi Raimo,ES
+Sivu 17-18 (PDF sivu 9),SEIJANKATU,SEIJANKATU 21,Katri-helena Ovaska,STF
+Sivu 17-18 (PDF sivu 9),SEIJANKATU,SEIJANKATU 9,Antti Heikkonen,STF
+Sivu 17-18 (PDF sivu 9),SEIJANKATU,SEIJANKATU 7,Miettinen Pirjo,STF

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+logs/
+*.log
+data/sftp_downloads/
+*.db
+*.sqlite
+.DS_Store
+coverage/
+.vscode/

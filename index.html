@@ -9,26 +9,111 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dark-mode">
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
-        <div class="login-container">
-            <div class="login-header">
-                <h1 class="login-logo">Mailia</h1>
-                <p class="login-subtitle">Imatran varhaisjakelu</p>
+        <!-- Pulsing Glow Behind Phone -->
+        <div class="phone-glow-pulse"></div>
+        
+        <!-- Floating Smartphone Animation -->
+        <div class="phone-container">
+            <div class="phone-device">
+                <!-- Phone Frame -->
+                <div class="phone-frame">
+                    <!-- Phone Screen -->
+                    <div class="phone-screen">
+                        <!-- Phone Status Bar -->
+                        <div class="phone-status-bar">
+                            <div class="status-bar-left">
+                                <span id="statusTime">12:00</span>
+                            </div>
+                            <div class="status-bar-right">
+                                <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+                                    <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+                                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                                    <circle cx="12" cy="20" r="1"></circle>
+                                </svg>
+                                <span class="status-battery" id="statusBattery">
+                                    <svg class="status-icon battery-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect>
+                                        <path d="M23 13v-2"></path>
+                                    </svg>
+                                    <span id="batteryPercent">100%</span>
+                                </span>
+                            </div>
+                        </div>
+                        <!-- Login Form on Phone Screen -->
+                        <div class="phone-login-form">
+                            <div class="phone-header-widgets">
+                                <!-- Logo Text with Wallpaper Effect -->
+                                <div class="phone-logo" id="mailiaLogo">
+                                    <div class="phone-logo-text">Mailia</div>
+                                </div>
+                                
+                                <div class="phone-widgets">
+                                    <div class="weather-widget" id="weatherWidget">
+                                        <svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="5"></circle>
+                                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                        </svg>
+                                        <span class="weather-temp">22°C</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- iPhone-style Notification - Middle Position -->
+                            <div class="iphone-notification">
+                                <div class="notification-header">
+                                    <svg class="notification-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                    <span class="notification-app">JUURI NYT:</span>
+                                    <span class="notification-time" id="notificationTime">nyt</span>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Jakeluyhtiö päätti lopettaa paperisodan</div>
+                                    <div class="notification-message">Nyt jakelun ohella pelastetaan puita!</div>
+                                </div>
+                            </div>
+                            
+                            <form id="loginForm" class="login-form">
+                                <div class="input-group">
+                                    <label for="username" class="input-label">
+                                        <input type="text" id="username" name="username" required autocomplete="username" placeholder="Käyttäjätunnus" class="phone-input">
+                                    </label>
+                                </div>
+                                <div class="input-group">
+                                    <label for="password" class="input-label password-container">
+                                        <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Salasana" class="phone-input">
+                                        <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">
+                                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </label>
+                                </div>
+                                <div class="remember-me-container">
+                                    <label class="remember-me-label">
+                                        <input type="checkbox" id="rememberMe" class="remember-me-checkbox">
+                                        <span class="remember-me-text">Muista minut tällä laitteella</span>
+                                    </label>
+                                </div>
+                                <div id="loginError" class="login-error" style="display: none;"></div>
+                                <button type="submit" class="phone-login-button">Kirjaudu sisään</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <form id="loginForm" class="login-form">
-                <div class="form-group">
-                    <label for="username">Käyttäjätunnus:</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label for="password">Salasana:</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
-                </div>
-                <div id="loginError" class="login-error" style="display: none;"></div>
-                <button type="submit" class="login-button">Kirjaudu sisään</button>
-            </form>
         </div>
     </div>
 
@@ -36,53 +121,96 @@
     <div id="mainApp" style="display: none;">
     <header>
         <div class="header-content">
-            <h1 class="logo">Mailia</h1>
+            <h1 class="logo">Jakokirja</h1>
             <div class="header-right">
-                <a href="tel:0503728330" class="quick-dial">
-                    <div class="quick-dial-icon">📞</div>
+                <a href="tel:0503728330" class="quick-dial icon-button" aria-label="Soita 0503728330">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
                 </a>
-                <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
-                    <span class="icon">🌙</span>
+                <button id="darkModeToggle" class="dark-mode-toggle icon-button" aria-label="Toggle light mode">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <a href="help.html" class="help-button icon-button" aria-label="käyttöohjeet">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </a>
+                <div class="settings-container">
+                    <button id="settingsBtn" class="settings-button icon-button" aria-label="Asetukset">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                    </button>
+                    <div id="settingsDropdown" class="settings-dropdown">
+                        <label>
+                            <input type="checkbox" id="showCheckboxesToggle">
+                            Kuittausruudut käytössä
+                        </label>
+                        <label>
+                            <input type="checkbox" id="hideStfFilter">
+                            Piilota STF
+                        </label>
+                        <label>
+                            <input type="checkbox" id="hideDeliveredFilter">
+                            Piilota kuitatut tilaukset
+                        </label>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-button icon-button" aria-label="Kirjaudu ulos">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
                 </button>
             </div>
         </div>
     </header>
 
     <div class="tab-container">
-        <button class="tab-button active" data-tab="delivery">Jakelu</button>
-        <button class="tab-button" data-tab="tracker">Seuranta</button>
+        <button class="tab-button admin-only" data-tab="delivery" style="display: none;">Jakelu</button>
+        <button class="tab-button admin-only" data-tab="tracker" style="display: none;">Seuranta</button>
+        <button class="tab-button admin-only" data-tab="messages" style="display: none;">Piirien viestit</button>
+    </div>
+
+    <!-- Circuit selector - always visible -->
+    <div class="circuit-selector-container">
+        <div class="custom-circuit-select" id="customCircuitSelect">
+            <div class="circuit-select-display" id="circuitSelectDisplay">
+                <span class="circuit-display-text">Valitse piiri</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="circuit-select-dropdown" id="circuitSelectDropdown" style="display: none;">
+                <input type="text" class="circuit-search" id="circuitSearch" placeholder="Valitse piiri">
+                <div class="circuit-options" id="circuitOptions"></div>
+            </div>
+        </div>
     </div>
 
     <main>
         <!-- Delivery Tab -->
         <div id="deliveryTab" class="tab-content active">
-            <div class="circuit-selector-container">
-                <label for="circuitSelect">Valitse piiri:</label>
-                <select id="circuitSelect">
-                    <option value="">-- Valitse piiri --</option>
-                </select>
-            </div>
-
             <div id="deliveryContent" class="delivery-content" style="display: none;">
                 <!-- Cover Sheet -->
                 <div class="cover-sheet">
-                    <h2>Reitin lehtimäärät</h2>
+                    <h2>Piirin lehtimäärät</h2>
                     <div class="date-display" id="dateDisplay"></div>
                     <div class="product-counts" id="productCounts"></div>
                     <button id="startRouteBtn" class="route-button">Aloita reitti</button>
                     <div id="routeStartTime" class="route-time" style="display: none;"></div>
-                </div>
-
-                <!-- Filters -->
-                <div class="filter-container">
-                    <label>
-                        <input type="checkbox" id="hideStfFilter">
-                        Piilota STF
-                    </label>
-                    <label>
-                        <input type="checkbox" id="hideDeliveredFilter">
-                        Piilota jaetut tilaukset
-                    </label>
                 </div>
 
                 <!-- Subscriber List -->
@@ -93,15 +221,47 @@
                     <button id="completeRouteBtn" class="route-button complete">Reitti valmis</button>
                     <div id="routeEndTime" class="route-time"></div>
                 </div>
+                
+                <!-- Loading Animation for Route Completion -->
+                <div id="routeCompleteLoader" class="route-complete-loader" style="display: none;">
+                    <div class="success-animation">
+                        <div class="checkmark-circle-only">
+                            <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="26" cy="26" r="25" fill="#28a745"/>
+                                <path class="checkmark" d="M14 27 L22 35 L38 17" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Custom Confirm Dialog -->
+                <div id="customConfirmDialog" class="custom-dialog" style="display: none;">
+                    <div class="custom-dialog-content">
+                        <div class="custom-dialog-message" id="customConfirmMessage"></div>
+                        <div class="custom-dialog-buttons">
+                            <button id="customConfirmCancel" class="custom-dialog-btn cancel-btn">Peruuta</button>
+                            <button id="customConfirmOk" class="custom-dialog-btn confirm-btn">OK</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Circuit Tracker Tab -->
         <div id="trackerTab" class="tab-content">
-            <h2>Piirien tilanne</h2>
+            <h2>Jakelustatus</h2>
             <div id="circuitTracker" class="circuit-tracker"></div>
         </div>
+        
+        <!-- Route Messages Tab (Admin Only) -->
+        <div id="messagesTab" class="tab-content">
+            <div class="messages-header">
+                <h2>Piirien viestit</h2>
+            </div>
+            <div id="routeMessages" class="route-messages"></div>
+        </div>
     </main>
+    
     </div>
     <!-- End Main Application -->
 

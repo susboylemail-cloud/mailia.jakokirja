@@ -10,6 +10,15 @@ let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe
 let isLoadingCircuit = false; // Prevent concurrent circuit loads
 let isRenderingTracker = false; // Prevent concurrent tracker renders
 
+// Small helper: get current role from memory or storage
+function getEffectiveUserRole() {
+    try {
+        return userRole || localStorage.getItem('mailiaUserRole') || null;
+    } catch (_) {
+        return userRole || null;
+    }
+}
+
 // ============= Backend Integration =============
 // Check if user is already logged in
 window.addEventListener('DOMContentLoaded', async () => {
@@ -57,9 +66,17 @@ async function handleLogin() {
         // Login via backend API
         await window.mailiaAPI.login(username, password);
         
+        // Persist role ASAP after login (before async UI init)
+        const currentUser = window.mailiaAPI.getCurrentUser();
+        if (currentUser && currentUser.role) {
+            userRole = currentUser.role; // set global
+            try { localStorage.setItem('mailiaUserRole', currentUser.role); } catch(_) {}
+            console.log('[handleLogin] stored role:', currentUser.role);
+        }
+
         // Success - show main app (this is async and calls populateCircuitSelector)
         await showMainApp();
-        
+
     } catch (error) {
         console.error('Login failed:', error);
         loginError.textContent = error.message || 'Kirjautuminen epäonnistui. Tarkista tunnukset.';
@@ -87,8 +104,9 @@ function initializeApp() {
     initializeWebSocketListeners();
     
     // Initialize dashboard if user is admin or manager
-    const userRole = localStorage.getItem('mailiaUserRole');
-    if (userRole === 'admin' || userRole === 'manager') {
+    const role = getEffectiveUserRole();
+    console.log('[initializeApp] effective role:', role);
+    if (role === 'admin' || role === 'manager') {
         initializeDashboard();
     }
 }
@@ -1330,10 +1348,10 @@ async function showMainApp() {
     scheduleMidnightReset();
     
     // Set initial view based on user role
-    const userRole = localStorage.getItem('mailiaUserRole');
+    const role = getEffectiveUserRole();
     const circuitSelectorContainer = document.querySelector('.circuit-selector-container');
     
-    if (userRole === 'admin' || userRole === 'manager') {
+    if (role === 'admin' || role === 'manager') {
         // Admin/Manager: Show tracker tab by default
         const deliveryTab = document.getElementById('deliveryTab');
         const trackerTab = document.getElementById('trackerTab');
@@ -2580,8 +2598,8 @@ function renderSubscriberList(circuitId, subscribers) {
                                    currentStaircase !== previousStaircase;
             
             // Add + button before each card (admin and manager only)
-            const userRole = localStorage.getItem('mailiaUserRole');
-            if (userRole === 'admin' || userRole === 'manager') {
+            const role = getEffectiveUserRole();
+            if (role === 'admin' || role === 'manager') {
                 const addButton = createAddSubscriberButton(circuitId, sub.orderIndex);
                 buildingGroup.appendChild(addButton);
             }
@@ -2595,8 +2613,8 @@ function renderSubscriberList(circuitId, subscribers) {
         });
         
         // Add final + button at the end of each building group (admin and manager only)
-        const userRole = localStorage.getItem('mailiaUserRole');
-        if ((userRole === 'admin' || userRole === 'manager') && buildingSubscribers.length > 0) {
+        const role = getEffectiveUserRole();
+        if ((role === 'admin' || role === 'manager') && buildingSubscribers.length > 0) {
             const lastSub = buildingSubscribers[buildingSubscribers.length - 1];
             const addButton = createAddSubscriberButton(circuitId, lastSub.orderIndex + 1);
             buildingGroup.appendChild(addButton);
@@ -3796,8 +3814,8 @@ async function createCircuitItem(circuitId, routeData) {
     header.appendChild(name);
     
     // Add 3-dot menu button for admin users (always visible)
-    const userRole = localStorage.getItem('mailiaUserRole');
-    if (userRole === 'admin' || userRole === 'manager') {
+    const role = getEffectiveUserRole();
+    if (role === 'admin' || role === 'manager') {
         const menuBtn = document.createElement('button');
         menuBtn.className = 'circuit-menu-btn';
         menuBtn.innerHTML = '⋮';
@@ -4938,11 +4956,10 @@ function closeAddSubscriberModal() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    // ... existing initialization code ...
-    
-    // Initialize add subscriber modal if admin or manager
-    const userRole = localStorage.getItem('mailiaUserRole');
-    if (userRole === 'admin' || userRole === 'manager') {
+    // Initialize add subscriber modal if admin or manager (deferred until role known)
+    const role = getEffectiveUserRole();
+    console.log('[DOMContentLoaded] role at init:', role);
+    if (role === 'admin' || role === 'manager') {
         initializeAddSubscriberModal();
     }
 });

@@ -273,25 +273,32 @@ const importCircuitData = async (circuitId: string, circuitName: string, subscri
 // Import all CSV files from a directory
 export const importAllCSVFiles = async (directoryPath: string): Promise<void> => {
     try {
+        console.log(`Scanning directory for CSV files: ${directoryPath}`);
         logger.info(`Scanning directory for CSV files: ${directoryPath}`);
         
         const files = await fs.readdir(directoryPath);
         const csvFiles = files.filter(file => file.toLowerCase().endsWith('.csv'));
         
+        console.log(`Found ${csvFiles.length} CSV files`);
         logger.info(`Found ${csvFiles.length} CSV files`);
         
         for (const file of csvFiles) {
             const filePath = path.join(directoryPath, file);
+            console.log(`Importing ${file}...`);
             try {
                 await importCSVFile(filePath);
+                console.log(`✓ Successfully imported ${file}`);
             } catch (error) {
+                console.error(`✗ Failed to import ${file}:`, error);
                 logger.error(`Failed to import ${file}:`, error);
                 // Continue with other files
             }
         }
         
+        console.log('CSV import completed');
         logger.info('CSV import completed');
     } catch (error) {
+        console.error('Error importing CSV files:', error);
         logger.error('Error importing CSV files:', error);
         throw error;
     }

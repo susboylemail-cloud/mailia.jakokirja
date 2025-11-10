@@ -1472,11 +1472,18 @@ function initializeTabs() {
         if (messagesButton) messagesButton.style.display = 'inline-block';
         if (dashboardButton) dashboardButton.style.display = 'inline-block';
     } else {
-        // Delivery user sees no tabs (direct access to circuit selector)
-        if (jakeluButton) jakeluButton.style.display = 'none';
+        // Driver: Only delivery tab visible
+        if (jakeluButton) jakeluButton.style.display = 'inline-block';
         if (seurantaButton) seurantaButton.style.display = 'none';
         if (messagesButton) messagesButton.style.display = 'none';
         if (dashboardButton) dashboardButton.style.display = 'none';
+    }
+
+    // Default active tab selection based on role
+    if (userRole === 'admin' || userRole === 'manager') {
+        if (seurantaButton) seurantaButton.click(); // tracker default
+    } else {
+        if (jakeluButton) jakeluButton.click(); // delivery default
     }
 
     tabButtons.forEach(button => {
@@ -2587,6 +2594,7 @@ function renderSubscriberList(circuitId, subscribers) {
         const buildingSubscribers = buildingObj.subscribers;
         let previousStaircase = null;
         
+        // Only show one + button per building group: at end, not between each card
         buildingSubscribers.forEach((sub, subIndex) => {
             // Extract the staircase letter from the apartment specification
             const apartmentSpec = extractApartmentSpecification(sub.address, sub.buildingAddress);
@@ -2597,16 +2605,7 @@ function renderSubscriberList(circuitId, subscribers) {
                                    currentStaircase && previousStaircase && 
                                    currentStaircase !== previousStaircase;
             
-            // Add + button before each card (admin and manager only)
-            const role = getEffectiveUserRole();
-            if (role === 'admin' || role === 'manager') {
-                // Avoid inserting duplicate + buttons directly adjacent (check last element class)
-                const lastChild = buildingGroup.lastElementChild;
-                if (!lastChild || !lastChild.classList.contains('add-subscriber-between-btn')) {
-                const addButton = createAddSubscriberButton(circuitId, sub.orderIndex);
-                buildingGroup.appendChild(addButton);
-                }
-            }
+            // Removed per-card + button insertion to avoid duplicates
             
             const card = createSubscriberCard(circuitId, sub, buildingIndex, subIndex, 
                 buildingIndex === buildings.length - 1 && subIndex === buildingSubscribers.length - 1,
@@ -2616,15 +2615,12 @@ function renderSubscriberList(circuitId, subscribers) {
             previousStaircase = currentStaircase;
         });
         
-        // Add final + button at the end of each building group (admin and manager only)
+        // Add single + button at end of group (admin/manager only)
         const role = getEffectiveUserRole();
         if ((role === 'admin' || role === 'manager') && buildingSubscribers.length > 0) {
             const lastSub = buildingSubscribers[buildingSubscribers.length - 1];
-            const lastChild = buildingGroup.lastElementChild;
-            if (!lastChild || !lastChild.classList.contains('add-subscriber-between-btn')) {
-                const addButton = createAddSubscriberButton(circuitId, lastSub.orderIndex + 1);
-                buildingGroup.appendChild(addButton);
-            }
+            const addButton = createAddSubscriberButton(circuitId, lastSub.orderIndex + 1);
+            buildingGroup.appendChild(addButton);
         }
         
         listContainer.appendChild(buildingGroup);

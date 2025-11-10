@@ -2241,41 +2241,48 @@ const SUNDAY = 0, MONDAY = 1, TUESDAY = 2, WEDNESDAY = 3, THURSDAY = 4, FRIDAY =
 
 /**
  * Check if a product should be delivered on a specific day of the week
+ * IMPORTANT: Sundays have no deliveries. Sunday papers are delivered on Monday.
+ * 
  * @param {string} product - The product code (e.g., 'ESLS', 'HSP', 'UV')
  * @param {number} dayOfWeek - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
  * @returns {boolean} True if the product should be delivered on the given day
  * 
  * @example
- * isProductValidForDay('ESLS', FRIDAY) // returns false (ESLS is weekend-only)
- * isProductValidForDay('ESLS', SATURDAY) // returns true
- * isProductValidForDay('UV', MONDAY) // returns true (UV has no day restrictions)
+ * isProductValidForDay('ESLS', SUNDAY) // returns false (no deliveries on Sunday)
+ * isProductValidForDay('SH', MONDAY) // returns true (Sunday papers delivered on Monday)
+ * isProductValidForDay('UV', MONDAY) // returns true (UV has no day restrictions except Sunday)
  */
 function isProductValidForDay(product, dayOfWeek) {
+    // NO DELIVERIES ON SUNDAY - return false for all products
+    if (dayOfWeek === SUNDAY) {
+        return false;
+    }
+    
     const productSchedule = {
         // Helsingin Sanomat variants
-        'SH': [SUNDAY],                              // Sunnuntai Hesari - Sunday only
-        'HSPS': [FRIDAY, SATURDAY, SUNDAY],          // Hesari perjantai-sunnuntai
+        'SH': [MONDAY],                              // Sunnuntai Hesari - delivered on Monday
+        'HSPS': [FRIDAY, SATURDAY, MONDAY],          // Hesari perjantai-sunnuntai (Sunday edition on Monday)
         'HSPE': [FRIDAY],                            // Hesari perjantai - Friday only
-        'HSLS': [SATURDAY, SUNDAY],                  // Hesari lauantai-sunnuntai
+        'HSLS': [SATURDAY, MONDAY],                  // Hesari lauantai-sunnuntai (Sunday edition on Monday)
         'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai
-        'HSTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY],           // Hesari torstai-sunnuntai
-        'HSTO': [THURSDAY, FRIDAY, SATURDAY, SUNDAY], // Hesari torstai-sunnuntai (sama kuin HSTS)
+        'HSTS': [THURSDAY, FRIDAY, SATURDAY, MONDAY],           // Hesari torstai-sunnuntai (Sunday edition on Monday)
+        'HSTO': [THURSDAY, FRIDAY, SATURDAY, MONDAY], // Hesari torstai-sunnuntai (Sunday edition on Monday)
         'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
         // Etelä-Saimaa variants
-        // Note: plain ES is a daily product (delivered every day), so it's not listed here
-        'ESPS': [FRIDAY, SATURDAY, SUNDAY],          // Etelä-Saimaa perjantai-sunnuntai
-        'ESLS': [SATURDAY, SUNDAY],                  // Etelä-Saimaa lauantai-sunnuntai
+        // Note: plain ES is a daily product (delivered every day except Sunday)
+        'ESPS': [FRIDAY, SATURDAY, MONDAY],          // Etelä-Saimaa perjantai-sunnuntai (Sunday edition on Monday)
+        'ESLS': [SATURDAY, MONDAY],                  // Etelä-Saimaa lauantai-sunnuntai (Sunday edition on Monday)
         'ESP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],   // Etelä-Saimaa maanantai-perjantai
         'ESMP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Etelä-Saimaa ma-pe (sama kuin ESP)
         'ETSA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY], // Etelä-Saimaa ma-la
         // Itä-Savo variants
         'ISAP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Itä-Savo ma-pe
-        'ISALASU': [SATURDAY, SUNDAY],               // Itä-Savo la-su
-        'ISAPESU': [FRIDAY, SATURDAY, SUNDAY],       // Itä-Savo pe-su
-        'ISASU': [SUNDAY],                           // Itä-Savo sunnuntai
+        'ISALASU': [SATURDAY, MONDAY],               // Itä-Savo la-su (Sunday edition on Monday)
+        'ISAPESU': [FRIDAY, SATURDAY, MONDAY],       // Itä-Savo pe-su (Sunday edition on Monday)
+        'ISASU': [MONDAY],                           // Itä-Savo sunnuntai - delivered on Monday
         // Other products
         'PASA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY], // Parikkalan Sanomat ma-la
-        'YHTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY] // Yhteishyvä to-su
+        'YHTS': [THURSDAY, FRIDAY, SATURDAY, MONDAY] // Yhteishyvä to-su (Sunday edition on Monday)
     };
     
     // If the product has a specific schedule, check if today is valid
@@ -2283,8 +2290,8 @@ function isProductValidForDay(product, dayOfWeek) {
         return productSchedule[product].includes(dayOfWeek);
     }
     
-    // All other products (UV, HS, ES, JO, STF, LU, ISA, Muu, RL, PL, etc.) are always valid (every day)
-    return true;
+    // All other products (UV, HS, ES, JO, STF, LU, ISA, Muu, RL, PL, etc.) are valid Mon-Sat (not Sunday)
+    return dayOfWeek !== SUNDAY;
 }
 
 /**
@@ -2314,8 +2321,10 @@ function expandCombinedProducts(productString, dayOfWeek) {
 
 /**
  * Simplifies product display names based on delivery days
+ * IMPORTANT: Sunday papers (SH, ISASU, etc.) are delivered on Monday
  * E.g., ESP (mon-fri) displays as "ES" on those days
  * E.g., HSPE (friday) displays as "HS" on friday
+ * E.g., SH (sunday) displays as "HS" on Monday (when it's actually delivered)
  */
 function simplifyProductName(product, dayOfWeek) {
     const normalized = normalizeProduct(product);
@@ -2327,10 +2336,12 @@ function simplifyProductName(product, dayOfWeek) {
     if (normalized === 'ESMP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
         return 'ES';
     }
-    if (normalized === 'ESPS' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+    // ESPS includes Sunday edition, which is delivered on Monday
+    if (normalized === 'ESPS' && [FRIDAY, SATURDAY, MONDAY].includes(dayOfWeek)) {
         return 'ES';
     }
-    if (normalized === 'ESLS' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
+    // ESLS includes Sunday edition, which is delivered on Monday
+    if (normalized === 'ESLS' && [SATURDAY, MONDAY].includes(dayOfWeek)) {
         return 'ES';
     }
     if (normalized === 'ETSA' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY].includes(dayOfWeek)) {
@@ -2341,25 +2352,29 @@ function simplifyProductName(product, dayOfWeek) {
     if (normalized === 'HSP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    if (normalized === 'HSPS' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+    // HSPS includes Sunday edition, which is delivered on Monday
+    if (normalized === 'HSPS' && [FRIDAY, SATURDAY, MONDAY].includes(dayOfWeek)) {
         return 'HS';
     }
     if (normalized === 'HSPE' && dayOfWeek === FRIDAY) {
         return 'HS';
     }
-    if (normalized === 'HSLS' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
+    // HSLS includes Sunday edition, which is delivered on Monday
+    if (normalized === 'HSLS' && [SATURDAY, MONDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    if (normalized === 'HSTS' && [THURSDAY, FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+    // HSTS/HSTO include Sunday edition, which is delivered on Monday
+    if (normalized === 'HSTS' && [THURSDAY, FRIDAY, SATURDAY, MONDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    if (normalized === 'HSTO' && [THURSDAY, FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+    if (normalized === 'HSTO' && [THURSDAY, FRIDAY, SATURDAY, MONDAY].includes(dayOfWeek)) {
         return 'HS';
     }
     if (normalized === 'MALA' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    if (normalized === 'SH' && dayOfWeek === SUNDAY) {
+    // SH (Sunday Hesari) is delivered on Monday
+    if (normalized === 'SH' && dayOfWeek === MONDAY) {
         return 'HS';
     }
     
@@ -2367,13 +2382,16 @@ function simplifyProductName(product, dayOfWeek) {
     if (normalized === 'ISAP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
         return 'ISA';
     }
-    if (normalized === 'ISALASU' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
+    // ISALASU includes Sunday edition, which is delivered on Monday
+    if (normalized === 'ISALASU' && [SATURDAY, MONDAY].includes(dayOfWeek)) {
         return 'ISA';
     }
-    if (normalized === 'ISAPESU' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+    // ISAPESU includes Sunday edition, which is delivered on Monday
+    if (normalized === 'ISAPESU' && [FRIDAY, SATURDAY, MONDAY].includes(dayOfWeek)) {
         return 'ISA';
     }
-    if (normalized === 'ISASU' && dayOfWeek === SUNDAY) {
+    // ISASU (Sunday ISA) is delivered on Monday
+    if (normalized === 'ISASU' && dayOfWeek === MONDAY) {
         return 'ISA';
     }
     

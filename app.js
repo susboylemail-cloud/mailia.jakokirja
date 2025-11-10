@@ -2108,12 +2108,18 @@ function renderCoverSheet(circuitId, subscribers) {
     subscribers.forEach(sub => {
         sub.products.forEach(product => {
             const normalized = normalizeProduct(product);
-            // Only count if product is valid for today
-            if (isProductValidForDay(normalized, today)) {
-                // Simplify product name (e.g., HSPE → HS, ESP → ES)
-                const simplified = simplifyProductName(normalized, today);
-                products[simplified] = (products[simplified] || 0) + 1;
-            }
+            
+            // Split space-separated products (e.g., "UV HS" → ["UV", "HS"])
+            const individualProducts = normalized.split(/\s+/);
+            
+            individualProducts.forEach(individualProduct => {
+                // Only count if product is valid for today
+                if (isProductValidForDay(individualProduct, today)) {
+                    // Simplify product name (e.g., HSPE → HS, ESP → ES)
+                    const simplified = simplifyProductName(individualProduct, today);
+                    products[simplified] = (products[simplified] || 0) + 1;
+                }
+            });
         });
     });
     
@@ -2386,10 +2392,16 @@ function renderSubscriberList(circuitId, subscribers) {
     
     // Filter subscribers to only include those with at least one valid product for today
     const validSubscribers = subscribers.map(sub => {
-        // Filter products to only those valid for today
-        const validProducts = sub.products.filter(product => {
+        // Filter products to only those valid for today, splitting combined products
+        const validProducts = [];
+        sub.products.forEach(product => {
             const normalized = normalizeProduct(product);
-            return isProductValidForDay(normalized, today);
+            const individualProducts = normalized.split(/\s+/);
+            individualProducts.forEach(individualProduct => {
+                if (isProductValidForDay(individualProduct, today)) {
+                    validProducts.push(individualProduct);
+                }
+            });
         });
         
         // If no valid products, don't include this subscriber
@@ -2553,6 +2565,7 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
             const simpleBase = simplifyProductName(baseName, today);
             productCounts[simpleBase] = (productCounts[simpleBase] || 0) + quantity;
         } else {
+            // Products are already normalized and split from filter phase
             productCounts[simplifiedProduct] = (productCounts[simplifiedProduct] || 0) + 1;
         }
     });

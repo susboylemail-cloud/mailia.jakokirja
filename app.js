@@ -2242,6 +2242,7 @@ const SUNDAY = 0, MONDAY = 1, TUESDAY = 2, WEDNESDAY = 3, THURSDAY = 4, FRIDAY =
 /**
  * Check if a product should be delivered on a specific day of the week
  * IMPORTANT: Sundays have no deliveries. Sunday papers are delivered on Monday.
+ * IMPORTANT: UV (Uutisvuoksi) is delivered only on Monday, Wednesday, and Friday.
  * 
  * @param {string} product - The product code (e.g., 'ESLS', 'HSP', 'UV')
  * @param {number} dayOfWeek - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
@@ -2250,7 +2251,8 @@ const SUNDAY = 0, MONDAY = 1, TUESDAY = 2, WEDNESDAY = 3, THURSDAY = 4, FRIDAY =
  * @example
  * isProductValidForDay('ESLS', SUNDAY) // returns false (no deliveries on Sunday)
  * isProductValidForDay('SH', MONDAY) // returns true (Sunday papers delivered on Monday)
- * isProductValidForDay('UV', MONDAY) // returns true (UV has no day restrictions except Sunday)
+ * isProductValidForDay('UV', MONDAY) // returns true (UV delivered Mon/Wed/Fri)
+ * isProductValidForDay('UV', TUESDAY) // returns false (UV not delivered on Tuesday)
  */
 function isProductValidForDay(product, dayOfWeek) {
     // NO DELIVERIES ON SUNDAY - return false for all products
@@ -2259,6 +2261,8 @@ function isProductValidForDay(product, dayOfWeek) {
     }
     
     const productSchedule = {
+        // Special products with specific delivery days
+        'UV': [MONDAY, WEDNESDAY, FRIDAY],           // Uutisvuoksi - Monday, Wednesday, Friday only
         // Helsingin Sanomat variants
         'SH': [MONDAY],                              // Sunnuntai Hesari - delivered on Monday
         'HSPS': [FRIDAY, SATURDAY, MONDAY],          // Hesari perjantai-sunnuntai (Sunday edition on Monday)

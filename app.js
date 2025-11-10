@@ -2259,9 +2259,8 @@ function isProductValidForDay(product, dayOfWeek) {
         'HSLS': [SATURDAY, SUNDAY],                  // Hesari lauantai-sunnuntai
         'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai
         'HSTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY],           // Hesari torstai-sunnuntai
-        'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
-        'HSPE': [FRIDAY],                            // Hesari perjantai
         'HSTO': [THURSDAY, FRIDAY, SATURDAY, SUNDAY], // Hesari torstai-sunnuntai (sama kuin HSTS)
+        'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
         // Etelä-Saimaa variants
         // Note: plain ES is a daily product (delivered every day), so it's not listed here
         'ESPS': [FRIDAY, SATURDAY, SUNDAY],          // Etelä-Saimaa perjantai-sunnuntai

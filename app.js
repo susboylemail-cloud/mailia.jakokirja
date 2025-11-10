@@ -1139,15 +1139,20 @@ function initializeTabs() {
 
 // Initialize refresh buttons for Seuranta and Messages tabs
 function initializeRefreshButtons() {
-    // Tracker refresh button
+    // Tracker refresh button - hard refresh while keeping user logged in
     const refreshTrackerBtn = document.getElementById('refreshTrackerBtn');
     if (refreshTrackerBtn) {
         refreshTrackerBtn.addEventListener('click', async () => {
-            console.log('Manually refreshing tracker...');
+            console.log('Hard refreshing tracker (clearing cache)...');
             refreshTrackerBtn.classList.add('refreshing');
             refreshTrackerBtn.disabled = true;
             
             try {
+                // Clear the circuit data cache to force re-fetch from backend
+                Object.keys(allData).forEach(key => delete allData[key]);
+                
+                // Force re-render of tracker with fresh data
+                isRenderingTracker = false; // Reset the render lock
                 await renderCircuitTracker();
                 showNotification('Seuranta päivitetty', 'success');
             } catch (error) {
@@ -1162,15 +1167,16 @@ function initializeRefreshButtons() {
         });
     }
 
-    // Messages refresh button
+    // Messages refresh button - hard refresh
     const refreshMessagesBtn = document.getElementById('refreshMessagesBtn');
     if (refreshMessagesBtn) {
         refreshMessagesBtn.addEventListener('click', async () => {
-            console.log('Manually refreshing messages...');
+            console.log('Hard refreshing messages (clearing cache)...');
             refreshMessagesBtn.classList.add('refreshing');
             refreshMessagesBtn.disabled = true;
             
             try {
+                // Force re-render of messages with fresh data from API
                 await renderRouteMessages();
                 showNotification('Viestit päivitetty', 'success');
             } catch (error) {
@@ -1836,6 +1842,22 @@ function renderCoverSheet(circuitId, subscribers) {
 }
 
 function normalizeProduct(product) {
+    // First split concatenated multi-products (e.g., "UVES" -> "UV ES", "HSES" -> "HS ES")
+    const multiProductPatterns = [
+        { pattern: /^UVES$/i, replacement: 'UV ES' },
+        { pattern: /^HSES$/i, replacement: 'HS ES' },
+        { pattern: /^UVHS$/i, replacement: 'UV HS' },
+        { pattern: /^ESHSPS$/i, replacement: 'ES HSPS' },
+        { pattern: /^ESHSP$/i, replacement: 'ES HSP' },
+        { pattern: /^UVESHS$/i, replacement: 'UV ES HS' }
+    ];
+    
+    for (const {pattern, replacement} of multiProductPatterns) {
+        if (pattern.test(product)) {
+            return replacement;
+        }
+    }
+    
     // Normalize products: UV2→UV, HS2→HS, ES4→ES, STF2→STF, etc.
     return product.replace(/\d+$/, '').trim();
 }

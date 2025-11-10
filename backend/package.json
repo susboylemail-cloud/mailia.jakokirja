@@ -15,6 +15,7 @@
     "create:admin": "tsx scripts/create-admin.ts",
     "create:user": "tsx scripts/create-user.ts",
     "remove:duplicates": "tsx scripts/remove-duplicates.ts",
+    "reimport:circuit": "tsx scripts/reimport-circuit.ts",
     "sftp:sync": "tsx src/services/sftpSync.ts"
   },
   "engines": {

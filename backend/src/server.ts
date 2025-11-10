@@ -36,6 +36,10 @@ dotenv.config();
 // });
 
 const app: Express = express();
+
+// Trust proxy for Heroku
+app.set('trust proxy', 1);
+
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
     cors: {

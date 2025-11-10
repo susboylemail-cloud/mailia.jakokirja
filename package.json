@@ -1,0 +1,20 @@
+{
+  "name": "mailia-delivery-tracker",
+  "version": "1.0.0",
+  "description": "Mailia delivery tracking system for Imatra postal circuits",
+  "scripts": {
+    "build": "cd backend && npm install && npm run build",
+    "start": "cd backend && npm start",
+    "postinstall": "cd backend && npm install"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  },
+  "keywords": [
+    "delivery",
+    "tracking"
+  ],
+  "author": "Mailia",
+  "license": "MIT"
+}

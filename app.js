@@ -316,11 +316,36 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
     let menuOptions = '';
     
     if (!routeData || status === 'not-started') {
-        // Route hasn't been started - no management options available
+        // Route hasn't been started - show start and finish options
         menuOptions = `
-            <p style="margin: 0; color: #b0b0b0; font-size: 0.9rem; text-align: center;">
-                Reitti ei ole aloitettu.<br>Ei saatavilla toimintoja.
-            </p>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button class="modal-btn start-btn" style="
+                    background: #007bff;
+                    color: white;
+                    border: none;
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">
+                    🔵 Aloita reitti
+                </button>
+                <button class="modal-btn complete-btn" style="
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">
+                    🟢 Merkitse valmiiksi
+                </button>
+            </div>
         `;
     } else {
         // Route has been started - show management options
@@ -410,18 +435,50 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
         });
     }
 
-    // Handle mark as completed (if button exists)
-    const completeBtn = modal.querySelector('.complete-btn');
-    if (completeBtn && routeData) {
-        completeBtn.addEventListener('click', async () => {
+    // Handle start route (if button exists and no route)
+    const startBtn = modal.querySelector('.start-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', async () => {
             try {
-                await window.mailiaAPI.resetRoute(routeData.id, 'completed');
-                showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+                const route = await window.mailiaAPI.startRoute(circuitId);
+                localStorage.setItem(`route_id_${circuitId}`, route.id);
+                showNotification(`Reitti ${circuitId} aloitettu`, 'success');
                 renderCircuitTracker();
                 overlay.remove();
             } catch (error) {
-                console.error('Failed to complete route:', error);
-                showNotification('Reitin merkkaus epäonnistui', 'error');
+                console.error('Failed to start route:', error);
+                showNotification('Reitin aloitus epäonnistui', 'error');
+            }
+        });
+    }
+
+    // Handle mark as completed (if button exists)
+    const completeBtn = modal.querySelector('.complete-btn');
+    if (completeBtn) {
+        completeBtn.addEventListener('click', async () => {
+            // If no route exists, create one first then mark as completed
+            if (!routeData) {
+                try {
+                    const route = await window.mailiaAPI.startRoute(circuitId);
+                    localStorage.setItem(`route_id_${circuitId}`, route.id);
+                    await window.mailiaAPI.resetRoute(route.id, 'completed');
+                    showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+                    renderCircuitTracker();
+                    overlay.remove();
+                } catch (error) {
+                    console.error('Failed to create and complete route:', error);
+                    showNotification('Reitin merkkaus epäonnistui', 'error');
+                }
+            } else {
+                try {
+                    await window.mailiaAPI.resetRoute(routeData.id, 'completed');
+                    showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+                    renderCircuitTracker();
+                    overlay.remove();
+                } catch (error) {
+                    console.error('Failed to complete route:', error);
+                    showNotification('Reitin merkkaus epäonnistui', 'error');
+                }
             }
         });
     }
@@ -2762,12 +2819,42 @@ function reportUndelivered(circuitId, subscriber) {
 
 function saveRouteMessage(message) {
     // Get current route ID
-    const routeId = localStorage.getItem(`route_id_${message.circuit}`);
+    let routeId = localStorage.getItem(`route_id_${message.circuit}`);
     
+    // If no route exists, create one automatically
     if (!routeId) {
-        console.error('No route ID found for circuit:', message.circuit);
-        alert('Virhe: Reittiä ei löydy. Aloita reitti ensin.');
-        return;
+        console.log('No route ID found, creating route for circuit:', message.circuit);
+        
+        // Create route via API
+        if (window.mailiaAPI) {
+            window.mailiaAPI.startRoute(message.circuit)
+                .then(route => {
+                    localStorage.setItem(`route_id_${message.circuit}`, route.id);
+                    // Now send the message
+                    return window.mailiaAPI.sendMessage(
+                        route.id,
+                        'issue',
+                        `${message.reason} - ${message.address}`
+                    );
+                })
+                .then(() => {
+                    console.log('Route created and message saved');
+                })
+                .catch(error => {
+                    console.error('Failed to create route or save message:', error);
+                    // Fallback to localStorage
+                    const messages = loadRouteMessages();
+                    messages.push(message);
+                    localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+                });
+            return;
+        } else {
+            // Fallback to localStorage if API not available
+            const messages = loadRouteMessages();
+            messages.push(message);
+            localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+            return;
+        }
     }
     
     // Send message to backend API

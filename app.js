@@ -769,6 +769,9 @@ async function handleLogout() {
         currentCircuit = null;
         allData = {};
         
+        // Clear user role from localStorage
+        localStorage.removeItem('mailiaUserRole');
+        
         // Show login screen
         showLoginScreen();
         
@@ -1286,6 +1289,8 @@ async function showMainApp() {
         console.log('Logged in as:', user.username, 'Role:', user.role);
         userRole = user.role;
         isAuthenticated = true;
+        // Save user role to localStorage for access in other functions
+        localStorage.setItem('mailiaUserRole', user.role);
     }
     
     // Start the phone rise up transition animation
@@ -3049,7 +3054,7 @@ function reportUndelivered(circuitId, subscriber) {
         
         // Get selected products if multiple products available
         let selectedProducts = subscriber.products;
-        if (productCheckboxes) {
+        if (subscriber.products.length > 1) {
             const checkedBoxes = productCheckboxes.querySelectorAll('input[type="checkbox"]:checked');
             if (checkedBoxes.length === 0) {
                 alert('Valitse vähintään yksi tuote');

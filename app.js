@@ -1,5 +1,15 @@
 // Mailia Delivery Tracking Application
 
+// ============= Global State =============
+let allData = {};  // Changed to object for easier circuit lookup
+let currentCircuit = null;
+let isAuthenticated = false;
+let userRole = null; // 'delivery', 'admin', or 'manager'
+let routeMessages = []; // Store route messages for admin panel
+let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
+let isLoadingCircuit = false; // Prevent concurrent circuit loads
+let isRenderingTracker = false; // Prevent concurrent tracker renders
+
 // ============= Backend Integration =============
 // Check if user is already logged in
 window.addEventListener('DOMContentLoaded', async () => {
@@ -877,16 +887,6 @@ function customConfirm(message, clickEvent = null) {
         cancelBtn.addEventListener('click', handleCancel);
     });
 }
-
-// Global state
-let allData = {};  // Changed to object for easier circuit lookup
-let currentCircuit = null;
-let isAuthenticated = false;
-let userRole = null; // 'delivery' or 'admin'
-let routeMessages = []; // Store route messages for admin panel
-let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
-let isLoadingCircuit = false; // Prevent concurrent circuit loads
-let isRenderingTracker = false; // Prevent concurrent tracker renders
 
 // Circuit file mapping for lazy loading
 const circuitFiles = {

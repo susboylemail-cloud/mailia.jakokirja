@@ -10,6 +10,7 @@
     "start": "node dist/server.js",
     "postinstall": "npm run build",
     "migrate": "psql -d mailia_db -f database/schema.sql",
+    "setup:heroku": "tsx scripts/setup-heroku-db.ts",
     "import:csv": "tsx scripts/import-csv.ts",
     "create:admin": "tsx scripts/create-admin.ts",
     "create:user": "tsx scripts/create-user.ts",

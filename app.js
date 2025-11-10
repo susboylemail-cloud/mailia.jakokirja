@@ -1,13 +1,17 @@
 // Generic modal factory (lightweight, non-invasive)
-function createModal({ title, bodyHTML, actions = [] }) {
+function createModal({ title, bodyHTML, actions = [], ariaLabel = null, initialFocusSelector = null }) {
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;';
+    overlay.className = 'modal-overlay-accessible';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    if (ariaLabel) overlay.setAttribute('aria-label', ariaLabel);
+
     const box = document.createElement('div');
-    box.style.cssText = 'background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:2rem;max-width:440px;width:90%;color:var(--text-color);box-shadow:0 8px 24px rgba(0,0,0,0.4);';
+    box.className = 'app-modal';
     box.innerHTML = `
-        <h3 style="margin:0 0 1rem 0;font-size:1.25rem;font-weight:600;">${title}</h3>
+        <h3>${title}</h3>
         <div class="modal-body">${bodyHTML}</div>
-        <div class="modal-actions" style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem;"></div>
+        <div class="modal-actions"></div>
     `;
     const actionsContainer = box.querySelector('.modal-actions');
     actions.forEach(a => {
@@ -15,16 +19,64 @@ function createModal({ title, bodyHTML, actions = [] }) {
         btn.textContent = a.label;
         btn.type = 'button';
         btn.id = a.id || '';
-        btn.style.cssText = a.variant === 'primary'
-            ? 'padding:.75rem 1.5rem;border:none;background:var(--primary-blue);color:#fff;border-radius:8px;font-weight:600;cursor:pointer;'
-            : 'padding:.75rem 1.5rem;border:2px solid var(--border-color);background:transparent;color:var(--text-color);border-radius:8px;font-weight:500;cursor:pointer;';
+        btn.className = a.variant === 'primary' ? 'modal-btn-primary' : 'modal-btn-secondary';
         btn.addEventListener('click', () => a.handler && a.handler({ close }));
         actionsContainer.appendChild(btn);
     });
-    function close() { document.body.removeChild(overlay); }
+
+    function close() {
+        document.removeEventListener('keydown', handleKey);
+        overlay.remove();
+        // Restore focus to previously focused element
+        if (previousActive) previousActive.focus();
+    }
+
+    function handleKey(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            close();
+        } else if (e.key === 'Tab') {
+            // Focus trap
+            const focusables = Array.from(box.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+                .filter(el => !el.disabled && el.offsetParent !== null);
+            if (focusables.length === 0) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        } else if (e.key === 'Enter') {
+            // Submit on Enter unless typing in a multiline field
+            const ae = document.activeElement;
+            if (ae && ae.tagName === 'TEXTAREA') return;
+            const primary = box.querySelector('.modal-btn-primary');
+            if (primary) {
+                e.preventDefault();
+                primary.click();
+            }
+        }
+    }
+
+    const previousActive = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     overlay.appendChild(box);
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     document.body.appendChild(overlay);
+    document.addEventListener('keydown', handleKey);
+
+    // Initial focus
+    if (initialFocusSelector) {
+        const el = box.querySelector(initialFocusSelector);
+        if (el) el.focus();
+    } else {
+        // Focus first focusable
+        const first = box.querySelector('button, [href], input, select, textarea');
+        if (first) first.focus();
+    }
+
     return { overlay, box, close };
 }
 
@@ -62,16 +114,16 @@ function openDeliveryIssueDialog(subscriber, circuitId) {
             { id: 'reportSubmit', label: 'Lähetä', variant: 'primary', handler: () => {
                 const issueSelect = box.querySelector('#reportIssue');
                 let reason = issueSelect.value;
-                if (!reason) { alert('Valitse syy'); return; }
+                if (!reason) { showNotification('Valitse syy', 'error'); return; }
                 if (reason === 'Muu') {
                     const customTxt = box.querySelector('#reportCustomText').value.trim();
-                    if (!customTxt) { alert('Kirjoita tarkennusviesti'); return; }
+                    if (!customTxt) { showNotification('Kirjoita tarkennusviesti', 'error'); return; }
                     reason = `Muu: ${customTxt}`;
                 }
                 let selectedProducts = subscriber.products;
                 if (hasMultiple) {
                     const checked = Array.from(box.querySelectorAll('#reportProducts input[type="checkbox"]:checked')).map(cb => cb.value);
-                    if (checked.length === 0) { alert('Valitse vähintään yksi tuote'); return; }
+                    if (checked.length === 0) { showNotification('Valitse vähintään yksi tuote', 'error'); return; }
                     selectedProducts = checked;
                 }
                 const report = {
@@ -83,7 +135,7 @@ function openDeliveryIssueDialog(subscriber, circuitId) {
                     reason
                 };
                 saveRouteMessage(report);
-                alert('Raportti tallennettu!');
+                showNotification('Raportti tallennettu!', 'success');
                 close();
             } }
         ]
@@ -394,39 +446,26 @@ function initializeWebSocketListeners() {
 
 // Show notification helper
 function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    
-    // Define colors based on type
-    const backgroundColor = type === 'success' ? '#28a745' : 
-                           type === 'error' ? '#dc3545' : 
-                           '#007bff'; // info/default
-    
-    notification.style.cssText = `
-        position: fixed;
-        top: 80px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${backgroundColor};
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 8px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-        border: 2px solid rgba(255,255,255,0.3);
-        z-index: 9999;
-        max-width: 90%;
-        text-align: center;
-        font-weight: 600;
-        font-size: 1rem;
-        animation: slideInDown 0.3s ease-out;
-    `;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
+    // Create container lazily
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    // Animate in
+    toast.classList.add('enter');
+    // Auto-dismiss
     setTimeout(() => {
-        notification.style.animation = 'slideOutUp 0.3s ease-in';
-        setTimeout(() => notification.remove(), 300);
+        toast.classList.add('exit');
+        setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
 

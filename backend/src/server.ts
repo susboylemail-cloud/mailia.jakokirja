@@ -51,11 +51,25 @@ const io = new SocketIOServer(httpServer, {
 
 const PORT = process.env.PORT || 3000;
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
-    message: 'Too many requests from this IP, please try again later.'
+// Rate limiting - more lenient for auth endpoints
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // Allow 20 login attempts per 15 minutes
+    message: { error: 'Too many login attempts, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const generalLimiter = rateLimit({
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000'), // 1 minute default
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '200'), // 200 requests per minute
+    message: { error: 'Too many requests from this IP, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting for health checks
+        return req.path === '/health';
+    }
 });
 
 // Middleware
@@ -69,7 +83,6 @@ app.use(cors({
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/api/', limiter);
 
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
@@ -89,16 +102,16 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
     next();
 });
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/circuits', circuitRoutes);
-app.use('/api/routes', routeRoutes);
-app.use('/api/deliveries', deliveryRoutes);
-app.use('/api/working-times', workingTimeRoutes);
-app.use('/api/subscriptions', subscriptionRoutes);
-app.use('/api/sync', syncRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+// Routes with specific rate limiting
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/circuits', generalLimiter, circuitRoutes);
+app.use('/api/routes', generalLimiter, routeRoutes);
+app.use('/api/deliveries', generalLimiter, deliveryRoutes);
+app.use('/api/working-times', generalLimiter, workingTimeRoutes);
+app.use('/api/subscriptions', generalLimiter, subscriptionRoutes);
+app.use('/api/sync', generalLimiter, syncRoutes);
+app.use('/api/messages', generalLimiter, messageRoutes);
+app.use('/api/dashboard', generalLimiter, dashboardRoutes);
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {

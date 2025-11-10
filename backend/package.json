@@ -14,6 +14,7 @@
     "import:csv": "tsx scripts/import-csv.ts",
     "create:admin": "tsx scripts/create-admin.ts",
     "create:user": "tsx scripts/create-user.ts",
+    "remove:duplicates": "tsx scripts/remove-duplicates.ts",
     "sftp:sync": "tsx src/services/sftpSync.ts"
   },
   "engines": {

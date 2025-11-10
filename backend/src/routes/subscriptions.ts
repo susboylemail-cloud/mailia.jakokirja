@@ -85,10 +85,10 @@ router.post('/changes/:id/process',
     }
 );
 
-// Manually add or update subscriber (admin only)
+// Manually add or update subscriber (admin and manager)
 router.post('/subscriber',
     authenticate,
-    authorize('admin'),
+    authorize('admin', 'manager'),
     async (req, res) => {
         try {
             const { circuitId, street, number, building, apartment, name, products, orderIndex } = req.body;

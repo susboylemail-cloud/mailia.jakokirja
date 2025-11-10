@@ -1279,15 +1279,31 @@ async function showMainApp() {
     checkMidnightReset();
     scheduleMidnightReset();
     
-    // Set initial circuit selector visibility based on active tab
-    const activeTab = document.querySelector('.tab-content.active');
+    // Set initial view based on user role
+    const userRole = localStorage.getItem('mailiaUserRole');
     const circuitSelectorContainer = document.querySelector('.circuit-selector-container');
-    if (circuitSelectorContainer && activeTab) {
-        if (activeTab.id === 'deliveryTab') {
-            circuitSelectorContainer.style.display = 'block';
-        } else {
-            circuitSelectorContainer.style.display = 'none';
-        }
+    
+    if (userRole === 'admin' || userRole === 'manager') {
+        // Admin/Manager: Show tracker tab by default
+        const deliveryTab = document.getElementById('deliveryTab');
+        const trackerTab = document.getElementById('trackerTab');
+        const deliveryButton = document.querySelector('[data-tab="delivery"]');
+        const trackerButton = document.querySelector('[data-tab="tracker"]');
+        
+        // Switch from delivery to tracker
+        if (deliveryTab) deliveryTab.classList.remove('active');
+        if (trackerTab) trackerTab.classList.add('active');
+        if (deliveryButton) deliveryButton.classList.remove('active');
+        if (trackerButton) trackerButton.classList.add('active');
+        
+        // Hide circuit selector for tracker view
+        if (circuitSelectorContainer) circuitSelectorContainer.style.display = 'none';
+        
+        // Render tracker
+        renderCircuitTracker();
+    } else {
+        // Regular driver: Show delivery tab (already active by default)
+        if (circuitSelectorContainer) circuitSelectorContainer.style.display = 'block';
     }
 }
 
@@ -2513,9 +2529,9 @@ function renderSubscriberList(circuitId, subscribers) {
                                    currentStaircase && previousStaircase && 
                                    currentStaircase !== previousStaircase;
             
-            // Add + button before each card (admin only)
+            // Add + button before each card (admin and manager only)
             const userRole = localStorage.getItem('mailiaUserRole');
-            if (userRole === 'admin') {
+            if (userRole === 'admin' || userRole === 'manager') {
                 const addButton = createAddSubscriberButton(circuitId, sub.orderIndex);
                 buildingGroup.appendChild(addButton);
             }
@@ -2528,9 +2544,9 @@ function renderSubscriberList(circuitId, subscribers) {
             previousStaircase = currentStaircase;
         });
         
-        // Add final + button at the end of each building group (admin only)
+        // Add final + button at the end of each building group (admin and manager only)
         const userRole = localStorage.getItem('mailiaUserRole');
-        if (userRole === 'admin' && buildingSubscribers.length > 0) {
+        if ((userRole === 'admin' || userRole === 'manager') && buildingSubscribers.length > 0) {
             const lastSub = buildingSubscribers[buildingSubscribers.length - 1];
             const addButton = createAddSubscriberButton(circuitId, lastSub.orderIndex + 1);
             buildingGroup.appendChild(addButton);
@@ -4874,9 +4890,9 @@ function closeAddSubscriberModal() {
 document.addEventListener('DOMContentLoaded', () => {
     // ... existing initialization code ...
     
-    // Initialize add subscriber modal if admin
+    // Initialize add subscriber modal if admin or manager
     const userRole = localStorage.getItem('mailiaUserRole');
-    if (userRole === 'admin') {
+    if (userRole === 'admin' || userRole === 'manager') {
         initializeAddSubscriberModal();
     }
 });

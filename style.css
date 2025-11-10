@@ -2033,6 +2033,37 @@ body.dark-mode .subscriber-name {
     transform: rotate(180deg) scale(0.95);
 }
 
+/* Circuit Management Menu Button (3-dot) */
+.circuit-menu-btn {
+    background: rgba(108, 117, 125, 0.2);
+    border: 1px solid #6c757d;
+    color: #adb5bd;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+    font-weight: bold;
+    letter-spacing: -1px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+}
+
+.circuit-menu-btn:hover {
+    background: rgba(108, 117, 125, 0.3);
+    color: #f8f9fa;
+    border-color: #adb5bd;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+}
+
+.circuit-menu-btn:active {
+    transform: scale(0.95);
+}
+
 /* Circuit Menu (3-dot menu) */
 .circuit-menu-container {
     position: relative;

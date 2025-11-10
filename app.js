@@ -282,6 +282,163 @@ function showNotification(message, type = 'info') {
     }, 4000);
 }
 
+function showCircuitManagementMenu(circuitId, routeData, status) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+
+    // Create modal content
+    const modal = document.createElement('div');
+    modal.className = 'circuit-management-modal';
+    modal.style.cssText = `
+        background: #2c2c2c;
+        border-radius: 12px;
+        padding: 1.5rem;
+        max-width: 90%;
+        width: 320px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        border: 1px solid #444;
+    `;
+
+    // Build menu options based on route status
+    let menuOptions = '';
+    
+    if (!routeData || status === 'not-started') {
+        // Route hasn't been started - no management options available
+        menuOptions = `
+            <p style="margin: 0; color: #b0b0b0; font-size: 0.9rem; text-align: center;">
+                Reitti ei ole aloitettu.<br>Ei saatavilla toimintoja.
+            </p>
+        `;
+    } else {
+        // Route has been started - show management options
+        menuOptions = `
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button class="modal-btn reset-btn" style="
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">
+                    🔴 Nollaa reitti
+                </button>
+                ${status !== 'completed' ? `
+                <button class="modal-btn complete-btn" style="
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">
+                    🟢 Merkitse valmiiksi
+                </button>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    modal.innerHTML = `
+        <h3 style="margin: 0 0 1rem 0; color: #f0f0f0; font-size: 1.1rem; font-weight: 600;">Hallitse reittiä ${circuitId}</h3>
+        ${menuOptions}
+        <button class="modal-btn cancel-btn" style="
+            background: #495057;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: ${!routeData || status === 'not-started' ? '1rem' : '0.75rem'};
+            width: 100%;
+        ">
+            Sulje
+        </button>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Add hover effects
+    const buttons = modal.querySelectorAll('.modal-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            btn.style.opacity = '0.9';
+            btn.style.transform = 'scale(1.02)';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.opacity = '1';
+            btn.style.transform = 'scale(1)';
+        });
+    });
+
+    // Handle reset to not-started (if route exists)
+    const resetBtn = modal.querySelector('.reset-btn');
+    if (resetBtn && routeData) {
+        resetBtn.addEventListener('click', async () => {
+            try {
+                await window.mailiaAPI.resetRoute(routeData.id, 'not-started');
+                showNotification('Jakelustatus nollattu', 'success');
+                renderCircuitTracker();
+                overlay.remove();
+            } catch (error) {
+                console.error('Failed to reset route:', error);
+                showNotification('Reitin nollaus epäonnistui', 'error');
+            }
+        });
+    }
+
+    // Handle mark as completed (if button exists)
+    const completeBtn = modal.querySelector('.complete-btn');
+    if (completeBtn && routeData) {
+        completeBtn.addEventListener('click', async () => {
+            try {
+                await window.mailiaAPI.resetRoute(routeData.id, 'completed');
+                showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+                renderCircuitTracker();
+                overlay.remove();
+            } catch (error) {
+                console.error('Failed to complete route:', error);
+                showNotification('Reitin merkkaus epäonnistui', 'error');
+            }
+        });
+    }
+
+    // Handle cancel/close
+    modal.querySelector('.cancel-btn').addEventListener('click', () => {
+        overlay.remove();
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    });
+}
+
 function showRouteStatusModal(circuitId, routeData) {
     // Create modal overlay
     const overlay = document.createElement('div');
@@ -378,7 +535,7 @@ function showRouteStatusModal(circuitId, routeData) {
     modal.querySelector('.reset-btn').addEventListener('click', async () => {
         try {
             await window.mailiaAPI.resetRoute(routeData.id, 'not-started');
-            showNotification(`Reitti ${circuitId} nollattu aloittamattomaksi`, 'success');
+            showNotification('Jakelustatus nollattu', 'success');
             renderCircuitTracker();
             overlay.remove();
         } catch (error) {
@@ -469,11 +626,23 @@ async function handleLogout() {
         if (passwordInput) passwordInput.value = '';
         if (loginError) loginError.style.display = 'none';
         
+        // Remove zoom-transition class if it exists
+        const loginScreen = document.getElementById('loginScreen');
+        if (loginScreen) {
+            loginScreen.classList.remove('zoom-transition');
+        }
+        
         console.log('Logged out successfully');
     } catch (error) {
         console.error('Logout error:', error);
         // Force show login screen even if logout fails
         showLoginScreen();
+        
+        // Remove zoom-transition class if it exists
+        const loginScreen = document.getElementById('loginScreen');
+        if (loginScreen) {
+            loginScreen.classList.remove('zoom-transition');
+        }
     }
 }
 
@@ -1873,6 +2042,7 @@ function normalizeProduct(product) {
         { pattern: /^UVES$/i, replacement: 'UV ES' },
         { pattern: /^HSES$/i, replacement: 'HS ES' },
         { pattern: /^UVHS$/i, replacement: 'UV HS' },
+        { pattern: /^UVHSLS$/i, replacement: 'UV HS' },
         { pattern: /^ESHSPS$/i, replacement: 'ES HSPS' },
         { pattern: /^ESHSP$/i, replacement: 'ES HSP' },
         { pattern: /^UVESHS$/i, replacement: 'UV ES HS' }
@@ -2496,7 +2666,7 @@ function reportUndelivered(circuitId, subscriber) {
         <select id="deliveryIssueSelect" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; background: var(--card-bg); color: var(--text-color); -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer;">
             <option value="">Valitse syy</option>
             <option value="Ei pääsyä">Ei pääsyä</option>
-            <option value="Avaimongelma">Avainongelma</option>
+            <option value="Avainongelma">Avainongelma</option>
             <option value="Lehtipuute">Lehtipuute</option>
             <option value="Muu">Muu</option>
         </select>
@@ -3266,18 +3436,18 @@ async function createCircuitItem(circuitId, routeData) {
     name.textContent = circuitNames[circuitId] || circuitId;
     header.appendChild(name);
     
-    // Add reset button for admin users on in-progress or completed routes
+    // Add 3-dot menu button for admin users (always visible)
     const userRole = localStorage.getItem('mailiaUserRole');
-    if ((userRole === 'admin' || userRole === 'manager') && routeData && routeData.id) {
-        const resetBtn = document.createElement('button');
-        resetBtn.className = 'reset-route-btn';
-        resetBtn.innerHTML = '↻';
-        resetBtn.title = 'Muuta reitin tilaa';
-        resetBtn.onclick = async (e) => {
+    if (userRole === 'admin' || userRole === 'manager') {
+        const menuBtn = document.createElement('button');
+        menuBtn.className = 'circuit-menu-btn';
+        menuBtn.innerHTML = '⋮';
+        menuBtn.title = 'Hallinta';
+        menuBtn.onclick = async (e) => {
             e.stopPropagation();
-            showRouteStatusModal(circuitId, routeData);
+            showCircuitManagementMenu(circuitId, routeData, status);
         };
-        header.appendChild(resetBtn);
+        header.appendChild(menuBtn);
     }
     
     content.appendChild(header);

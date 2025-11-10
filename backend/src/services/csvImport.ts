@@ -2,6 +2,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { query } from '../config/database';
 import logger from '../config/logger';
+import { buildingKey as normBuilding, unitKey as normUnit, fixRepeatedAddress } from '../util/addressNormalization';
+import fsSync from 'fs';
 
 interface CSVSubscriber {
     address: string;
@@ -11,6 +13,8 @@ interface CSVSubscriber {
     orderIndex: number;
     apartment?: string;
     stairwell?: string;
+    normalizedBuilding?: string;
+    normalizedUnit?: string;
 }
 
 // Extract circuit ID from filename (same logic as frontend)
@@ -166,7 +170,7 @@ export const importCSVFile = async (filePath: string): Promise<void> => {
         // Detect delimiter: semicolon or comma
         const delimiter = header.includes(';') ? ';' : ',';
         
-        const subscribers: CSVSubscriber[] = [];
+    let subscribers: CSVSubscriber[] = [];
         
         // Parse each line
         for (let i = 1; i < lines.length; i++) {
@@ -180,12 +184,39 @@ export const importCSVFile = async (filePath: string): Promise<void> => {
             }
             
             if (subscriber) {
+                // Apply repeated address fix & recompute buildingAddress
+                subscriber.address = fixRepeatedAddress(subscriber.address);
+                subscriber.buildingAddress = fixRepeatedAddress(subscriber.buildingAddress);
                 subscriber.orderIndex = i;
                 subscribers.push(subscriber);
             }
         }
         
         logger.info(`Parsed ${subscribers.length} subscribers from ${filename}`);
+
+        // In-file dedupe: merge exact same address (case/space-insensitive) & merge products
+        const before = subscribers.length;
+        const seen = new Map<string, CSVSubscriber>();
+        const order: string[] = [];
+        const norm = (s: string) => s.toUpperCase().replace(/\s+/g,' ').trim();
+        for (const sub of subscribers) {
+            const key = norm(sub.address);
+            if (!seen.has(key)) { seen.set(key, { ...sub, products: [...sub.products] }); order.push(key); }
+            else {
+                const prev = seen.get(key)!;
+                const merged = new Set(prev.products);
+                sub.products.forEach(p=>merged.add(p));
+                prev.products = Array.from(merged);
+                prev.orderIndex = Math.min(prev.orderIndex, sub.orderIndex);
+            }
+        }
+        const deduped = order.map(k => seen.get(k)!);
+        if (deduped.length !== before) {
+            logger.info(`Deduped in-file: ${before} -> ${deduped.length} (${before - deduped.length} collapsed)`);
+        }
+
+        // Replace array with deduped version
+        subscribers = deduped;
         
         // Import into database
         await importCircuitData(circuitId, filename, subscribers);
@@ -216,7 +247,52 @@ const importCircuitData = async (circuitId: string, circuitName: string, subscri
         const dbCircuitId = circuitResult.rows[0].id;
         
         // Import subscribers
+        // Load whitelist once (from repo root if exists)
+        const rootDir = path.resolve(process.cwd(), '..', '..');
+        const wlPath = path.join(rootDir, 'duplicates-whitelist.json');
+        let whitelist: any = { buildings: [], units: [] };
+        if (fsSync.existsSync(wlPath)) {
+            try { whitelist = JSON.parse(fsSync.readFileSync(wlPath,'utf8')); } catch { logger.warn('Failed to parse duplicates-whitelist.json'); }
+        }
+        const isWhitelisted = (level: 'buildings'|'units', key: string): boolean => {
+            const entries = whitelist[level] || [];
+            return entries.some((e: any) => {
+                if (typeof e === 'string') return e.toLowerCase() === key.toLowerCase();
+                if (e && e.key) return String(e.key).toLowerCase() === key.toLowerCase();
+                return false;
+            });
+        };
+
+        const allowOverlap = process.env.IMPORT_ALLOW_OVERLAP === 'true';
+
         for (const subscriber of subscribers) {
+            subscriber.normalizedBuilding = normBuilding(subscriber.buildingAddress);
+            subscriber.normalizedUnit = normUnit(subscriber.buildingAddress, subscriber.stairwell, subscriber.apartment);
+
+            // Cross-circuit duplicate guard (best-effort): check existing subscribers with same normalized unit
+            const dupCheck = await query(
+                `SELECT s.id, c.circuit_id FROM subscribers s JOIN circuits c ON s.circuit_id = c.id
+                 WHERE LOWER(s.building_address) = LOWER($1)
+                   AND COALESCE(LOWER(s.stairwell),'') = LOWER($2)
+                   AND COALESCE(LOWER(s.apartment),'') = LOWER($3)
+                   AND c.circuit_id <> $4
+                 LIMIT 5`,
+                [subscriber.buildingAddress, subscriber.stairwell || '', subscriber.apartment || '', circuitId]
+            );
+            if (dupCheck.rows.length) {
+                const otherCircuits = dupCheck.rows.map(r => r.circuit_id);
+                const key = subscriber.normalizedUnit;
+                const whitelisted = isWhitelisted('units', key) || isWhitelisted('buildings', subscriber.normalizedBuilding!);
+                if (!whitelisted) {
+                    const msg = `High-risk overlap: ${subscriber.address} conflicts with circuits ${otherCircuits.join(', ')} (key=${key})`;
+                    if (!allowOverlap) {
+                        logger.warn(msg + ' -> skipped (set IMPORT_ALLOW_OVERLAP=true to force)');
+                        continue; // Skip insertion
+                    } else {
+                        logger.warn(msg + ' -> allowed due to IMPORT_ALLOW_OVERLAP');
+                    }
+                }
+            }
             // Insert or update subscriber
             const subscriberResult = await query(
                 `INSERT INTO subscribers (
@@ -266,7 +342,7 @@ const importCircuitData = async (circuitId: string, circuitName: string, subscri
         // Commit transaction
         await query('COMMIT');
         
-        logger.info(`Imported circuit ${circuitId} with ${subscribers.length} subscribers`);
+    logger.info(`Imported circuit ${circuitId} with ${subscribers.length} subscribers (after duplicate guard skips)`);
     } catch (error) {
         // Rollback on error
         await query('ROLLBACK');

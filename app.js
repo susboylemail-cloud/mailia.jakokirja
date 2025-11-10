@@ -2615,16 +2615,20 @@ function renderSubscriberList(circuitId, subscribers) {
             previousStaircase = currentStaircase;
         });
         
-        // Add single + button at end of group (admin/manager only)
-        const role = getEffectiveUserRole();
-        if ((role === 'admin' || role === 'manager') && buildingSubscribers.length > 0) {
-            const lastSub = buildingSubscribers[buildingSubscribers.length - 1];
-            const addButton = createAddSubscriberButton(circuitId, lastSub.orderIndex + 1);
-            buildingGroup.appendChild(addButton);
-        }
+        // No per-group + button; only a single global + is rendered after the full list
         
         listContainer.appendChild(buildingGroup);
     });
+
+    // Add a single global + button at the end (admin/manager only)
+    const role = getEffectiveUserRole();
+    if (role === 'admin' || role === 'manager') {
+        // Default order index: append after the last visible subscriber
+        const lastVisible = validSubscribers[validSubscribers.length - 1];
+        const defaultOrderIndex = lastVisible ? (lastVisible.orderIndex + 1) : 1;
+        const addButton = createAddSubscriberButton(circuitId, defaultOrderIndex);
+        listContainer.appendChild(addButton);
+    }
 }
 
 // Create add subscriber button between cards

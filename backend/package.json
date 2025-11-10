@@ -17,6 +17,7 @@
     "remove:duplicates": "tsx scripts/remove-duplicates.ts",
     "reimport:circuit": "tsx scripts/reimport-circuit.ts",
     "check:circuits": "tsx scripts/check-circuits.ts",
+    "diagnostics:circuits": "tsx scripts/diagnostics-circuits.ts",
     "sftp:sync": "tsx src/services/sftpSync.ts"
   },
   "engines": {

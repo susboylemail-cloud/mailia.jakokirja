@@ -359,7 +359,14 @@
     <!-- End Main Application -->
 
     <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDdZGA32-rDyg_73RMpAXUBH-l9D8xzteI&libraries=places" async defer></script>
+    <script>
+        function initGoogleMapsError() {
+            console.error('Google Maps API failed to load. Check your API key and billing settings.');
+            window.googleMapsLoadError = true;
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDdZGA32-rDyg_73RMpAXUBH-l9D8xzteI&libraries=places,geometry&v=weekly&callback=Function.prototype" 
+            onerror="initGoogleMapsError()" async defer></script>
     
     <script src="api.js"></script>
     <script src="app.js"></script>

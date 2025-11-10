@@ -4285,6 +4285,12 @@ function initializeDashboard() {
 
 // Google Maps Integration
 async function showCircuitMap(circuitId) {
+    // Check if Google Maps failed to load
+    if (window.googleMapsLoadError) {
+        showNotification('Google Maps API ei latautunut. Tarkista API-avain ja laskutusasetukset.', 'error');
+        return;
+    }
+    
     // Get circuit data
     const circuitData = allData[circuitId];
     if (!circuitData || circuitData.length === 0) {
@@ -4381,10 +4387,15 @@ async function showCircuitMap(circuitId) {
 }
 
 async function initializeGoogleMap(circuitId, circuitData, mapContainer, infoPanel) {
-    // Wait for Google Maps to load
+    // Wait for Google Maps to load with timeout
     if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
         showNotification('Google Maps ladataan...', 'info');
-        await new Promise(resolve => {
+        
+        const timeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Google Maps lataus aikakatkaistiin')), 10000)
+        );
+        
+        const waitForMaps = new Promise(resolve => {
             const checkGoogleMaps = setInterval(() => {
                 if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
                     clearInterval(checkGoogleMaps);
@@ -4392,6 +4403,17 @@ async function initializeGoogleMap(circuitId, circuitData, mapContainer, infoPan
                 }
             }, 100);
         });
+        
+        try {
+            await Promise.race([waitForMaps, timeout]);
+        } catch (error) {
+            throw new Error('Google Maps API ei latautunut. Tarkista API-avain ja verkkoyhteytesi.');
+        }
+    }
+
+    // Check if Geocoding is available
+    if (!google.maps.Geocoder) {
+        throw new Error('Google Maps Geocoding API ei ole käytettävissä. Tarkista että API on otettu käyttöön Google Cloud Console:ssa.');
     }
 
     // Geocode addresses to coordinates
@@ -4424,6 +4446,12 @@ async function initializeGoogleMap(circuitId, circuitData, mapContainer, infoPan
             geocodedCount++;
         } catch (error) {
             console.warn(`Could not geocode ${fullAddress}:`, error);
+            // Check for common API errors
+            if (error === 'REQUEST_DENIED') {
+                throw new Error('Google Maps Geocoding API pyyntö evätty. Tarkista että Geocoding API on käytössä ja API-avaimella on oikeudet.');
+            } else if (error === 'OVER_QUERY_LIMIT') {
+                throw new Error('Google Maps API kyselylimiitti ylitetty. Odota hetki ennen uudelleenyritystä.');
+            }
         }
 
         // Update progress

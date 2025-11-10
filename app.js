@@ -446,453 +446,284 @@ function initializeWebSocketListeners() {
 
 // Show notification helper
 function showNotification(message, type = 'info') {
-    // Create container lazily
+    // Accessible toast with inline icon & status role
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
         container.id = 'toastContainer';
         container.className = 'toast-container';
+        container.setAttribute('aria-live', 'polite');
+        container.setAttribute('aria-atomic', 'true');
         document.body.appendChild(container);
     }
 
+    const icons = {
+        success: '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+        error: '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12" y2="16"></line></svg>',
+        info: '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="8"></line></svg>'
+    };
+
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-
-    // Animate in
-    toast.classList.add('enter');
-    // Auto-dismiss
-    setTimeout(() => {
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = `
+        <div class="toast-content">${icons[type] || icons.info}<span class="toast-message">${message}</span></div>
+        <button class="toast-dismiss" aria-label="Sulje ilmoitus">×</button>
+    `;
+    const dismissBtn = toast.querySelector('.toast-dismiss');
+    dismissBtn.addEventListener('click', () => {
         toast.classList.add('exit');
-        setTimeout(() => toast.remove(), 300);
-    }, 4000);
+        setTimeout(() => toast.remove(), 250);
+    });
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('enter'));
+    setTimeout(() => dismissBtn.click(), 5000);
 }
 
 function showCircuitManagementMenu(circuitId, routeData, status) {
-    // Create modal overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-    `;
-
-    // Create modal content
-    const modal = document.createElement('div');
-    modal.className = 'circuit-management-modal';
-    modal.style.cssText = `
-        background: #2c2c2c;
-        border-radius: 12px;
-        padding: 1.5rem;
-        max-width: 90%;
-        width: 320px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        border: 1px solid #444;
-    `;
-
-    // Build menu options based on route status
-    let menuOptions = '';
-    
+    const buttons = [];
+    buttons.push({ id: 'mapView', label: 'Näytä kartalla', variant: 'secondary', icon: 'map', handler: ({ close }) => { showCircuitMap(circuitId); close(); }});
     if (!routeData || status === 'not-started') {
-        // Route hasn't been started - show start and finish options
-        menuOptions = `
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <button class="modal-btn map-btn" style="
-                    background: #17a2b8;
-                    color: white;
-                    border: none;
-                    padding: 0.75rem;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    Näytä kartalla
-                </button>
-                <button class="modal-btn start-btn" style="
-                    background: #007bff;
-                    color: white;
-                    border: none;
-                    padding: 0.75rem;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                    Aloita reitti
-                </button>
-                <button class="modal-btn complete-btn" style="
-                    background: #28a745;
-                    color: white;
-                    border: none;
-                    padding: 0.75rem;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Merkitse valmiiksi
-                </button>
-            </div>
-        `;
+        buttons.push({ id: 'startRoute', label: 'Aloita reitti', variant: 'primary', icon: 'play', handler: async ({ close }) => {
+            try { const route = await window.mailiaAPI.startRoute(circuitId); localStorage.setItem(`route_id_${circuitId}`, route.id); showNotification(`Reitti ${circuitId} aloitettu`, 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin aloitus epäonnistui', 'error'); }
+        }});
+        buttons.push({ id: 'completeRoute', label: 'Merkitse valmiiksi', variant: 'secondary', icon: 'check', handler: async ({ close }) => {
+            try { let routeId = routeData?.id; if (!routeId) { const route = await window.mailiaAPI.startRoute(circuitId); routeId = route.id; localStorage.setItem(`route_id_${circuitId}`, route.id); } await window.mailiaAPI.resetRoute(routeId, 'completed'); showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin merkkaus epäonnistui', 'error'); }
+        }});
     } else {
-        // Route has been started - show management options
-        menuOptions = `
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <button class="modal-btn map-btn" style="
-                    background: #17a2b8;
-                    color: white;
-                    border: none;
-                    padding: 0.75rem;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    Näytä kartalla
-                </button>
-                <button class="modal-btn reset-btn" style="
-                    background: #dc3545;
-                    color: white;
-                    border: none;
-                    padding: 0.75rem;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="1 4 1 10 7 10"></polyline>
-                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                    </svg>
-                    Nollaa reitti
-                </button>
-                ${status !== 'completed' ? `
-                <button class="modal-btn complete-btn" style="
-                    background: #28a745;
-                    color: white;
-                    border: none;
-                    padding: 0.75rem;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Merkitse valmiiksi
-                </button>
-                ` : ''}
-            </div>
-        `;
-    }
-
-    modal.innerHTML = `
-        <h3 style="margin: 0 0 1rem 0; color: #f0f0f0; font-size: 1.1rem; font-weight: 600;">Hallitse reittiä ${circuitId}</h3>
-        ${menuOptions}
-        <button class="modal-btn cancel-btn" style="
-            background: #495057;
-            color: white;
-            border: none;
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: ${!routeData || status === 'not-started' ? '1rem' : '0.75rem'};
-            width: 100%;
-        ">
-            Sulje
-        </button>
-    `;
-
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    // Add hover effects
-    const buttons = modal.querySelectorAll('.modal-btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-            btn.style.opacity = '0.9';
-            btn.style.transform = 'scale(1.02)';
-        });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.opacity = '1';
-            btn.style.transform = 'scale(1)';
-        });
-    });
-
-    // Handle map view button
-    const mapBtn = modal.querySelector('.map-btn');
-    if (mapBtn) {
-        mapBtn.addEventListener('click', () => {
-            overlay.remove();
-            showCircuitMap(circuitId);
-        });
-    }
-
-    // Handle reset to not-started (if route exists)
-    const resetBtn = modal.querySelector('.reset-btn');
-    if (resetBtn && routeData) {
-        resetBtn.addEventListener('click', async () => {
-            try {
-                await window.mailiaAPI.resetRoute(routeData.id, 'not-started');
-                showNotification('Jakelustatus nollattu', 'success');
-                renderCircuitTracker();
-                overlay.remove();
-            } catch (error) {
-                console.error('Failed to reset route:', error);
-                showNotification('Reitin nollaus epäonnistui', 'error');
-            }
-        });
-    }
-
-    // Handle start route (if button exists and no route)
-    const startBtn = modal.querySelector('.start-btn');
-    if (startBtn) {
-        startBtn.addEventListener('click', async () => {
-            try {
-                const route = await window.mailiaAPI.startRoute(circuitId);
-                localStorage.setItem(`route_id_${circuitId}`, route.id);
-                showNotification(`Reitti ${circuitId} aloitettu`, 'success');
-                renderCircuitTracker();
-                overlay.remove();
-            } catch (error) {
-                console.error('Failed to start route:', error);
-                showNotification('Reitin aloitus epäonnistui', 'error');
-            }
-        });
-    }
-
-    // Handle mark as completed (if button exists)
-    const completeBtn = modal.querySelector('.complete-btn');
-    if (completeBtn) {
-        completeBtn.addEventListener('click', async () => {
-            // If no route exists, create one first then mark as completed
-            if (!routeData) {
-                try {
-                    const route = await window.mailiaAPI.startRoute(circuitId);
-                    localStorage.setItem(`route_id_${circuitId}`, route.id);
-                    await window.mailiaAPI.resetRoute(route.id, 'completed');
-                    showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
-                    renderCircuitTracker();
-                    overlay.remove();
-                } catch (error) {
-                    console.error('Failed to create and complete route:', error);
-                    showNotification('Reitin merkkaus epäonnistui', 'error');
-                }
-            } else {
-                try {
-                    await window.mailiaAPI.resetRoute(routeData.id, 'completed');
-                    showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
-                    renderCircuitTracker();
-                    overlay.remove();
-                } catch (error) {
-                    console.error('Failed to complete route:', error);
-                    showNotification('Reitin merkkaus epäonnistui', 'error');
-                }
-            }
-        });
-    }
-
-    // Handle cancel/close
-    modal.querySelector('.cancel-btn').addEventListener('click', () => {
-        overlay.remove();
-    });
-
-    // Close on overlay click
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.remove();
+        buttons.push({ id: 'resetRoute', label: 'Nollaa reitti', variant: 'secondary', icon: 'reset', handler: async ({ close }) => {
+            try { await window.mailiaAPI.resetRoute(routeData.id, 'not-started'); showNotification('Jakelustatus nollattu', 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin nollaus epäonnistui', 'error'); }
+        }});
+        if (status !== 'completed') {
+            buttons.push({ id: 'completeRoute', label: 'Merkitse valmiiksi', variant: 'primary', icon: 'check', handler: async ({ close }) => {
+                try { await window.mailiaAPI.resetRoute(routeData.id, 'completed'); showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin merkkaus epäonnistui', 'error'); }
+            }});
         }
-    });
+    }
+    const iconMap = {
+        map: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
+        play: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
+        check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+        reset: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>'
+    };
+    const bodyHTML = `<div class="route-mgmt-buttons">${buttons.map(b=>`<button type=\"button\" data-btn=\"${b.id}\" class=\"modal-btn-${b.variant}\">${iconMap[b.icon]||''}<span>${b.label}</span></button>`).join('')}</div>`;
+    const { box, close } = createModal({ title: `Hallitse reittiä ${circuitId}`, bodyHTML, actions:[{ id:'closeMgmt', label:'Sulje', variant:'secondary', handler: ({close})=>close()}], ariaLabel:`Reitin ${circuitId} hallinta` });
+    buttons.forEach(b=>{ const el=box.querySelector(`[data-btn="${b.id}"]`); if(el) el.addEventListener('click', ()=>b.handler({ close })); });
 }
 
 function showRouteStatusModal(circuitId, routeData) {
-    // Create modal overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-    `;
-
-    // Create modal content
-    const modal = document.createElement('div');
-    modal.className = 'route-status-modal';
-    modal.style.cssText = `
-        background: #2c2c2c;
-        border-radius: 12px;
-        padding: 1.5rem;
-        max-width: 90%;
-        width: 320px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        border: 1px solid #444;
-    `;
-
-    modal.innerHTML = `
-        <h3 style="margin: 0 0 1rem 0; color: #f0f0f0; font-size: 1.1rem; font-weight: 600;">Muuta reitin ${circuitId} tilaa</h3>
-        <p style="margin: 0 0 1.5rem 0; color: #b0b0b0; font-size: 0.9rem;">Valitse uusi tila:</p>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <button class="modal-btn reset-btn" style="
-                background: #dc3545;
-                color: white;
-                border: none;
-                padding: 0.75rem;
-                border-radius: 8px;
-                font-size: 1rem;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s;
-            ">
-                🔴 Merkitse aloittamattomaksi
-            </button>
-            <button class="modal-btn complete-btn" style="
-                background: #28a745;
-                color: white;
-                border: none;
-                padding: 0.75rem;
-                border-radius: 8px;
-                font-size: 1rem;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s;
-            ">
-                🟢 Merkitse valmiiksi
-            </button>
-            <button class="modal-btn cancel-btn" style="
-                background: #495057;
-                color: white;
-                border: none;
-                padding: 0.75rem;
-                border-radius: 8px;
-                font-size: 1rem;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s;
-            ">
-                Peruuta
-            </button>
-        </div>
-    `;
-
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    // Add hover effects
-    const buttons = modal.querySelectorAll('.modal-btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-            btn.style.opacity = '0.9';
-            btn.style.transform = 'scale(1.02)';
-        });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.opacity = '1';
-            btn.style.transform = 'scale(1)';
-        });
+    const { box, close } = createModal({
+        title: `Muuta reitin ${circuitId} tilaa`,
+        bodyHTML: `
+            <div class="route-status-actions">
+                <button type="button" class="modal-btn-secondary" data-action="reset">🔴 Merkitse aloittamattomaksi</button>
+                <button type="button" class="modal-btn-primary" data-action="complete">🟢 Merkitse valmiiksi</button>
+            </div>
+        `,
+        actions: [{ id: 'closeRouteStatus', label: 'Sulje', variant: 'secondary', handler: ({ close }) => close() }],
+        ariaLabel: `Reitin ${circuitId} tilan muutokset`
     });
-
-    // Handle reset to not-started
-    modal.querySelector('.reset-btn').addEventListener('click', async () => {
-        try {
-            await window.mailiaAPI.resetRoute(routeData.id, 'not-started');
-            showNotification('Jakelustatus nollattu', 'success');
-            renderCircuitTracker();
-            overlay.remove();
-        } catch (error) {
-            console.error('Failed to reset route:', error);
-            showNotification('Reitin nollaus epäonnistui', 'error');
-        }
+    const resetBtn = box.querySelector('[data-action="reset"]');
+    const completeBtn = box.querySelector('[data-action="complete"]');
+    if (resetBtn) resetBtn.addEventListener('click', async () => {
+        try { await window.mailiaAPI.resetRoute(routeData.id, 'not-started'); showNotification('Jakelustatus nollattu', 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin nollaus epäonnistui', 'error'); }
     });
-
-    // Handle mark as completed
-    modal.querySelector('.complete-btn').addEventListener('click', async () => {
-        try {
-            await window.mailiaAPI.resetRoute(routeData.id, 'completed');
-            showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
-            renderCircuitTracker();
-            overlay.remove();
-        } catch (error) {
-            console.error('Failed to complete route:', error);
-            showNotification('Reitin merkkaus epäonnistui', 'error');
-        }
-    });
-
-    // Handle cancel
-    modal.querySelector('.cancel-btn').addEventListener('click', () => {
-        overlay.remove();
-    });
-
-    // Close on overlay click
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.remove();
-        }
+    if (completeBtn) completeBtn.addEventListener('click', async () => {
+        try { await window.mailiaAPI.resetRoute(routeData.id, 'completed'); showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin merkkaus epäonnistui', 'error'); }
     });
 }
+
+// ----- Tabs Accessibility & Keyboard Navigation -----
+function initTabsAccessibility() {
+    const tabContainer = document.querySelector('.tab-container');
+    if (!tabContainer) return;
+    tabContainer.setAttribute('role', 'tablist');
+    const tabButtons = tabContainer.querySelectorAll('.tab-button');
+    const tabPanels = document.querySelectorAll('.tab-content');
+
+    // Ensure each button has id and ARIA mapping
+    tabButtons.forEach(btn => {
+        const tabId = btn.getAttribute('data-tab');
+        if (!btn.id) btn.id = `tab-btn-${tabId}`;
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-controls', `${tabId}Tab`);
+        // Initial aria-selected state
+        const panel = document.getElementById(`${tabId}Tab`);
+        if (panel) panel.setAttribute('role', 'tabpanel');
+    });
+
+    // Initialize selected/hidden state based on existing .active classes
+    const activePanel = document.querySelector('.tab-content.active');
+    tabPanels.forEach(panel => {
+        const isActive = panel === activePanel;
+        panel.hidden = !isActive;
+        const relatedBtn = document.querySelector(`.tab-button[data-tab="${panel.id.replace('Tab','')}"]`);
+        if (relatedBtn) {
+            relatedBtn.classList.toggle('active', isActive);
+            relatedBtn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            relatedBtn.tabIndex = isActive ? 0 : -1;
+            panel.setAttribute('aria-labelledby', relatedBtn.id);
+        }
+    });
+
+    function activateTab(btn) {
+        const tabId = btn.getAttribute('data-tab');
+        tabButtons.forEach(b => {
+            const isActive = b === btn;
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            b.tabIndex = isActive ? 0 : -1;
+        });
+        tabPanels.forEach(panel => {
+            const matches = panel.id === `${tabId}Tab`;
+            panel.classList.toggle('active', matches);
+            panel.hidden = !matches;
+            panel.setAttribute('aria-labelledby', `tab-btn-${tabId}`);
+        });
+        btn.focus();
+    }
+
+    // Click activation
+    tabButtons.forEach(btn => btn.addEventListener('click', () => activateTab(btn)));
+
+    // Keyboard navigation
+    tabContainer.addEventListener('keydown', e => {
+        const activeIndex = Array.from(tabButtons).findIndex(b => b.classList.contains('active'));
+        if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) e.preventDefault();
+        let targetIndex = activeIndex;
+        if (e.key === 'ArrowRight') targetIndex = (activeIndex + 1) % tabButtons.length;
+        if (e.key === 'ArrowLeft') targetIndex = (activeIndex - 1 + tabButtons.length) % tabButtons.length;
+        if (e.key === 'Home') targetIndex = 0;
+        if (e.key === 'End') targetIndex = tabButtons.length - 1;
+        if (targetIndex !== activeIndex) activateTab(tabButtons[targetIndex]);
+    });
+}
+
+// ----- Jump To Next Undelivered -----
+function initJumpNextUndelivered() {
+    let btn = document.getElementById('jumpNextBtn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'jumpNextBtn';
+        btn.className = 'jump-next-btn';
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Siirry seuraavaan jakamattomaan');
+        btn.textContent = '➡';
+        document.body.appendChild(btn);
+    }
+    btn.addEventListener('click', scrollToNextUndelivered);
+    updateJumpNextVisibility();
+
+    // Observe subscriber list changes to keep visibility in sync
+    const list = document.getElementById('subscriberList');
+    if (list && !list._jumpObserver) {
+        const obs = new MutationObserver(() => updateJumpNextVisibility());
+        obs.observe(list, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        list._jumpObserver = obs;
+    }
+}
+
+function updateJumpNextVisibility() {
+    const remaining = document.querySelectorAll('#subscriberList .subscriber-card:not(.delivered)');
+    const btn = document.getElementById('jumpNextBtn');
+    if (!btn) return;
+    btn.style.display = remaining.length > 0 ? 'flex' : 'none';
+}
+
+function scrollToNextUndelivered() {
+    const cards = Array.from(document.querySelectorAll('#subscriberList .subscriber-card:not(.delivered)'));
+    if (!cards.length) { showNotification('Kaikki jakelut tehty', 'success'); updateJumpNextVisibility(); return; }
+    // Find first card below current scroll
+    const viewportTop = window.scrollY;
+    const target = cards.find(c => c.getBoundingClientRect().top + window.scrollY > viewportTop + 80) || cards[0];
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('flash-highlight');
+    setTimeout(() => target.classList.remove('flash-highlight'), 1200);
+}
+
+// Hook delivery updates to refresh jump button if global function exists
+const originalUpdateDelivery = window.updateDeliveryStatus;
+if (typeof originalUpdateDelivery === 'function') {
+    window.updateDeliveryStatus = async function(...args) {
+        const result = await originalUpdateDelivery.apply(this, args);
+        updateJumpNextVisibility();
+        return result;
+    };
+}
+
+// ----- Skeleton Loaders -----
+function showSubscriberSkeletons(count = 8) {
+    const list = document.getElementById('subscriberList');
+    if (!list) return;
+    list.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        const skel = document.createElement('div');
+        skel.className = 'subscriber-card skeleton-card';
+        skel.innerHTML = '<div class="skeleton-line w40"></div><div class="skeleton-line w60"></div><div class="skeleton-line w30"></div>';
+        list.appendChild(skel);
+    }
+}
+
+function hideSubscriberSkeletons() {
+    document.querySelectorAll('.skeleton-card').forEach(el => el.remove());
+}
+
+// Patch loadCircuit to use skeletons (assumption: function exists)
+if (typeof window.loadCircuit === 'function') {
+    const originalLoadCircuit = window.loadCircuit;
+    window.loadCircuit = async function(...args) {
+        showSubscriberSkeletons();
+        const result = await originalLoadCircuit.apply(this, args);
+        hideSubscriberSkeletons();
+        updateJumpNextVisibility();
+        return result;
+    };
+}
+
+// ----- Debounced Circuit Search with Highlight -----
+function initCircuitSearchEnhancements() {
+    const input = document.getElementById('circuitSearch');
+    const optionsContainer = document.getElementById('circuitOptions');
+    if (!input || !optionsContainer) return;
+    let timeout;
+    input.addEventListener('input', () => {
+        clearTimeout(timeout);
+        const query = input.value.trim().toLowerCase();
+        timeout = setTimeout(() => {
+            const options = optionsContainer.querySelectorAll('.circuit-option');
+            options.forEach(opt => {
+                const text = opt.dataset.circuitId || opt.textContent.trim();
+                if (!query) {
+                    opt.style.display = '';
+                    opt.innerHTML = `<span>${text}</span>`;
+                    return;
+                }
+                if (text.toLowerCase().includes(query)) {
+                    const highlighted = text.replace(new RegExp(query, 'i'), m => `<mark>${m}</mark>`);
+                    opt.style.display = '';
+                    opt.innerHTML = `<span>${highlighted}</span>`;
+                } else {
+                    opt.style.display = 'none';
+                }
+            });
+        }, 250);
+    });
+}
+
+// ----- Service Worker Registration -----
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js').catch(err => console.warn('SW registration failed', err));
+    }
+}
+
+// Run enhancements after DOMContentLoaded (choose last listener for consolidation)
+document.addEventListener('DOMContentLoaded', () => {
+    initTabsAccessibility();
+    initJumpNextUndelivered();
+    initCircuitSearchEnhancements();
+    registerServiceWorker();
+});
 
 function showLoginScreen() {
     console.log('showLoginScreen called');

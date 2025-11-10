@@ -100,6 +100,17 @@ body.dark-mode {
     to { opacity: 0; transform: translateY(-4px) scale(.98); }
 }
 
+/* Toast content & controls */
+.toast-content { display:flex; align-items:center; gap:.6rem; }
+.toast-icon { width:18px; height:18px; opacity:.9; }
+.toast-dismiss { 
+    background: transparent; border: none; color: var(--text-color); 
+    font-size: 1.1rem; line-height: 1; cursor: pointer; padding: .2rem .3rem; 
+    border-radius: 6px; pointer-events: auto; 
+}
+.toast-dismiss:focus { outline: 2px solid var(--primary-blue); outline-offset: 2px; }
+.toast-message { display:inline-block; }
+
 /* Accessible Modal Base Classes */
 .modal-overlay-accessible {
     position: fixed;
@@ -774,6 +785,29 @@ body {
     transition: color 0.2s ease;
     user-select: none;
 }
+
+/* Jump to next undelivered */
+.jump-next-btn { 
+    position: fixed; right: 16px; bottom: 16px; z-index: 2000; 
+    width: 48px; height: 48px; border-radius: 24px; 
+    background: var(--primary-blue); color: #fff; border: none; 
+    display: none; align-items: center; justify-content: center; 
+    box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+    cursor: pointer;
+}
+.jump-next-btn:focus { outline: 2px solid #fff; outline-offset: 2px; }
+
+.flash-highlight { box-shadow: 0 0 0 3px var(--primary-blue) inset; transition: box-shadow .3s ease; }
+
+/* Skeleton loaders */
+.skeleton-card { position: relative; overflow: hidden; }
+.skeleton-line { height: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.18), rgba(255,255,255,0.08)); border-radius: 6px; margin: .35rem 0; }
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w30 { width: 30%; }
+
+/* Highlight in circuit search */
+mark { background: rgba(255, 235, 59, 0.5); color: inherit; padding: 0 .1rem; border-radius: 2px; }
 
 .remember-me-label:hover {
     color: rgba(255, 255, 255, 0.9);
@@ -1820,6 +1854,11 @@ body.dark-mode .route-time {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 56px;
+    z-index: 2;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.05);
 }
 
 .building-name {

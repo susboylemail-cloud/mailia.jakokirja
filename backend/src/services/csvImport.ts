@@ -66,11 +66,15 @@ const parseOldFormatCSVLine = (line: string, delimiter: string = ','): CSVSubscr
     fields.push(currentField);
     
     if (fields.length >= 5) {
-        const address = fields[2].trim();
+        const street = fields[1].trim();
+        const number = fields[2].trim();
         const name = fields[3].trim();
         const productsStr = fields[4].trim();
         
-        if (!address) return null;
+        if (!street || !number) return null;
+        
+        // Combine street name and number
+        const address = `${street} ${number}`;
         
         const products = productsStr.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
         

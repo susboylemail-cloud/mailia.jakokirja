@@ -319,6 +319,19 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
         // Route hasn't been started - show start and finish options
         menuOptions = `
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button class="modal-btn map-btn" style="
+                    background: #17a2b8;
+                    color: white;
+                    border: none;
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">
+                    🗺️ Näytä kartalla
+                </button>
                 <button class="modal-btn start-btn" style="
                     background: #007bff;
                     color: white;
@@ -351,6 +364,19 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
         // Route has been started - show management options
         menuOptions = `
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button class="modal-btn map-btn" style="
+                    background: #17a2b8;
+                    color: white;
+                    border: none;
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    font-size: 1rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">
+                    🗺️ Näytä kartalla
+                </button>
                 <button class="modal-btn reset-btn" style="
                     background: #dc3545;
                     color: white;
@@ -418,6 +444,15 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
             btn.style.transform = 'scale(1)';
         });
     });
+
+    // Handle map view button
+    const mapBtn = modal.querySelector('.map-btn');
+    if (mapBtn) {
+        mapBtn.addEventListener('click', () => {
+            overlay.remove();
+            showCircuitMap(circuitId);
+        });
+    }
 
     // Handle reset to not-started (if route exists)
     const resetBtn = modal.querySelector('.reset-btn');
@@ -2084,6 +2119,43 @@ function renderCoverSheet(circuitId, subscribers) {
     
     // Display product counts
     productCounts.innerHTML = '';
+    
+    // Add map view button first
+    const mapButton = document.createElement('button');
+    mapButton.className = 'map-view-btn';
+    mapButton.innerHTML = '🗺️ Näytä kartalla';
+    mapButton.style.cssText = `
+        width: 100%;
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+    `;
+    mapButton.onclick = (e) => {
+        e.stopPropagation();
+        showCircuitMap(circuitId);
+    };
+    
+    // Add hover effect
+    mapButton.addEventListener('mouseenter', () => {
+        mapButton.style.transform = 'translateY(-2px)';
+        mapButton.style.boxShadow = '0 4px 12px rgba(23, 162, 184, 0.4)';
+    });
+    mapButton.addEventListener('mouseleave', () => {
+        mapButton.style.transform = 'translateY(0)';
+        mapButton.style.boxShadow = '0 2px 8px rgba(23, 162, 184, 0.3)';
+    });
+    
+    productCounts.appendChild(mapButton);
+    
+    // Add product badges
     Object.entries(products).sort().forEach(([product, count]) => {
         const badge = document.createElement('div');
         const colorClass = getProductColorClass(product);
@@ -4203,5 +4275,333 @@ function initializeDashboard() {
     }
     
     console.log('Dashboard initialized successfully');
+}
+
+// Google Maps Integration
+async function showCircuitMap(circuitId) {
+    // Get circuit data
+    const circuitData = allData[circuitId];
+    if (!circuitData || circuitData.length === 0) {
+        showNotification('Ei osoitteita tälle piirille', 'error');
+        return;
+    }
+
+    // Create fullscreen map overlay
+    const mapOverlay = document.createElement('div');
+    mapOverlay.id = 'mapOverlay';
+    mapOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #000;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+    `;
+
+    // Create header with close button
+    const mapHeader = document.createElement('div');
+    mapHeader.style.cssText = `
+        background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    `;
+    mapHeader.innerHTML = `
+        <h3 style="margin: 0; color: #fff; font-size: 1.2rem;">
+            🗺️ ${circuitNames[circuitId] || circuitId} - Karttanäkymä
+        </h3>
+        <button id="closeMapBtn" style="
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+        ">
+            ✕ Sulje
+        </button>
+    `;
+
+    // Create map container
+    const mapContainer = document.createElement('div');
+    mapContainer.id = 'googleMap';
+    mapContainer.style.cssText = `
+        flex: 1;
+        width: 100%;
+    `;
+
+    // Create info panel
+    const infoPanel = document.createElement('div');
+    infoPanel.id = 'mapInfoPanel';
+    infoPanel.style.cssText = `
+        background: #2c2c2c;
+        padding: 1rem;
+        color: #fff;
+        border-top: 2px solid #444;
+    `;
+    infoPanel.innerHTML = `
+        <p style="margin: 0;">Yhteensä: <strong>${circuitData.length} osoitetta</strong></p>
+    `;
+
+    mapOverlay.appendChild(mapHeader);
+    mapOverlay.appendChild(mapContainer);
+    mapOverlay.appendChild(infoPanel);
+    document.body.appendChild(mapOverlay);
+
+    // Close button handler
+    document.getElementById('closeMapBtn').addEventListener('click', () => {
+        mapOverlay.remove();
+    });
+
+    // Initialize Google Map
+    try {
+        await initializeGoogleMap(circuitId, circuitData, mapContainer, infoPanel);
+    } catch (error) {
+        console.error('Failed to initialize map:', error);
+        showNotification('Kartan lataus epäonnistui', 'error');
+        mapOverlay.remove();
+    }
+}
+
+async function initializeGoogleMap(circuitId, circuitData, mapContainer, infoPanel) {
+    // Wait for Google Maps to load
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        showNotification('Google Maps ladataan...', 'info');
+        await new Promise(resolve => {
+            const checkGoogleMaps = setInterval(() => {
+                if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+                    clearInterval(checkGoogleMaps);
+                    resolve();
+                }
+            }, 100);
+        });
+    }
+
+    // Geocode addresses to coordinates
+    const geocoder = new google.maps.Geocoder();
+    const locations = [];
+    let geocodedCount = 0;
+
+    showNotification(`Haetaan osoitteiden sijainteja...`, 'info');
+
+    for (const subscriber of circuitData) {
+        const fullAddress = `${subscriber.address}, Imatra, Finland`;
+        
+        try {
+            const result = await new Promise((resolve, reject) => {
+                geocoder.geocode({ address: fullAddress }, (results, status) => {
+                    if (status === 'OK' && results[0]) {
+                        resolve(results[0]);
+                    } else {
+                        reject(status);
+                    }
+                });
+            });
+
+            locations.push({
+                position: result.geometry.location,
+                title: subscriber.address,
+                name: subscriber.name,
+                products: subscriber.products
+            });
+            geocodedCount++;
+        } catch (error) {
+            console.warn(`Could not geocode ${fullAddress}:`, error);
+        }
+
+        // Update progress
+        if (geocodedCount % 5 === 0) {
+            infoPanel.innerHTML = `
+                <p style="margin: 0;">Ladataan... <strong>${geocodedCount}/${circuitData.length} osoitetta</strong></p>
+            `;
+        }
+    }
+
+    if (locations.length === 0) {
+        showNotification('Osoitteiden sijainteja ei löytynyt', 'error');
+        return;
+    }
+
+    // Calculate center point
+    const bounds = new google.maps.LatLngBounds();
+    locations.forEach(loc => bounds.extend(loc.position));
+
+    // Create map
+    const map = new google.maps.Map(mapContainer, {
+        zoom: 14,
+        center: bounds.getCenter(),
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        styles: [
+            {
+                featureType: 'all',
+                elementType: 'labels.text.fill',
+                stylers: [{ color: '#ffffff' }]
+            },
+            {
+                featureType: 'all',
+                elementType: 'labels.text.stroke',
+                stylers: [{ color: '#000000' }, { lightness: 13 }]
+            },
+            {
+                featureType: 'administrative',
+                elementType: 'geometry.fill',
+                stylers: [{ color: '#000000' }]
+            },
+            {
+                featureType: 'administrative',
+                elementType: 'geometry.stroke',
+                stylers: [{ color: '#144b53' }, { lightness: 14 }, { weight: 1.4 }]
+            }
+        ]
+    });
+
+    // Fit map to show all markers
+    map.fitBounds(bounds);
+
+    // Create info window
+    const infoWindow = new google.maps.InfoWindow();
+
+    // Add markers
+    locations.forEach((location, index) => {
+        const marker = new google.maps.Marker({
+            position: location.position,
+            map: map,
+            title: location.title,
+            label: {
+                text: `${index + 1}`,
+                color: 'white',
+                fontSize: '12px',
+                fontWeight: 'bold'
+            },
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: '#FF6B6B',
+                fillOpacity: 0.9,
+                strokeColor: '#fff',
+                strokeWeight: 2
+            }
+        });
+
+        marker.addListener('click', () => {
+            const content = `
+                <div style="padding: 10px; min-width: 200px;">
+                    <h4 style="margin: 0 0 8px 0; color: #333;">${location.title}</h4>
+                    <p style="margin: 4px 0; color: #666;"><strong>Asiakas:</strong> ${location.name || 'Ei tietoa'}</p>
+                    <p style="margin: 4px 0; color: #666;"><strong>Tuotteet:</strong> ${location.products.join(', ')}</p>
+                    <p style="margin: 8px 0 0 0;">
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(location.title + ', Imatra, Finland')}" 
+                           target="_blank" 
+                           style="color: #007bff; text-decoration: none;">
+                            📍 Avaa Google Mapsissa
+                        </a>
+                    </p>
+                </div>
+            `;
+            infoWindow.setContent(content);
+            infoWindow.open(map, marker);
+        });
+    });
+
+    // Update info panel
+    infoPanel.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <p style="margin: 0;">
+                Näytetään: <strong>${locations.length}/${circuitData.length} osoitetta</strong>
+                ${locations.length < circuitData.length ? `<span style="color: #ffc107;"> (${circuitData.length - locations.length} sijaintia ei löytynyt)</span>` : ''}
+            </p>
+            <button id="optimizeRouteBtn" style="
+                background: #28a745;
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                font-weight: 500;
+            ">
+                🧭 Optimoi reitti
+            </button>
+        </div>
+    `;
+
+    // Optimize route button
+    document.getElementById('optimizeRouteBtn').addEventListener('click', () => {
+        optimizeDeliveryRoute(map, locations);
+    });
+
+    showNotification(`Kartta ladattu! ${locations.length} osoitetta näytetään.`, 'success');
+}
+
+function optimizeDeliveryRoute(map, locations) {
+    if (locations.length < 2) {
+        showNotification('Tarvitaan vähintään 2 sijaintia reitin optimointiin', 'error');
+        return;
+    }
+
+    // Clear existing polylines
+    if (window.currentPolyline) {
+        window.currentPolyline.setMap(null);
+    }
+
+    // Use Directions Service to calculate optimal route
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map,
+        suppressMarkers: true, // Keep our custom markers
+        polylineOptions: {
+            strokeColor: '#4285F4',
+            strokeWeight: 4,
+            strokeOpacity: 0.7
+        }
+    });
+
+    // Prepare waypoints (max 25 for free tier)
+    const maxWaypoints = Math.min(locations.length - 2, 23);
+    const waypoints = locations.slice(1, maxWaypoints + 1).map(loc => ({
+        location: loc.position,
+        stopover: true
+    }));
+
+    const request = {
+        origin: locations[0].position,
+        destination: locations[locations.length - 1].position,
+        waypoints: waypoints,
+        optimizeWaypoints: true,
+        travelMode: google.maps.TravelMode.DRIVING
+    };
+
+    showNotification('Optimoidaan reittiä...', 'info');
+
+    directionsService.route(request, (result, status) => {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(result);
+            window.currentPolyline = directionsRenderer;
+            
+            const route = result.routes[0];
+            let totalDistance = 0;
+            let totalDuration = 0;
+            
+            route.legs.forEach(leg => {
+                totalDistance += leg.distance.value;
+                totalDuration += leg.duration.value;
+            });
+
+            showNotification(
+                `Reitti optimoitu! Matka: ${(totalDistance / 1000).toFixed(1)} km, Aika: ${Math.round(totalDuration / 60)} min`,
+                'success'
+            );
+        } else {
+            console.error('Directions request failed:', status);
+            showNotification('Reitin optimointi epäonnistui', 'error');
+        }
+    });
 }
 

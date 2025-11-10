@@ -2600,8 +2600,12 @@ function renderSubscriberList(circuitId, subscribers) {
             // Add + button before each card (admin and manager only)
             const role = getEffectiveUserRole();
             if (role === 'admin' || role === 'manager') {
+                // Avoid inserting duplicate + buttons directly adjacent (check last element class)
+                const lastChild = buildingGroup.lastElementChild;
+                if (!lastChild || !lastChild.classList.contains('add-subscriber-between-btn')) {
                 const addButton = createAddSubscriberButton(circuitId, sub.orderIndex);
                 buildingGroup.appendChild(addButton);
+                }
             }
             
             const card = createSubscriberCard(circuitId, sub, buildingIndex, subIndex, 
@@ -2616,8 +2620,11 @@ function renderSubscriberList(circuitId, subscribers) {
         const role = getEffectiveUserRole();
         if ((role === 'admin' || role === 'manager') && buildingSubscribers.length > 0) {
             const lastSub = buildingSubscribers[buildingSubscribers.length - 1];
-            const addButton = createAddSubscriberButton(circuitId, lastSub.orderIndex + 1);
-            buildingGroup.appendChild(addButton);
+            const lastChild = buildingGroup.lastElementChild;
+            if (!lastChild || !lastChild.classList.contains('add-subscriber-between-btn')) {
+                const addButton = createAddSubscriberButton(circuitId, lastSub.orderIndex + 1);
+                buildingGroup.appendChild(addButton);
+            }
         }
         
         listContainer.appendChild(buildingGroup);
@@ -4818,9 +4825,23 @@ function openAddSubscriberModal(circuitId = null, orderIndex = null) {
 // Populate circuit dropdown
 function populateCircuitOptions() {
     const circuitSelect = document.getElementById('subscriberCircuit');
-    const currentCircuits = Array.from(document.getElementById('circuitSelector').options)
-        .filter(opt => opt.value !== '')
-        .map(opt => ({ id: opt.value, name: opt.text }));
+    if (!circuitSelect) {
+        console.warn('[populateCircuitOptions] subscriberCircuit select not found');
+        return;
+    }
+
+    // Try to read from existing circuit selector if present; fallback to known circuitFiles keys
+    const circuitSelectorEl = document.getElementById('circuitSelector');
+    let currentCircuits = [];
+    if (circuitSelectorEl && circuitSelectorEl.options) {
+        currentCircuits = Array.from(circuitSelectorEl.options)
+            .filter(opt => opt.value !== '')
+            .map(opt => ({ id: opt.value, name: opt.text }));
+    } else {
+        // Fallback: use circuitFiles map if delivery selector not mounted (e.g. tracker view)
+        currentCircuits = Object.keys(circuitFiles).map(id => ({ id, name: id }));
+        console.log('[populateCircuitOptions] fallback using circuitFiles map');
+    }
 
     circuitSelect.innerHTML = '<option value="">Valitse piiri...</option>';
     currentCircuits.forEach(circuit => {

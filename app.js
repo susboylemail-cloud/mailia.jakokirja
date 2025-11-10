@@ -2123,7 +2123,13 @@ function renderCoverSheet(circuitId, subscribers) {
     // Add map view button first
     const mapButton = document.createElement('button');
     mapButton.className = 'map-view-btn';
-    mapButton.innerHTML = '🗺️ Näytä kartalla';
+    mapButton.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        Näytä kartalla
+    `;
     mapButton.style.cssText = `
         width: 100%;
         background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
@@ -4312,8 +4318,12 @@ async function showCircuitMap(circuitId) {
         box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     `;
     mapHeader.innerHTML = `
-        <h3 style="margin: 0; color: #fff; font-size: 1.2rem;">
-            🗺️ ${circuitNames[circuitId] || circuitId} - Karttanäkymä
+        <h3 style="margin: 0; color: #fff; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            ${circuitNames[circuitId] || circuitId} - Karttanäkymä
         </h3>
         <button id="closeMapBtn" style="
             background: #dc3545;
@@ -4493,10 +4503,8 @@ async function initializeGoogleMap(circuitId, circuitData, mapContainer, infoPan
         marker.addListener('click', () => {
             const content = `
                 <div style="padding: 10px; min-width: 200px;">
-                    <h4 style="margin: 0 0 8px 0; color: #333;">${location.title}</h4>
-                    <p style="margin: 4px 0; color: #666;"><strong>Asiakas:</strong> ${location.name || 'Ei tietoa'}</p>
-                    <p style="margin: 4px 0; color: #666;"><strong>Tuotteet:</strong> ${location.products.join(', ')}</p>
-                    <p style="margin: 8px 0 0 0;">
+                    <h4 style="margin: 0 0 12px 0; color: #333;">${location.title}</h4>
+                    <p style="margin: 0;">
                         <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(location.title + ', Imatra, Finland')}" 
                            target="_blank" 
                            style="color: #007bff; text-decoration: none;">
@@ -4512,96 +4520,13 @@ async function initializeGoogleMap(circuitId, circuitData, mapContainer, infoPan
 
     // Update info panel
     infoPanel.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <p style="margin: 0;">
-                Näytetään: <strong>${locations.length}/${circuitData.length} osoitetta</strong>
-                ${locations.length < circuitData.length ? `<span style="color: #ffc107;"> (${circuitData.length - locations.length} sijaintia ei löytynyt)</span>` : ''}
-            </p>
-            <button id="optimizeRouteBtn" style="
-                background: #28a745;
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 0.9rem;
-                font-weight: 500;
-            ">
-                🧭 Optimoi reitti
-            </button>
-        </div>
+        <p style="margin: 0;">
+            Näytetään: <strong>${locations.length}/${circuitData.length} osoitetta</strong>
+            ${locations.length < circuitData.length ? `<span style="color: #ffc107;"> (${circuitData.length - locations.length} sijaintia ei löytynyt)</span>` : ''}
+        </p>
     `;
-
-    // Optimize route button
-    document.getElementById('optimizeRouteBtn').addEventListener('click', () => {
-        optimizeDeliveryRoute(map, locations);
-    });
 
     showNotification(`Kartta ladattu! ${locations.length} osoitetta näytetään.`, 'success');
 }
 
-function optimizeDeliveryRoute(map, locations) {
-    if (locations.length < 2) {
-        showNotification('Tarvitaan vähintään 2 sijaintia reitin optimointiin', 'error');
-        return;
-    }
-
-    // Clear existing polylines
-    if (window.currentPolyline) {
-        window.currentPolyline.setMap(null);
-    }
-
-    // Use Directions Service to calculate optimal route
-    const directionsService = new google.maps.DirectionsService();
-    const directionsRenderer = new google.maps.DirectionsRenderer({
-        map: map,
-        suppressMarkers: true, // Keep our custom markers
-        polylineOptions: {
-            strokeColor: '#4285F4',
-            strokeWeight: 4,
-            strokeOpacity: 0.7
-        }
-    });
-
-    // Prepare waypoints (max 25 for free tier)
-    const maxWaypoints = Math.min(locations.length - 2, 23);
-    const waypoints = locations.slice(1, maxWaypoints + 1).map(loc => ({
-        location: loc.position,
-        stopover: true
-    }));
-
-    const request = {
-        origin: locations[0].position,
-        destination: locations[locations.length - 1].position,
-        waypoints: waypoints,
-        optimizeWaypoints: true,
-        travelMode: google.maps.TravelMode.DRIVING
-    };
-
-    showNotification('Optimoidaan reittiä...', 'info');
-
-    directionsService.route(request, (result, status) => {
-        if (status === 'OK') {
-            directionsRenderer.setDirections(result);
-            window.currentPolyline = directionsRenderer;
-            
-            const route = result.routes[0];
-            let totalDistance = 0;
-            let totalDuration = 0;
-            
-            route.legs.forEach(leg => {
-                totalDistance += leg.distance.value;
-                totalDuration += leg.duration.value;
-            });
-
-            showNotification(
-                `Reitti optimoitu! Matka: ${(totalDistance / 1000).toFixed(1)} km, Aika: ${Math.round(totalDuration / 60)} min`,
-                'success'
-            );
-        } else {
-            console.error('Directions request failed:', status);
-            showNotification('Reitin optimointi epäonnistui', 'error');
-        }
-    });
-}
 

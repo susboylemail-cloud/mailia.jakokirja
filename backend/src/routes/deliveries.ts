@@ -37,10 +37,16 @@ router.post('/update',
             );
 
             // Broadcast to route participants
-            io?.to(`route:${routeId}`).emit('delivery:updated', {
+            const deliveryUpdate = {
+                routeId,
+                subscriberId,
+                isDelivered,
                 delivery: result.rows[0],
                 updatedBy: req.user!.username
-            });
+            };
+            
+            io?.to(`route:${routeId}`).emit('delivery:updated', deliveryUpdate);
+            logger.info(`Broadcasted delivery:updated to route:${routeId}`, deliveryUpdate);
 
             res.json(result.rows[0]);
         } catch (error) {

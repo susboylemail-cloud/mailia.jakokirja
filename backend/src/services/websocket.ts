@@ -55,12 +55,23 @@ export const initializeWebSocket = (socketIO: SocketIOServer) => {
             try {
                 logger.info(`Route update from ${user.username}:`, data);
                 
-                // Broadcast route status to all users
-                io.emit('route:updated', {
+                const updateData = {
                     ...data,
                     updatedBy: user.username,
+                    userId: user.userId,
                     timestamp: new Date()
-                });
+                };
+                
+                // Broadcast route status to all connected users (not just route room)
+                // This allows all users to see when routes are started/completed
+                io.emit('route:updated', updateData);
+                logger.info(`Broadcasted route:updated to all clients`, updateData);
+                
+                // Also broadcast to route room if routeId is present
+                if (data.routeId) {
+                    io.to(`route:${data.routeId}`).emit('route:updated', updateData);
+                    logger.info(`Broadcasted route:updated to route:${data.routeId}`);
+                }
             } catch (error) {
                 logger.error('Route update error:', error);
                 socket.emit('error', { message: 'Failed to update route' });
@@ -88,16 +99,23 @@ export const initializeWebSocket = (socketIO: SocketIOServer) => {
         // Handle route messages
         socket.on('message:send', async (data) => {
             try {
-                logger.info(`Message from ${user.username}:`, data);
+                logger.info(`${data.message || 'Message'} from ${user.username}:`, data);
                 
-                // Broadcast message to route participants
+                const messageData = {
+                    ...data,
+                    userId: user.userId,
+                    username: user.username,
+                    timestamp: new Date()
+                };
+                
+                // Broadcast message to all users (so everyone can see delivery issues)
+                io.emit('message:received', messageData);
+                logger.info(`Broadcasted message:received to all clients`);
+                
+                // Also broadcast to route room if routeId is present
                 if (data.routeId) {
-                    io.to(`route:${data.routeId}`).emit('message:received', {
-                        ...data,
-                        userId: user.userId,
-                        username: user.username,
-                        timestamp: new Date()
-                    });
+                    io.to(`route:${data.routeId}`).emit('message:received', messageData);
+                    logger.info(`Broadcasted message:received to route:${data.routeId}`);
                 }
             } catch (error) {
                 logger.error('Message send error:', error);
@@ -153,13 +171,21 @@ export const broadcastSubscriptionChange = (change: any) => {
     }
 };
 
-// Broadcast route update to specific users
+// Broadcast route update to all users (global broadcast)
 export const broadcastRouteUpdate = (routeId: number, update: any) => {
     if (io) {
-        io.to(`route:${routeId}`).emit('route:updated', {
+        const updateData = {
             ...update,
+            routeId,
             timestamp: new Date()
-        });
+        };
+        
+        // Broadcast to ALL connected clients (global)
+        io.emit('route:updated', updateData);
+        logger.info(`Broadcasted route:updated to all clients (route ${routeId})`, updateData);
+        
+        // Also broadcast to route room for redundancy
+        io.to(`route:${routeId}`).emit('route:updated', updateData);
     }
 };
 

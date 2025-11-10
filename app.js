@@ -1,5 +1,456 @@
 // Mailia Delivery Tracking Application
 
+// ============= Backend Integration =============
+// Check if user is already logged in
+window.addEventListener('DOMContentLoaded', async () => {
+    if (window.mailiaAPI && window.mailiaAPI.isAuthenticated()) {
+        // Verify the token is still valid by trying to fetch user data
+        try {
+            await window.mailiaAPI.makeRequest('/auth/me');
+            // Token is valid, show main app
+            showMainApp();
+            initializeApp();
+        } catch (error) {
+            // Token is invalid, clear it and show login
+            console.log('Session expired, please login again');
+            await window.mailiaAPI.logout();
+            showLoginScreen();
+        }
+    } else {
+        // Show login screen
+        showLoginScreen();
+    }
+});
+
+// Handle login form submission
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleLogin();
+        });
+    }
+});
+
+async function handleLogin() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const loginError = document.getElementById('loginError');
+    
+    try {
+        loginError.style.display = 'none';
+        const loginButton = document.querySelector('.phone-login-button');
+        loginButton.disabled = true;
+        loginButton.textContent = 'Kirjaudutaan sisään...';
+        
+        // Login via backend API
+        await window.mailiaAPI.login(username, password);
+        
+        // Success - show main app (this is async and calls populateCircuitSelector)
+        await showMainApp();
+        
+    } catch (error) {
+        console.error('Login failed:', error);
+        loginError.textContent = error.message || 'Kirjautuminen epäonnistui. Tarkista tunnukset.';
+        loginError.style.display = 'block';
+        
+        const loginButton = document.querySelector('.phone-login-button');
+        loginButton.disabled = false;
+        loginButton.textContent = 'Kirjaudu sisään';
+    }
+}
+
+function initializeApp() {
+    // Initialize all app functionality after successful login
+    initializeTabs();
+    initializeRefreshButtons();
+    initializeLogout();
+    initializeSwipeGestures();
+    initializeCircuitTracker();
+    loadFavorites();
+    
+    // Initialize geolocation for weather
+    getLocationWeather();
+    
+    // Initialize WebSocket event listeners for real-time updates
+    initializeWebSocketListeners();
+    
+    // Initialize dashboard if user is admin or manager
+    const userRole = localStorage.getItem('mailiaUserRole');
+    if (userRole === 'admin' || userRole === 'manager') {
+        initializeDashboard();
+    }
+}
+
+// WebSocket real-time event listeners
+function initializeWebSocketListeners() {
+    // Listen for route updates from other users
+    window.addEventListener('routeUpdated', async (event) => {
+        const data = event.detail;
+        console.log('Route updated event received:', data);
+        console.log('Current circuit:', currentCircuit);
+        console.log('Data circuit:', data.circuitId);
+        console.log('Event data:', data);
+        
+        // Update localStorage with the route status from the event
+        if (data.circuitId) {
+            const startKey = `route_start_${data.circuitId}`;
+            const endKey = `route_end_${data.circuitId}`;
+            const routeIdKey = `route_id_${data.circuitId}`;
+            
+            // Store route ID
+            if (data.routeId) {
+                localStorage.setItem(routeIdKey, data.routeId);
+            }
+            
+            // Handle reset to not-started: clear all times
+            if (data.status === 'not-started' || data.action === 'reset') {
+                localStorage.removeItem(startKey);
+                localStorage.removeItem(endKey);
+                console.log(`Reset route: cleared ${startKey} and ${endKey}`);
+            }
+            // Handle completed status
+            else if (data.status === 'completed' && data.endTime) {
+                if (data.startTime) {
+                    localStorage.setItem(startKey, data.startTime);
+                }
+                localStorage.setItem(endKey, data.endTime);
+                console.log(`Completed route: set ${startKey} and ${endKey}`);
+            }
+            // Handle started/in-progress status
+            else if (data.status === 'in-progress' || (data.startTime && !data.endTime)) {
+                localStorage.setItem(startKey, data.startTime);
+                localStorage.removeItem(endKey);
+                console.log(`Started route: set ${startKey}, cleared ${endKey}`);
+            }
+        }
+        
+        // Update UI if it's the current circuit
+        if (currentCircuit && data.circuitId === currentCircuit) {
+            console.log('Updating route buttons for current circuit...');
+            // Refresh route status display
+            updateRouteButtons(currentCircuit);
+            
+            // Show notification
+            showNotification(`Reitin tila päivitetty käyttäjältä: ${data.updatedBy}`, 'info');
+        } else {
+            console.log('Circuit mismatch or no current circuit, not updating buttons');
+        }
+        
+        // Refresh tracker if visible (admin view)
+        const trackerTab = document.getElementById('trackerTab');
+        console.log('Tracker tab element:', trackerTab);
+        console.log('Tracker tab active?', trackerTab?.classList.contains('active'));
+        if (trackerTab && trackerTab.classList.contains('active')) {
+            console.log('Refreshing circuit tracker...');
+            renderCircuitTracker();
+        }
+    });
+    
+    // Listen for route messages
+    window.addEventListener('messageReceived', (event) => {
+        const data = event.detail;
+        console.log('Message received event:', data);
+        
+        // Show notification
+        const messageText = data.message || 'Uusi viesti';
+        const username = data.username || 'Tuntematon';
+        showNotification(`${username}: ${messageText}`, 'info');
+        
+        // Refresh messages if messages view is active
+        const messagesTab = document.querySelector('.tab-content.active#messagesTab');
+        if (messagesTab) {
+            console.log('Refreshing messages view...');
+            renderRouteMessages();
+        } else {
+            console.log('Messages tab not active, skipping render');
+        }
+    });
+    
+    // Listen for message read events
+    window.addEventListener('messageRead', (event) => {
+        const data = event.detail;
+        console.log('Message read event received:', data);
+        
+        // Refresh messages if messages view is active
+        const messagesTab = document.querySelector('.tab-content.active#messagesTab');
+        if (messagesTab) {
+            console.log('Refreshing messages view after message read...');
+            renderRouteMessages();
+        }
+    });
+    
+    // Listen for delivery updates
+    window.addEventListener('deliveryUpdated', (event) => {
+        const data = event.detail;
+        console.log('Delivery updated event received:', data);
+        console.log('Looking for checkbox with subscriber ID:', data.subscriberId);
+        
+        // Update checkbox state if viewing the same route
+        const checkbox = document.querySelector(`input[data-subscriber-id="${data.subscriberId}"]`);
+        console.log('Found checkbox:', checkbox);
+        if (checkbox) {
+            console.log('Updating checkbox to:', data.isDelivered);
+            checkbox.checked = data.isDelivered;
+            
+            // Update visual state
+            const card = checkbox.closest('.subscriber-card');
+            if (card) {
+                if (data.isDelivered) {
+                    card.classList.add('delivered');
+                } else {
+                    card.classList.remove('delivered');
+                }
+            }
+            
+            // Show notification
+            showNotification(`Jakelu päivitetty: ${data.isDelivered ? 'toimitettu' : 'ei toimitettu'}`, 'info');
+        } else {
+            console.log('Checkbox not found, subscriber might not be visible');
+        }
+        
+        // Refresh tracker to update progress bars
+        console.log('Triggering tracker refresh after delivery update');
+        if (typeof renderCircuitTracker === 'function') {
+            renderCircuitTracker();
+        }
+    });
+}
+
+// Show notification helper
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    
+    // Define colors based on type
+    const backgroundColor = type === 'success' ? '#28a745' : 
+                           type === 'error' ? '#dc3545' : 
+                           '#007bff'; // info/default
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${backgroundColor};
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        border: 2px solid rgba(255,255,255,0.3);
+        z-index: 9999;
+        max-width: 90%;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1rem;
+        animation: slideInDown 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOutUp 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+function showRouteStatusModal(circuitId, routeData) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+
+    // Create modal content
+    const modal = document.createElement('div');
+    modal.className = 'route-status-modal';
+    modal.style.cssText = `
+        background: #2c2c2c;
+        border-radius: 12px;
+        padding: 1.5rem;
+        max-width: 90%;
+        width: 320px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        border: 1px solid #444;
+    `;
+
+    modal.innerHTML = `
+        <h3 style="margin: 0 0 1rem 0; color: #f0f0f0; font-size: 1.1rem; font-weight: 600;">Muuta reitin ${circuitId} tilaa</h3>
+        <p style="margin: 0 0 1.5rem 0; color: #b0b0b0; font-size: 0.9rem;">Valitse uusi tila:</p>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button class="modal-btn reset-btn" style="
+                background: #dc3545;
+                color: white;
+                border: none;
+                padding: 0.75rem;
+                border-radius: 8px;
+                font-size: 1rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">
+                🔴 Merkitse aloittamattomaksi
+            </button>
+            <button class="modal-btn complete-btn" style="
+                background: #28a745;
+                color: white;
+                border: none;
+                padding: 0.75rem;
+                border-radius: 8px;
+                font-size: 1rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">
+                🟢 Merkitse valmiiksi
+            </button>
+            <button class="modal-btn cancel-btn" style="
+                background: #495057;
+                color: white;
+                border: none;
+                padding: 0.75rem;
+                border-radius: 8px;
+                font-size: 1rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">
+                Peruuta
+            </button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Add hover effects
+    const buttons = modal.querySelectorAll('.modal-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            btn.style.opacity = '0.9';
+            btn.style.transform = 'scale(1.02)';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.opacity = '1';
+            btn.style.transform = 'scale(1)';
+        });
+    });
+
+    // Handle reset to not-started
+    modal.querySelector('.reset-btn').addEventListener('click', async () => {
+        try {
+            await window.mailiaAPI.resetRoute(routeData.id, 'not-started');
+            showNotification(`Reitti ${circuitId} nollattu aloittamattomaksi`, 'success');
+            renderCircuitTracker();
+            overlay.remove();
+        } catch (error) {
+            console.error('Failed to reset route:', error);
+            showNotification('Reitin nollaus epäonnistui', 'error');
+        }
+    });
+
+    // Handle mark as completed
+    modal.querySelector('.complete-btn').addEventListener('click', async () => {
+        try {
+            await window.mailiaAPI.resetRoute(routeData.id, 'completed');
+            showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+            renderCircuitTracker();
+            overlay.remove();
+        } catch (error) {
+            console.error('Failed to complete route:', error);
+            showNotification('Reitin merkkaus epäonnistui', 'error');
+        }
+    });
+
+    // Handle cancel
+    modal.querySelector('.cancel-btn').addEventListener('click', () => {
+        overlay.remove();
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    });
+}
+
+function showLoginScreen() {
+    console.log('showLoginScreen called');
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+    
+    console.log('loginScreen element:', loginScreen);
+    console.log('mainApp element:', mainApp);
+    
+    if (loginScreen && mainApp) {
+        loginScreen.style.display = 'flex';
+        loginScreen.style.visibility = 'visible';
+        loginScreen.style.opacity = '1';
+        mainApp.style.display = 'none';
+        
+        // Verify the styles were applied
+        setTimeout(() => {
+            const loginScreenComputed = window.getComputedStyle(loginScreen).display;
+            const mainAppComputed = window.getComputedStyle(mainApp).display;
+            const loginScreenVisibility = window.getComputedStyle(loginScreen).visibility;
+            const loginScreenOpacity = window.getComputedStyle(loginScreen).opacity;
+            console.log('After setting - loginScreen computed display:', loginScreenComputed);
+            console.log('After setting - loginScreen visibility:', loginScreenVisibility);
+            console.log('After setting - loginScreen opacity:', loginScreenOpacity);
+            console.log('After setting - mainApp computed display:', mainAppComputed);
+        }, 100);
+        
+        console.log('Login screen should now be visible');
+    } else {
+        console.error('Login screen or main app element not found!');
+    }
+}
+
+async function handleLogout() {
+    console.log('handleLogout called');
+    try {
+        await window.mailiaAPI.logout();
+        console.log('API logout completed');
+        
+        // Clear local state
+        isAuthenticated = false;
+        userRole = null;
+        currentCircuit = null;
+        allData = {};
+        
+        // Show login screen
+        showLoginScreen();
+        
+        // Reset form
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginError = document.getElementById('loginError');
+        
+        if (usernameInput) usernameInput.value = '';
+        if (passwordInput) passwordInput.value = '';
+        if (loginError) loginError.style.display = 'none';
+        
+        console.log('Logged out successfully');
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Force show login screen even if logout fails
+        showLoginScreen();
+    }
+}
+
 // Animation constants
 const ANIMATION_DURATION_MS = 500; // Must match CSS transition duration
 
@@ -73,20 +524,6 @@ function customConfirm(message, clickEvent = null) {
         cancelBtn.addEventListener('click', handleCancel);
     });
 }
-
-// Authentication credentials
-// WARNING: This is client-side only implementation for demonstration purposes
-// In production, implement proper server-side authentication
-const CREDENTIALS = {
-    delivery: {
-        username: 'imatravj',
-        password: 'mailiavj1!'
-    },
-    admin: {
-        username: 'paivystys.imatra',
-        password: 'mailia123!'
-    }
-};
 
 // Global state
 let allData = {};  // Changed to object for easier circuit lookup
@@ -344,17 +781,11 @@ async function initializeWeatherWidget() {
 
 // Phone theme toggle functionality
 document.addEventListener('DOMContentLoaded', async () => {
-    // Load saved credentials if available
-    loadSavedCredentials();
-    
     // Load checkbox visibility preference
     loadCheckboxVisibility();
     
-    // Check if already authenticated
-    checkAuthentication();
-    
-    // Setup login form
-    initializeLogin();
+    // Setup password toggle
+    initializePasswordToggle();
     
     // Initialize swipe-up gesture for login form
     initializeSwipeUpLogin();
@@ -381,57 +812,23 @@ function initializeLogoAnimation() {
     // No JavaScript needed for the logo
 }
 
-// Authentication
+// Authentication - now handled by backend via API
 function checkAuthentication() {
-    const sessionAuth = sessionStorage.getItem('mailiaAuth');
-    const sessionRole = sessionStorage.getItem('mailiaRole');
-    if (sessionAuth === 'authenticated') {
-        isAuthenticated = true;
-        userRole = sessionRole || 'delivery';
-        showMainApp();
-    }
+    // Backend authentication is handled in the DOMContentLoaded event at the top of the file
+    // This function is kept for compatibility but does nothing
 }
 
-function loadSavedCredentials() {
-    const savedCreds = localStorage.getItem('mailiaSavedCredentials');
-    if (savedCreds) {
-        try {
-            const {username, password} = JSON.parse(savedCreds);
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            if (usernameInput && passwordInput) {
-                usernameInput.value = username;
-                passwordInput.value = password;
-            }
-        } catch (e) {
-            console.error('Failed to load saved credentials', e);
-        }
-    }
-}
-
-function initializeLogin() {
-    const loginForm = document.getElementById('loginForm');
+// Password visibility toggle - keep this for UX
+function initializePasswordToggle() {
     const passwordInput = document.getElementById('password');
-    const usernameInput = document.getElementById('username');
-    const loginButton = document.querySelector('.login-button');
     const passwordToggle = document.getElementById('passwordToggle');
-    const rememberMeCheckbox = document.getElementById('rememberMe');
     
-    // Load saved credentials if remember me was checked
-    loadSavedCredentials();
-    
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
-    
-    // Password visibility toggle
     if (passwordToggle && passwordInput) {
         passwordToggle.addEventListener('click', () => {
             const type = passwordInput.getAttribute('type');
             const svg = passwordToggle.querySelector('svg');
             if (type === 'password') {
                 passwordInput.setAttribute('type', 'text');
-                // Add strikethrough line to eye icon
                 svg.innerHTML = `
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
@@ -440,29 +837,11 @@ function initializeLogin() {
                 passwordToggle.setAttribute('aria-label', 'Hide password');
             } else {
                 passwordInput.setAttribute('type', 'password');
-                // Eye icon without strikethrough
                 svg.innerHTML = `
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
                 `;
                 passwordToggle.setAttribute('aria-label', 'Show password');
-            }
-        });
-    }
-    
-    // Add listener to password field to check if correct password is entered
-    if (passwordInput && loginButton) {
-        passwordInput.addEventListener('input', () => {
-            const username = document.getElementById('username').value;
-            const password = passwordInput.value;
-            
-            const isDeliveryUser = username === CREDENTIALS.delivery.username && password === CREDENTIALS.delivery.password;
-            const isAdminUser = username === CREDENTIALS.admin.username && password === CREDENTIALS.admin.password;
-            
-            if (isDeliveryUser || isAdminUser) {
-                loginButton.classList.add('correct-password');
-            } else {
-                loginButton.classList.remove('correct-password');
             }
         });
     }
@@ -522,125 +901,6 @@ function updateBatteryStatus() {
     }
 }
 
-function handleLogin(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const rememberMe = document.getElementById('rememberMe')?.checked || false;
-    const errorDiv = document.getElementById('loginError');
-    
-    let authenticated = false;
-    let role = null;
-    
-    // Check delivery user credentials
-    if (username === CREDENTIALS.delivery.username && password === CREDENTIALS.delivery.password) {
-        authenticated = true;
-        role = 'delivery';
-    }
-    // Check admin credentials
-    else if (username === CREDENTIALS.admin.username && password === CREDENTIALS.admin.password) {
-        authenticated = true;
-        role = 'admin';
-    }
-    
-    if (authenticated) {
-        // Handle remember me
-        if (rememberMe) {
-            saveCredentials(username, password);
-        } else {
-            clearSavedCredentials();
-        }
-        
-        // Successful login
-        sessionStorage.setItem('mailiaAuth', 'authenticated');
-        sessionStorage.setItem('mailiaRole', role);
-        isAuthenticated = true;
-        userRole = role;
-        errorDiv.style.display = 'none';
-        
-        showMainApp();
-    } else {
-        // Failed login - trigger wiggle animation
-        const phoneDevice = document.querySelector('.phone-device');
-        phoneDevice.classList.add('wiggle');
-        
-        // Remove wiggle class after animation completes
-        setTimeout(() => {
-            phoneDevice.classList.remove('wiggle');
-        }, 500);
-        
-        errorDiv.textContent = 'Virheellinen käyttäjätunnus tai salasana';
-        errorDiv.style.display = 'block';
-        document.getElementById('password').value = '';
-    }
-}
-
-// Save credentials to localStorage
-function saveCredentials(username, password) {
-    // WARNING: Storing passwords in localStorage is insecure
-    // This is for convenience in a client-side-only demo application
-    // In production, use secure token-based authentication
-    try {
-        localStorage.setItem('mailiaRememberMe', JSON.stringify({
-            username: username,
-            password: password  // Stored in plain text - NOT SECURE
-        }));
-    } catch (e) {
-        console.error('Failed to save credentials:', e);
-    }
-}
-
-// Load saved credentials
-function loadSavedCredentials() {
-    try {
-        const saved = localStorage.getItem('mailiaRememberMe');
-        if (saved) {
-            const creds = JSON.parse(saved);
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const rememberMeCheckbox = document.getElementById('rememberMe');
-            
-            if (usernameInput && passwordInput && creds.username && creds.password) {
-                usernameInput.value = creds.username;
-                passwordInput.value = creds.password;
-                if (rememberMeCheckbox) {
-                    rememberMeCheckbox.checked = true;
-                }
-            }
-        }
-    } catch (e) {
-        console.error('Failed to load credentials:', e);
-    }
-}
-
-// Clear saved credentials
-function clearSavedCredentials() {
-    try {
-        localStorage.removeItem('mailiaRememberMe');
-    } catch (e) {
-        console.error('Failed to clear credentials:', e);
-    }
-}
-
-function promptSaveLoginInfo(username, password) {
-    // Check if credentials are already saved
-    const savedCreds = localStorage.getItem('mailiaSavedCredentials');
-    if (savedCreds) return; // Already saved
-    
-    // WARNING: Storing passwords in localStorage is insecure
-    // This is for convenience in a client-side-only demo application
-    // In production, use secure token-based authentication
-    setTimeout(async () => {
-        if (await customConfirm('Haluatko tallentaa kirjautumistiedot?')) {
-            localStorage.setItem('mailiaSavedCredentials', JSON.stringify({
-                username: username,
-                password: password  // Stored in plain text - NOT SECURE
-            }));
-        }
-    }, 500);
-}
-
 // Checkbox visibility functions
 function loadCheckboxVisibility() {
     const saved = localStorage.getItem('mailiaShowCheckboxes');
@@ -670,6 +930,14 @@ function updateCheckboxVisibility() {
 
 
 async function showMainApp() {
+    // Update UI with user info
+    const user = window.mailiaAPI.getCurrentUser();
+    if (user) {
+        console.log('Logged in as:', user.username, 'Role:', user.role);
+        userRole = user.role;
+        isAuthenticated = true;
+    }
+    
     // Start the phone rise up transition animation
     const loginScreen = document.getElementById('loginScreen');
     const mainApp = document.getElementById('mainApp');
@@ -700,11 +968,22 @@ async function showMainApp() {
     // Initialize the main application
     initializeTabs();
     await loadData();
-    populateCircuitSelector();
+    await populateCircuitSelector(); // Wait for circuits to load from backend
     initializeCircuitTracker();
     initializeEventListeners();
     checkMidnightReset();
     scheduleMidnightReset();
+    
+    // Set initial circuit selector visibility based on active tab
+    const activeTab = document.querySelector('.tab-content.active');
+    const circuitSelectorContainer = document.querySelector('.circuit-selector-container');
+    if (circuitSelectorContainer && activeTab) {
+        if (activeTab.id === 'deliveryTab') {
+            circuitSelectorContainer.style.display = 'block';
+        } else {
+            circuitSelectorContainer.style.display = 'none';
+        }
+    }
 }
 
 // Dark Mode
@@ -774,33 +1053,16 @@ function initializeSettings() {
 // Logout
 function initializeLogout() {
     const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn && isAuthenticated) {
-        logoutBtn.addEventListener('click', () => {
-            handleLogout();
+    if (logoutBtn) {
+        // Remove any existing listeners
+        const newLogoutBtn = logoutBtn.cloneNode(true);
+        logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+        
+        // Add the logout handler
+        newLogoutBtn.addEventListener('click', async () => {
+            await handleLogout();
         });
     }
-}
-
-function handleLogout() {
-    // Clear authentication
-    sessionStorage.removeItem('mailiaAuth');
-    isAuthenticated = false;
-    
-    const loginScreen = document.getElementById('loginScreen');
-    const mainApp = document.getElementById('mainApp');
-    
-    // Remove animation classes
-    loginScreen.classList.remove('zoom-transition');
-    mainApp.classList.remove('zoom-in');
-    
-    // Hide main app and show login screen
-    mainApp.style.display = 'none';
-    loginScreen.style.display = 'flex';
-    
-    // Reset form
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
-    document.getElementById('loginError').style.display = 'none';
 }
 
 // Tab Navigation
@@ -812,17 +1074,20 @@ function initializeTabs() {
     const jakeluButton = document.querySelector('[data-tab="delivery"]');
     const seurantaButton = document.querySelector('[data-tab="tracker"]');
     const messagesButton = document.querySelector('[data-tab="messages"]');
+    const dashboardButton = document.querySelector('[data-tab="dashboard"]');
     
-    if (userRole === 'admin') {
-        // Admin sees all tabs: Jakelu, Seuranta, and Reittiviestit
+    if (userRole === 'admin' || userRole === 'manager') {
+        // Admin/Manager sees all tabs: Jakelu, Seuranta, Reittiviestit, and Raportit
         if (jakeluButton) jakeluButton.style.display = 'inline-block';
         if (seurantaButton) seurantaButton.style.display = 'inline-block';
         if (messagesButton) messagesButton.style.display = 'inline-block';
+        if (dashboardButton) dashboardButton.style.display = 'inline-block';
     } else {
         // Delivery user sees no tabs (direct access to circuit selector)
         if (jakeluButton) jakeluButton.style.display = 'none';
         if (seurantaButton) seurantaButton.style.display = 'none';
         if (messagesButton) messagesButton.style.display = 'none';
+        if (dashboardButton) dashboardButton.style.display = 'none';
     }
 
     tabButtons.forEach(button => {
@@ -834,6 +1099,16 @@ function initializeTabs() {
 
             button.classList.add('active');
             
+            // Show/hide circuit selector based on tab
+            const circuitSelectorContainer = document.querySelector('.circuit-selector-container');
+            if (circuitSelectorContainer) {
+                if (targetTab === 'delivery') {
+                    circuitSelectorContainer.style.display = 'block';
+                } else {
+                    circuitSelectorContainer.style.display = 'none';
+                }
+            }
+            
             // Determine which tab content to show
             let tabContent;
             if (targetTab === 'delivery') {
@@ -844,6 +1119,15 @@ function initializeTabs() {
             } else if (targetTab === 'messages') {
                 tabContent = document.getElementById('messagesTab');
                 renderRouteMessages();
+            } else if (targetTab === 'dashboard') {
+                tabContent = document.getElementById('dashboardTab');
+                // Refresh dashboard data when tab is opened
+                if (typeof loadTodayDeliveryCount === 'function') {
+                    loadTodayDeliveryCount();
+                }
+                if (typeof loadPeriodDeliveryCount === 'function') {
+                    loadPeriodDeliveryCount();
+                }
             }
             
             if (tabContent) {
@@ -851,6 +1135,73 @@ function initializeTabs() {
             }
         });
     });
+}
+
+// Initialize refresh buttons for Seuranta and Messages tabs
+function initializeRefreshButtons() {
+    // Tracker refresh button
+    const refreshTrackerBtn = document.getElementById('refreshTrackerBtn');
+    if (refreshTrackerBtn) {
+        refreshTrackerBtn.addEventListener('click', async () => {
+            console.log('Manually refreshing tracker...');
+            refreshTrackerBtn.classList.add('refreshing');
+            refreshTrackerBtn.disabled = true;
+            
+            try {
+                await renderCircuitTracker();
+                showNotification('Seuranta päivitetty', 'success');
+            } catch (error) {
+                console.error('Error refreshing tracker:', error);
+                showNotification('Päivitys epäonnistui', 'error');
+            } finally {
+                setTimeout(() => {
+                    refreshTrackerBtn.classList.remove('refreshing');
+                    refreshTrackerBtn.disabled = false;
+                }, 500);
+            }
+        });
+    }
+
+    // Messages refresh button
+    const refreshMessagesBtn = document.getElementById('refreshMessagesBtn');
+    if (refreshMessagesBtn) {
+        refreshMessagesBtn.addEventListener('click', async () => {
+            console.log('Manually refreshing messages...');
+            refreshMessagesBtn.classList.add('refreshing');
+            refreshMessagesBtn.disabled = true;
+            
+            try {
+                await renderRouteMessages();
+                showNotification('Viestit päivitetty', 'success');
+            } catch (error) {
+                console.error('Error refreshing messages:', error);
+                showNotification('Päivitys epäonnistui', 'error');
+            } finally {
+                setTimeout(() => {
+                    refreshMessagesBtn.classList.remove('refreshing');
+                    refreshMessagesBtn.disabled = false;
+                }, 500);
+            }
+        });
+    }
+
+    // Auto-refresh tracker every 30 seconds if tab is active
+    setInterval(() => {
+        const trackerTab = document.getElementById('trackerTab');
+        if (trackerTab && trackerTab.classList.contains('active')) {
+            console.log('Auto-refreshing tracker...');
+            renderCircuitTracker();
+        }
+    }, 30000);
+
+    // Auto-refresh messages every 30 seconds if tab is active
+    setInterval(() => {
+        const messagesTab = document.getElementById('messagesTab');
+        if (messagesTab && messagesTab.classList.contains('active')) {
+            console.log('Auto-refreshing messages...');
+            renderRouteMessages();
+        }
+    }, 30000);
 }
 
 // Data Loading and Parsing
@@ -1148,7 +1499,7 @@ function extractApartmentSpecification(fullAddress, buildingAddress) {
 let circuitSearchMemory = '';
 let favoriteCircuits = [];
 
-function populateCircuitSelector() {
+async function populateCircuitSelector() {
     // Load favorites from localStorage
     const savedFavorites = localStorage.getItem('favoriteCircuits');
     if (savedFavorites) {
@@ -1166,7 +1517,20 @@ function populateCircuitSelector() {
         return;
     }
     
-    const circuits = Object.keys(circuitFiles).sort(sortCircuits);
+    // Fetch circuits from backend
+    let circuits;
+    try {
+        const response = await window.mailiaAPI.getCircuits();
+        // Backend returns an array directly, not wrapped in {circuits: [...]}
+        const circuitList = Array.isArray(response) ? response : response.circuits || [];
+        circuits = circuitList.map(c => c.circuit_id).sort(sortCircuits);
+        console.log(`Loaded ${circuits.length} circuits from backend`);
+    } catch (err) {
+        console.error('Failed to load circuits from backend:', err);
+        // Fallback to CSV-based circuit list
+        circuits = Object.keys(circuitFiles).sort(sortCircuits);
+        console.log(`Using fallback circuit list (${circuits.length} circuits)`);
+    }
     
     // Render circuit options
     function renderCircuitOptions(filterText = '') {
@@ -1315,6 +1679,43 @@ async function loadCircuitData(circuitId) {
         return allData[circuitId];
     }
     
+    try {
+        // Fetch circuit data from backend API (includes subscribers)
+        const response = await window.mailiaAPI.getCircuit(circuitId);
+        
+        // Transform backend data to match existing app format
+        const subscribers = response.subscribers.map(sub => {
+            // Filter out null products from the aggregation
+            const products = sub.products
+                .filter(p => p && p.product_code)
+                .map(p => p.product_code);
+            
+            return {
+                address: sub.address,
+                name: sub.name,
+                products: products,
+                buildingAddress: sub.building_address,
+                orderIndex: sub.order_index,
+                id: sub.id // Keep backend ID for updates
+            };
+        });
+        
+        // Cache the loaded data
+        allData[circuitId] = subscribers;
+        console.log(`Loaded circuit ${circuitId} from backend (${subscribers.length} subscribers)`);
+        
+        return subscribers;
+    } catch (err) {
+        console.error(`Error loading circuit ${circuitId} from backend:`, err);
+        
+        // Fallback to CSV loading if backend fails
+        console.warn('Falling back to CSV loading...');
+        return await loadCircuitDataFromCSV(circuitId);
+    }
+}
+
+// Fallback CSV loading (renamed from original loadCircuitData)
+async function loadCircuitDataFromCSV(circuitId) {
     // Get filename for this circuit
     const filename = circuitFiles[circuitId];
     if (!filename) {
@@ -1333,7 +1734,7 @@ async function loadCircuitData(circuitId) {
         
         // Cache the loaded data
         allData[circuitId] = data;
-        console.log(`Loaded circuit ${circuitId} (${data.length} subscribers)`);
+        console.log(`Loaded circuit ${circuitId} from CSV (${data.length} subscribers)`);
         
         return data;
     } catch (err) {
@@ -1695,14 +2096,20 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = getCheckboxState(circuitId, subscriber.address);
-    checkbox.addEventListener('change', (e) => {
-        saveCheckboxState(circuitId, subscriber.address, e.target.checked);
+    
+    // Add subscriber ID to checkbox for real-time sync
+    if (subscriber.id) {
+        checkbox.dataset.subscriberId = subscriber.id;
+    }
+    
+    checkbox.addEventListener('change', async (e) => {
+        await saveCheckboxState(circuitId, subscriber.address, e.target.checked, subscriber.id);
         applyFilters(); // Re-apply filters to hide/show delivered addresses
     });
     card.appendChild(checkbox);
     
     // Add swipe functionality
-    initializeSwipeToMark(card, checkbox, circuitId, subscriber.address);
+    initializeSwipeToMark(card, checkbox, circuitId, subscriber.address, subscriber.id);
     
     // Subscriber info
     const info = document.createElement('div');
@@ -1833,7 +2240,7 @@ function getNextAddress(buildings, currentBuildingIndex, currentSubIndex) {
 }
 
 // Swipe to Mark as Delivered Functionality
-function initializeSwipeToMark(card, checkbox, circuitId, address) {
+function initializeSwipeToMark(card, checkbox, circuitId, address, subscriberId = null) {
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
@@ -1888,7 +2295,7 @@ function initializeSwipeToMark(card, checkbox, circuitId, address) {
             
             setTimeout(() => {
                 checkbox.checked = true;
-                saveCheckboxState(circuitId, address, true);
+                saveCheckboxState(circuitId, address, true, subscriberId);
                 applyFilters();
                 
                 // Reset card position (will be hidden by filters if enabled)
@@ -2136,12 +2543,36 @@ function reportUndelivered(circuitId, subscriber) {
 }
 
 function saveRouteMessage(message) {
-    // Load existing messages
-    const messages = loadRouteMessages();
-    messages.push(message);
+    // Get current route ID
+    const routeId = localStorage.getItem(`route_id_${message.circuit}`);
     
-    // Save back to localStorage
-    localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+    if (!routeId) {
+        console.error('No route ID found for circuit:', message.circuit);
+        alert('Virhe: Reittiä ei löydy. Aloita reitti ensin.');
+        return;
+    }
+    
+    // Send message to backend API
+    if (window.mailiaAPI) {
+        window.mailiaAPI.sendMessage(
+            parseInt(routeId),
+            'issue',  // message type
+            `${message.reason} - ${message.address}` // message content
+        ).then(() => {
+            console.log('Message saved to database and broadcasted');
+        }).catch(error => {
+            console.error('Failed to save message:', error);
+            // Fallback to localStorage
+            const messages = loadRouteMessages();
+            messages.push(message);
+            localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+        });
+    } else {
+        // Fallback to localStorage if API not available
+        const messages = loadRouteMessages();
+        messages.push(message);
+        localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+    }
 }
 
 function loadRouteMessages() {
@@ -2189,12 +2620,17 @@ function initializeMessageSwipe() {
     // We'll add swipe handlers to message cards dynamically
 }
 
-function addSwipeToMessageCard(messageCard, messageIndex) {
+function addSwipeToMessageCard(messageCard, messageId) {
     let startX = 0;
     let currentX = 0;
     let isSwiping = false;
     
     const handleStart = (e) => {
+        // Don't interfere with button clicks or text selection
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+            return;
+        }
+        
         startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         currentX = startX;
         isSwiping = true;
@@ -2209,8 +2645,9 @@ function addSwipeToMessageCard(messageCard, messageIndex) {
         
         // Only allow swiping right (positive diff)
         if (diff > 0) {
-            messageCard.style.transform = `translateX(${diff}px)`;
-            messageCard.style.opacity = 1 - (diff / 300);
+            const translateX = Math.min(diff, 200); // Cap at 200px
+            messageCard.style.transform = `translateX(${translateX}px)`;
+            messageCard.style.opacity = 1 - (translateX / 300);
         }
     };
     
@@ -2224,7 +2661,7 @@ function addSwipeToMessageCard(messageCard, messageIndex) {
         
         // If swiped more than 100px, mark as read
         if (diff > 100) {
-            await markMessageAsRead(messageCard, messageIndex);
+            await markMessageAsRead(messageCard, messageId);
         } else {
             // Snap back
             messageCard.style.transform = '';
@@ -2247,7 +2684,7 @@ function addSwipeToMessageCard(messageCard, messageIndex) {
     messageCard.style.userSelect = 'none';
 }
 
-async function markMessageAsRead(messageCard, messageIndex) {
+async function markMessageAsRead(messageCard, messageId) {
     // Animate card off screen
     messageCard.style.transform = 'translateX(100%)';
     messageCard.style.opacity = '0';
@@ -2260,6 +2697,7 @@ async function markMessageAsRead(messageCard, messageIndex) {
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 10000;
+        font-size: 80px;
         animation: checkmarkPopIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     `;
     
@@ -2274,18 +2712,25 @@ async function markMessageAsRead(messageCard, messageIndex) {
     
     document.body.appendChild(checkmark);
     
-    // Remove message from storage after a delay
-    setTimeout(() => {
-        const messages = loadRouteMessages();
-        messages.splice(messageIndex, 1);
-        saveRouteMessages(messages);
+    try {
+        // Mark message as read via backend API
+        await window.mailiaAPI.markMessageAsRead(messageId);
         
-        // Remove checkmark
-        document.body.removeChild(checkmark);
-        
-        // Re-render messages
-        renderRouteMessages();
-    }, 800);
+        // Remove checkmark and re-render messages after a delay
+        setTimeout(() => {
+            document.body.removeChild(checkmark);
+            renderRouteMessages();
+        }, 800);
+    } catch (error) {
+        console.error('Error marking message as read:', error);
+        // Show error and reset card position
+        setTimeout(() => {
+            document.body.removeChild(checkmark);
+            messageCard.style.transform = '';
+            messageCard.style.opacity = '';
+            showNotification('Virhe viestin merkitsemisessä', 'error');
+        }, 500);
+    }
 }
 
 function saveRouteMessages(messages) {
@@ -2360,13 +2805,35 @@ function getCheckboxState(circuitId, address) {
     return localStorage.getItem(key) === 'true';
 }
 
-function saveCheckboxState(circuitId, address, checked) {
+async function saveCheckboxState(circuitId, address, checked, subscriberId = null) {
     const key = `checkbox_${circuitId}_${address}`;
     localStorage.setItem(key, checked);
+    
+    // Save to backend if online and route is active
+    const routeId = localStorage.getItem(`route_id_${circuitId}`);
+    if (routeId && window.mailiaAPI) {
+        try {
+            // Use provided subscriberId or find it from cached data
+            let subId = subscriberId;
+            if (!subId) {
+                const subscribers = allData[circuitId] || [];
+                const subscriber = subscribers.find(s => s.address === address);
+                subId = subscriber?.id;
+            }
+            
+            if (subId) {
+                await window.mailiaAPI.updateDelivery(routeId, subId, checked);
+                console.log(`Delivery ${checked ? 'marked' : 'unmarked'} for ${address}`);
+            }
+        } catch (error) {
+            console.error('Failed to sync delivery to backend:', error);
+            // Continue using localStorage as fallback
+        }
+    }
 }
 
 // Route Timing
-function startRoute(circuitId) {
+async function startRoute(circuitId) {
     const now = new Date();
     const startKey = `route_start_${circuitId}`;
     const endKey = `route_end_${circuitId}`;
@@ -2381,6 +2848,29 @@ function startRoute(circuitId) {
     
     // Set new start time
     localStorage.setItem(startKey, now.toISOString());
+    
+    // Start route in backend
+    if (window.mailiaAPI) {
+        try {
+            const route = await window.mailiaAPI.startRoute(circuitId);
+            localStorage.setItem(`route_id_${circuitId}`, route.id);
+            console.log(`Route started in backend: ${route.id}`);
+            
+            // Join the route room for real-time updates
+            window.mailiaAPI.joinRoute(route.id);
+            
+            // Emit route update to WebSocket
+            window.mailiaAPI.emitRouteUpdate({
+                circuitId: circuitId,
+                routeId: route.id,
+                status: 'started',
+                startTime: now.toISOString()
+            });
+        } catch (error) {
+            console.error('Failed to start route in backend:', error);
+            // Continue with localStorage-only mode
+        }
+    }
     
     // Show the subscriber list with cascading animation
     showSubscriberListWithAnimation();
@@ -2421,9 +2911,29 @@ function showSubscriberListWithAnimation() {
     });
 }
 
-function completeRoute(circuitId) {
+async function completeRoute(circuitId) {
     const now = new Date();
     const key = `route_end_${circuitId}`;
+    
+    // Complete route in backend
+    const routeId = localStorage.getItem(`route_id_${circuitId}`);
+    if (routeId && window.mailiaAPI) {
+        try {
+            await window.mailiaAPI.completeRoute(routeId);
+            console.log(`Route completed in backend: ${routeId}`);
+            
+            // Emit route update to WebSocket
+            window.mailiaAPI.emitRouteUpdate({
+                circuitId: circuitId,
+                routeId: parseInt(routeId),
+                status: 'completed',
+                endTime: now.toISOString()
+            });
+        } catch (error) {
+            console.error('Failed to complete route in backend:', error);
+            // Continue with localStorage-only mode
+        }
+    }
     
     // Show success animation immediately - centered on viewport
     const loader = document.getElementById('routeCompleteLoader');
@@ -2555,78 +3065,70 @@ function calculateDuration(start, end) {
 }
 
 // Route Messages (Admin Panel)
-function renderRouteMessages() {
+async function renderRouteMessages() {
     const messagesContainer = document.getElementById('routeMessages');
-    const messages = loadRouteMessages();
     
-    if (messages.length === 0) {
-        messagesContainer.innerHTML = '<p class="no-messages">Ei viestejä</p>';
-        return;
+    try {
+        // Fetch messages from backend API
+        const messages = await window.mailiaAPI.getTodayMessages();
+        
+        if (!messages || messages.length === 0) {
+            messagesContainer.innerHTML = '<p class="no-messages">Ei viestejä</p>';
+            return;
+        }
+        
+        messagesContainer.innerHTML = '';
+        
+        // Messages are already sorted by created_at DESC from backend
+        messages.forEach((message, index) => {
+            const messageCard = document.createElement('div');
+            messageCard.className = 'message-card';
+            
+            const timestamp = new Date(message.created_at);
+            const formattedDate = timestamp.toLocaleString('fi-FI');
+            
+            // Create elements safely to prevent XSS
+            const messageHeader = document.createElement('div');
+            messageHeader.className = 'message-header';
+            
+            const circuitSpan = document.createElement('span');
+            circuitSpan.className = 'message-circuit';
+            circuitSpan.textContent = message.circuit_id || message.circuit_name || 'N/A';
+            
+            const timestampSpan = document.createElement('span');
+            timestampSpan.className = 'message-timestamp';
+            timestampSpan.textContent = formattedDate;
+            
+            messageHeader.appendChild(circuitSpan);
+            messageHeader.appendChild(timestampSpan);
+            
+            const messageBody = document.createElement('div');
+            messageBody.className = 'message-body';
+            
+            const messageText = document.createElement('div');
+            messageText.className = 'message-text';
+            messageText.textContent = message.message;
+            
+            const messageUser = document.createElement('div');
+            messageUser.className = 'message-user';
+            messageUser.innerHTML = '<strong>Lähettäjä:</strong> ';
+            messageUser.appendChild(document.createTextNode(message.username || 'Tuntematon'));
+            
+            messageBody.appendChild(messageText);
+            messageBody.appendChild(messageUser);
+            
+            messageCard.appendChild(messageHeader);
+            messageCard.appendChild(messageBody);
+            
+            // Add swipe-to-dismiss functionality
+            addSwipeToMessageCard(messageCard, message.id);
+            
+            messagesContainer.appendChild(messageCard);
+        });
+    } catch (error) {
+        console.error('Error fetching messages:', error);
+        messagesContainer.innerHTML = '<p class="no-messages">Virhe viestien lataamisessa</p>';
     }
-    
-    messagesContainer.innerHTML = '';
-    
-    // Sort by timestamp descending (newest first)
-    messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    messages.forEach((message, index) => {
-        const messageCard = document.createElement('div');
-        messageCard.className = 'message-card';
-        
-        const timestamp = new Date(message.timestamp);
-        const formattedDate = timestamp.toLocaleString('fi-FI');
-        
-        // Create elements safely to prevent XSS
-        const messageHeader = document.createElement('div');
-        messageHeader.className = 'message-header';
-        
-        const circuitSpan = document.createElement('span');
-        circuitSpan.className = 'message-circuit';
-        circuitSpan.textContent = message.circuit;
-        
-        const timestampSpan = document.createElement('span');
-        timestampSpan.className = 'message-timestamp';
-        timestampSpan.textContent = formattedDate;
-        
-        messageHeader.appendChild(circuitSpan);
-        messageHeader.appendChild(timestampSpan);
-        
-        const messageBody = document.createElement('div');
-        messageBody.className = 'message-body';
-        
-        const addressDiv = document.createElement('div');
-        addressDiv.className = 'message-address';
-        addressDiv.innerHTML = '<strong>Osoite:</strong> ';
-        addressDiv.appendChild(document.createTextNode(message.address));
-        
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'message-name';
-        nameDiv.innerHTML = '<strong>Asiakas:</strong> ';
-        nameDiv.appendChild(document.createTextNode(message.name));
-        
-        const productsDiv = document.createElement('div');
-        productsDiv.className = 'message-products';
-        productsDiv.innerHTML = '<strong>Tuotteet:</strong> ';
-        productsDiv.appendChild(document.createTextNode(message.products));
-        
-        const reasonDiv = document.createElement('div');
-        reasonDiv.className = 'message-reason';
-        reasonDiv.innerHTML = '<strong>Syy:</strong> ';
-        reasonDiv.appendChild(document.createTextNode(message.reason));
-        
-        messageBody.appendChild(addressDiv);
-        messageBody.appendChild(nameDiv);
-        messageBody.appendChild(productsDiv);
-        messageBody.appendChild(reasonDiv);
-        
-        messageCard.appendChild(messageHeader);
-        messageCard.appendChild(messageBody);
-        
-        messagesContainer.appendChild(messageCard);
-        
-        // Add swipe functionality to this message card
-        addSwipeToMessageCard(messageCard, index);
-    });
 }
 
 // Circuit Tracker
@@ -2650,13 +3152,37 @@ async function renderCircuitTracker() {
             return;
         }
         
+        tracker.innerHTML = '<div class="loading">Ladataan...</div>';
+        
+        // Fetch today's routes from backend
+        let routesData = {};
+        try {
+            const response = await window.mailiaAPI.getTodayRoutes();
+            console.log('Today routes from API:', response);
+            
+            // Create a map of circuit_id string (e.g., "KP3") -> route data
+            if (response && Array.isArray(response)) {
+                response.forEach(route => {
+                    // Use the circuit_id string from the joined circuits table
+                    const circuitIdString = route.circuit_id; // This is the "KP3" string from JOIN
+                    if (circuitIdString && !routesData[circuitIdString]) {
+                        routesData[circuitIdString] = route;
+                    }
+                });
+            }
+            console.log('Routes data map:', routesData);
+        } catch (error) {
+            console.error('Error fetching today routes:', error);
+            // Fall back to localStorage if API fails
+        }
+        
         tracker.innerHTML = '';
         
         // Use circuitNames instead of allData since we're lazy loading
         const circuits = Object.keys(circuitNames).sort(sortCircuits);
         
         for (const circuitId of circuits) {
-            const item = await createCircuitItem(circuitId);
+            const item = await createCircuitItem(circuitId, routesData[circuitId]);
             tracker.appendChild(item);
         }
     } catch (error) {
@@ -2666,11 +3192,11 @@ async function renderCircuitTracker() {
     }
 }
 
-async function createCircuitItem(circuitId) {
+async function createCircuitItem(circuitId, routeData) {
     const item = document.createElement('div');
     item.className = 'circuit-item';
     
-    const status = getCircuitStatus(circuitId);
+    const status = getCircuitStatus(circuitId, routeData);
     
     // Add status class for gradient background
     item.classList.add(`${status}-item`);
@@ -2692,16 +3218,30 @@ async function createCircuitItem(circuitId) {
     name.textContent = circuitNames[circuitId] || circuitId;
     header.appendChild(name);
     
+    // Add reset button for admin users on in-progress or completed routes
+    const userRole = localStorage.getItem('mailiaUserRole');
+    if ((userRole === 'admin' || userRole === 'manager') && routeData && routeData.id) {
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'reset-route-btn';
+        resetBtn.innerHTML = '↻';
+        resetBtn.title = 'Muuta reitin tilaa';
+        resetBtn.onclick = async (e) => {
+            e.stopPropagation();
+            showRouteStatusModal(circuitId, routeData);
+        };
+        header.appendChild(resetBtn);
+    }
+    
     content.appendChild(header);
     
     const statusText = document.createElement('div');
     statusText.className = 'circuit-status';
-    statusText.textContent = getCircuitStatusText(circuitId, status);
+    statusText.textContent = getCircuitStatusText(circuitId, status, routeData);
     content.appendChild(statusText);
     
     // Add progress bar for in-progress circuits
     if (status === 'in-progress') {
-        const progressBar = await createCircuitProgressBar(circuitId);
+        const progressBar = await createCircuitProgressBar(circuitId, routeData);
         if (progressBar) {
             content.appendChild(progressBar);
         }
@@ -2712,27 +3252,38 @@ async function createCircuitItem(circuitId) {
     return item;
 }
 
-async function createCircuitProgressBar(circuitId) {
-    // Load circuit data if not already loaded
-    const data = await loadCircuitData(circuitId);
-    if (!data || data.length === 0) return null;
+async function createCircuitProgressBar(circuitId, routeData = null) {
+    let deliveredCount = 0;
+    let totalSubscribers = 0;
     
-    // Filter out subscribers with only STF products
-    const today = new Date().getDay();
-    const subscribersWithoutOnlySTF = data.filter(sub => {
-        // Check if subscriber has any non-STF products
-        const hasNonSTF = sub.products.some(product => {
-            const simplifiedProduct = simplifyProductName(product.trim(), today);
-            return simplifiedProduct !== 'STF';
+    // If we have route data from API, use the delivery counts from backend
+    if (routeData && routeData.total_deliveries !== undefined) {
+        totalSubscribers = routeData.total_deliveries || 0;
+        deliveredCount = routeData.completed_deliveries || 0;
+    } else {
+        // Fallback to localStorage-based calculation
+        const data = await loadCircuitData(circuitId);
+        if (!data || data.length === 0) return null;
+        
+        // Filter out subscribers with only STF products
+        const today = new Date().getDay();
+        const subscribersWithoutOnlySTF = data.filter(sub => {
+            // Check if subscriber has any non-STF products
+            const hasNonSTF = sub.products.some(product => {
+                const simplifiedProduct = simplifyProductName(product.trim(), today);
+                return simplifiedProduct !== 'STF';
+            });
+            return hasNonSTF;
         });
-        return hasNonSTF;
-    });
+        
+        totalSubscribers = subscribersWithoutOnlySTF.length;
+        if (totalSubscribers === 0) return null;
+        
+        // Count delivered by checking localStorage checkbox state (excluding STF-only)
+        deliveredCount = subscribersWithoutOnlySTF.filter(sub => getCheckboxState(circuitId, sub.address)).length;
+    }
     
-    const totalSubscribers = subscribersWithoutOnlySTF.length;
     if (totalSubscribers === 0) return null;
-    
-    // Count delivered by checking localStorage checkbox state (excluding STF-only)
-    const deliveredCount = subscribersWithoutOnlySTF.filter(sub => getCheckboxState(circuitId, sub.address)).length;
     const percentage = Math.round((deliveredCount / totalSubscribers) * 100);
     
     const container = document.createElement('div');
@@ -2755,7 +3306,24 @@ async function createCircuitProgressBar(circuitId) {
     return container;
 }
 
-function getCircuitStatus(circuitId) {
+function getCircuitStatus(circuitId, routeData) {
+    // If route data from API is available, use it
+    if (routeData) {
+        // Check for completed status
+        if (routeData.status === 'completed' || routeData.end_time) {
+            return 'completed';
+        }
+        // Check for in-progress status (database uses 'in-progress' status when started)
+        if (routeData.status === 'in-progress' || routeData.start_time) {
+            return 'in-progress';
+        }
+        // If status is explicitly 'not-started' with no times, return not-started
+        if (routeData.status === 'not-started' || (!routeData.start_time && !routeData.end_time)) {
+            return 'not-started';
+        }
+    }
+    
+    // Fall back to localStorage
     const startKey = `route_start_${circuitId}`;
     const endKey = `route_end_${circuitId}`;
     const startTime = localStorage.getItem(startKey);
@@ -2766,18 +3334,48 @@ function getCircuitStatus(circuitId) {
     return 'completed';
 }
 
-function getCircuitStatusText(circuitId, status) {
+function getCircuitStatusText(circuitId, status, routeData) {
     if (status === 'not-started') {
         return 'Ei aloitettu';
     } else if (status === 'in-progress') {
-        const startKey = `route_start_${circuitId}`;
-        const startTime = localStorage.getItem(startKey);
-        return `Aloitettu: ${formatTime(new Date(startTime))}`;
+        let startTime;
+        
+        // Use route data from API if available
+        if (routeData && routeData.start_time) {
+            startTime = new Date(routeData.start_time);
+        } else {
+            // Fall back to localStorage
+            const startKey = `route_start_${circuitId}`;
+            const startTimeStr = localStorage.getItem(startKey);
+            if (startTimeStr) {
+                startTime = new Date(startTimeStr);
+            }
+        }
+        
+        if (startTime) {
+            return `Aloitettu: ${formatTime(startTime)}`;
+        }
+        return 'Käynnissä';
     } else {
         // Completed - show completion time
-        const endKey = `route_end_${circuitId}`;
-        const endTime = localStorage.getItem(endKey);
-        return `Valmis: ${formatTime(new Date(endTime))}`;
+        let endTime;
+        
+        // Use route data from API if available
+        if (routeData && routeData.end_time) {
+            endTime = new Date(routeData.end_time);
+        } else {
+            // Fall back to localStorage
+            const endKey = `route_end_${circuitId}`;
+            const endTimeStr = localStorage.getItem(endKey);
+            if (endTimeStr) {
+                endTime = new Date(endTimeStr);
+            }
+        }
+        
+        if (endTime) {
+            return `Valmis: ${formatTime(endTime)}`;
+        }
+        return 'Valmis';
     }
 }
 
@@ -2849,3 +3447,456 @@ function updateNotificationTime() {
         timeElement.textContent = `${hours}:${minutes}`;
     }
 }
+
+// ============= Dashboard Functions =============
+
+let dashboardData = {
+    routeTimes: [],
+    selectedCircuits: [], // Store selected circuits for filtering
+    dailyCount: 0,
+    periodCount: 0,
+    monthlyReport: []
+};
+
+let allCircuits = []; // Store all available circuits
+
+// Load today's delivery count
+async function loadTodayDeliveryCount() {
+    try {
+        console.log('Loading today delivery count...');
+        const data = await window.mailiaAPI.getTodayDeliveryCount();
+        console.log('Today delivery count data:', data);
+        dashboardData.dailyCount = data.total_papers || 0;
+        const countElement = document.getElementById('todayDeliveryCount');
+        if (countElement) {
+            countElement.textContent = dashboardData.dailyCount.toLocaleString('fi-FI');
+        }
+    } catch (error) {
+        console.error('Error loading today delivery count:', error);
+        showNotification('Virhe ladattaessa päivän tilastoja: ' + (error.message || 'Tuntematon virhe'), 'error');
+    }
+}
+
+// Load period delivery count (monthly or yearly)
+async function loadPeriodDeliveryCount() {
+    try {
+        const year = document.getElementById('yearSelector')?.value;
+        const isMonthly = document.getElementById('toggleMonthly')?.checked;
+        const month = isMonthly ? document.getElementById('monthSelector')?.value : null;
+        
+        console.log('Loading period delivery count:', { year, month, isMonthly });
+        
+        if (!year) {
+            console.error('Year selector not found or no value');
+            return;
+        }
+        
+        const data = await window.mailiaAPI.getPeriodDeliveryCount(year, month);
+        console.log('Period delivery count data:', data);
+        dashboardData.periodCount = data.total_papers || 0;
+        
+        const countElement = document.getElementById('periodDeliveryCount');
+        if (countElement) {
+            countElement.textContent = dashboardData.periodCount.toLocaleString('fi-FI');
+        }
+        
+        // Update label
+        const label = isMonthly ? 'lehteä toimitettu tässä kuussa' : 'lehteä toimitettu tänä vuonna';
+        const labelElement = document.getElementById('periodLabel');
+        if (labelElement) {
+            labelElement.textContent = label;
+        }
+    } catch (error) {
+        console.error('Error loading period delivery count:', error);
+        showNotification('Virhe ladattaessa tilastoja: ' + (error.message || 'Tuntematon virhe'), 'error');
+    }
+}
+
+// Export monthly delivery report
+async function exportMonthlyDeliveryReport() {
+    try {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1;
+        
+        const data = await window.mailiaAPI.getMonthlyDeliveryReport(year, month);
+        
+        if (!data || data.length === 0) {
+            showNotification('Ei tietoja vietäväksi', 'error');
+            return;
+        }
+        
+        // Format data for export
+        const exportData = data.map(row => ({
+            'Päivämäärä': new Date(row.route_date).toLocaleDateString('fi-FI'),
+            'Toimitukset': row.total_deliveries,
+            'Lehtiä yhteensä': row.total_papers
+        }));
+        
+        exportToExcel(exportData, `toimitukset-${year}-${month.toString().padStart(2, '0')}`);
+    } catch (error) {
+        console.error('Error exporting monthly report:', error);
+        showNotification('Virhe vietäessä raporttia', 'error');
+    }
+}
+
+// Show circuit selection modal
+async function showCircuitSelectionModal() {
+    // Fetch all circuits if not already loaded
+    if (allCircuits.length === 0) {
+        try {
+            allCircuits = await window.mailiaAPI.getCircuits();
+        } catch (error) {
+            console.error('Error loading circuits:', error);
+            showNotification('Virhe ladattaessa piirejä', 'error');
+            return;
+        }
+    }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'custom-dialog-overlay';
+    modal.innerHTML = `
+        <div class="custom-dialog circuit-selection-dialog">
+            <h3>Valitse piirit</h3>
+            <div class="circuit-checkbox-list">
+                <label class="circuit-checkbox-item">
+                    <input type="checkbox" id="selectAllCircuits" ${dashboardData.selectedCircuits.length === 0 ? 'checked' : ''}>
+                    <span>Kaikki piirit</span>
+                </label>
+                ${allCircuits.map(circuit => `
+                    <label class="circuit-checkbox-item">
+                        <input type="checkbox" class="circuit-checkbox" value="${circuit.circuit_id}" 
+                            ${dashboardData.selectedCircuits.includes(circuit.circuit_id) ? 'checked' : ''}>
+                        <span>${circuit.circuit_name || circuit.circuit_id}</span>
+                    </label>
+                `).join('')}
+            </div>
+            <div class="custom-dialog-buttons">
+                <button class="custom-dialog-btn cancel-btn">Peruuta</button>
+                <button class="custom-dialog-btn confirm-btn">Vahvista</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Handle select all checkbox
+    const selectAllCheckbox = modal.querySelector('#selectAllCircuits');
+    const circuitCheckboxes = modal.querySelectorAll('.circuit-checkbox');
+    
+    selectAllCheckbox.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        circuitCheckboxes.forEach(cb => cb.checked = !isChecked);
+    });
+    
+    circuitCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const anyChecked = Array.from(circuitCheckboxes).some(checkbox => checkbox.checked);
+            selectAllCheckbox.checked = !anyChecked;
+        });
+    });
+    
+    // Handle confirm
+    modal.querySelector('.confirm-btn').addEventListener('click', () => {
+        if (selectAllCheckbox.checked) {
+            dashboardData.selectedCircuits = [];
+            document.getElementById('selectedCircuitsDisplay').textContent = 'Kaikki piirit';
+        } else {
+            dashboardData.selectedCircuits = Array.from(circuitCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            
+            if (dashboardData.selectedCircuits.length === 0) {
+                document.getElementById('selectedCircuitsDisplay').textContent = 'Kaikki piirit';
+            } else {
+                document.getElementById('selectedCircuitsDisplay').textContent = 
+                    `${dashboardData.selectedCircuits.length} piiriä valittu`;
+            }
+        }
+        document.body.removeChild(modal);
+    });
+    
+    // Handle cancel
+    modal.querySelector('.cancel-btn').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    // Handle overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+}
+
+// Load route times with circuit filtering
+async function loadRouteTimes() {
+    const startDate = document.getElementById('routeTimesStartDate').value;
+    const endDate = document.getElementById('routeTimesEndDate').value;
+    
+    console.log('Loading route times:', { startDate, endDate, selectedCircuits: dashboardData.selectedCircuits });
+    
+    if (!startDate || !endDate) {
+        showNotification('Valitse päivämääräväli', 'error');
+        return;
+    }
+    
+    try {
+        let data = await window.mailiaAPI.getDashboardRouteTimes(startDate, endDate);
+        console.log('Route times data received:', data);
+        
+        // Filter by selected circuits
+        if (dashboardData.selectedCircuits.length > 0) {
+            data = data.filter(row => dashboardData.selectedCircuits.includes(row.circuit_id));
+            console.log('Filtered data:', data);
+        }
+        
+        dashboardData.routeTimes = data;
+        renderRouteTimesTable(data);
+        showNotification(`${data.length} reittiä ladattu`, 'success');
+    } catch (error) {
+        console.error('Error loading route times:', error);
+        showNotification('Virhe ladattaessa reittiaikoja: ' + (error.message || 'Tuntematon virhe'), 'error');
+    }
+}
+
+function renderRouteTimesTable(data) {
+    const container = document.getElementById('routeTimesTable');
+    
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="no-data">Ei tietoja valitulta ajalta</p>';
+        return;
+    }
+    
+    const table = document.createElement('table');
+    table.className = 'dashboard-table';
+    
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Päivämäärä</th>
+                <th>Piiri</th>
+                <th>Käyttäjä</th>
+                <th>Aloitus</th>
+                <th>Lopetus</th>
+                <th>Tunnit</th>
+                <th>Toimitukset</th>
+                <th>Tila</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${data.map(row => `
+                <tr>
+                    <td>${new Date(row.route_date).toLocaleDateString('fi-FI')}</td>
+                    <td>${row.circuit_name || row.circuit_id}</td>
+                    <td>${row.username}</td>
+                    <td>${row.start_time ? new Date(row.start_time).toLocaleTimeString('fi-FI') : '-'}</td>
+                    <td>${row.end_time ? new Date(row.end_time).toLocaleTimeString('fi-FI') : '-'}</td>
+                    <td>${row.total_hours ? parseFloat(row.total_hours).toFixed(2) : '-'}</td>
+                    <td>${row.completed_deliveries || 0}/${row.total_deliveries || 0}</td>
+                    <td><span class="status-badge status-${row.status}">${getStatusText(row.status)}</span></td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    
+    container.innerHTML = '';
+    container.appendChild(table);
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'not-started': 'Ei aloitettu',
+        'in-progress': 'Kesken',
+        'completed': 'Valmis'
+    };
+    return statusMap[status] || status;
+}
+
+function exportToExcel(data, filename) {
+    if (!data || data.length === 0) {
+        showNotification('Ei tietoja vietäväksi', 'error');
+        return;
+    }
+    
+    // Convert data to CSV format
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+        headers.join(','),
+        ...data.map(row => 
+            headers.map(header => {
+                const value = row[header];
+                // Handle dates and times
+                if (value instanceof Date) {
+                    return value.toISOString();
+                }
+                // Escape commas and quotes
+                if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                    return `"${value.replace(/"/g, '""')}"`;
+                }
+                return value || '';
+            }).join(',')
+        )
+    ].join('\n');
+    
+    // Add BOM for UTF-8 Excel compatibility
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create download link
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${filename}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showNotification('Tiedosto ladattu', 'success');
+    }
+}
+
+function initializeDashboard() {
+    console.log('Initializing dashboard...');
+    
+    // Set default dates to current month
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    const formatDate = (date) => date.toISOString().split('T')[0];
+    
+    // Route times dates
+    const routeTimesStartDate = document.getElementById('routeTimesStartDate');
+    const routeTimesEndDate = document.getElementById('routeTimesEndDate');
+    if (routeTimesStartDate) routeTimesStartDate.value = formatDate(firstDay);
+    if (routeTimesEndDate) routeTimesEndDate.value = formatDate(lastDay);
+    
+    // Period selectors - set to current month/year
+    const yearSelector = document.getElementById('yearSelector');
+    const monthSelector = document.getElementById('monthSelector');
+    if (yearSelector) yearSelector.value = today.getFullYear();
+    if (monthSelector) monthSelector.value = today.getMonth() + 1;
+    
+    // Load initial data
+    loadTodayDeliveryCount();
+    loadPeriodDeliveryCount();
+    
+    // Set up auto-refresh for daily count every 5 minutes
+    setInterval(loadTodayDeliveryCount, 5 * 60 * 1000);
+    
+    // Add event listeners with error checking
+    const refreshDailyBtn = document.getElementById('refreshDailyCountBtn');
+    const exportDailyBtn = document.getElementById('exportDailyCountBtn');
+    const loadPeriodBtn = document.getElementById('loadPeriodCountBtn');
+    const toggleMonthly = document.getElementById('toggleMonthly');
+    const toggleYearly = document.getElementById('toggleYearly');
+    const selectCircuitsBtn = document.getElementById('selectCircuitsBtn');
+    const loadRouteTimesBtn = document.getElementById('loadRouteTimesBtn');
+    const exportRouteTimesBtn = document.getElementById('exportRouteTimesBtn');
+    const monthSelectorLabel = document.getElementById('monthSelectorLabel');
+    
+    if (refreshDailyBtn) {
+        refreshDailyBtn.addEventListener('click', () => {
+            console.log('Refresh daily count clicked');
+            loadTodayDeliveryCount();
+        });
+    }
+    
+    if (exportDailyBtn) {
+        exportDailyBtn.addEventListener('click', () => {
+            console.log('Export daily count clicked');
+            exportMonthlyDeliveryReport();
+        });
+    }
+    
+    if (loadPeriodBtn) {
+        loadPeriodBtn.addEventListener('click', () => {
+            console.log('Load period count clicked');
+            loadPeriodDeliveryCount();
+        });
+    }
+    
+    // Toggle between monthly/yearly
+    if (toggleMonthly) {
+        toggleMonthly.addEventListener('change', () => {
+            console.log('Toggle monthly selected');
+            if (monthSelectorLabel) monthSelectorLabel.style.display = 'flex';
+            const periodLabel = document.getElementById('periodLabel');
+            if (periodLabel) periodLabel.textContent = 'lehteä toimitettu tässä kuussa';
+            loadPeriodDeliveryCount();
+        });
+    }
+    
+    if (toggleYearly) {
+        toggleYearly.addEventListener('change', () => {
+            console.log('Toggle yearly selected');
+            if (monthSelectorLabel) monthSelectorLabel.style.display = 'none';
+            const periodLabel = document.getElementById('periodLabel');
+            if (periodLabel) periodLabel.textContent = 'lehteä toimitettu tänä vuonna';
+            loadPeriodDeliveryCount();
+        });
+    }
+    
+    // Year and month selector changes
+    if (yearSelector) {
+        yearSelector.addEventListener('change', () => {
+            console.log('Year changed:', yearSelector.value);
+            loadPeriodDeliveryCount();
+        });
+    }
+    
+    if (monthSelector) {
+        monthSelector.addEventListener('change', () => {
+            console.log('Month changed:', monthSelector.value);
+            loadPeriodDeliveryCount();
+        });
+    }
+    
+    // Circuit selection
+    if (selectCircuitsBtn) {
+        selectCircuitsBtn.addEventListener('click', () => {
+            console.log('Select circuits clicked');
+            showCircuitSelectionModal();
+        });
+    }
+    
+    // Route times
+    if (loadRouteTimesBtn) {
+        loadRouteTimesBtn.addEventListener('click', () => {
+            console.log('Load route times clicked');
+            loadRouteTimes();
+        });
+    }
+    
+    if (exportRouteTimesBtn) {
+        exportRouteTimesBtn.addEventListener('click', () => {
+            console.log('Export route times clicked');
+            if (!dashboardData.routeTimes || dashboardData.routeTimes.length === 0) {
+                showNotification('Lataa tiedot ensin', 'error');
+                return;
+            }
+            
+            // Format data for export with Finnish headers
+            const exportData = dashboardData.routeTimes.map(row => ({
+                'Päivämäärä': new Date(row.route_date).toLocaleDateString('fi-FI'),
+                'Piiri': row.circuit_name || row.circuit_id,
+                'Käyttäjä': row.username,
+                'Aloitus': row.start_time ? new Date(row.start_time).toLocaleTimeString('fi-FI') : '-',
+                'Lopetus': row.end_time ? new Date(row.end_time).toLocaleTimeString('fi-FI') : '-',
+                'Tunnit': row.total_hours ? parseFloat(row.total_hours).toFixed(2) : '-',
+                'Toimitukset': `${row.completed_deliveries || 0}/${row.total_deliveries || 0}`,
+                'Tila': getStatusText(row.status)
+            }));
+            
+            exportToExcel(exportData, `reittiajat-${Date.now()}`);
+        });
+    }
+    
+    console.log('Dashboard initialized successfully');
+}
+

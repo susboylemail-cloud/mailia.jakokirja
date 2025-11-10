@@ -40,7 +40,7 @@ export const extractCircuitId = (filename: string): string => {
 };
 
 // Parse old format CSV (same as frontend)
-const parseOldFormatCSVLine = (line: string): CSVSubscriber | null => {
+const parseOldFormatCSVLine = (line: string, delimiter: string = ','): CSVSubscriber | null => {
     const fields: string[] = [];
     let currentField = '';
     let insideQuotes = false;
@@ -56,7 +56,7 @@ const parseOldFormatCSVLine = (line: string): CSVSubscriber | null => {
             } else {
                 insideQuotes = !insideQuotes;
             }
-        } else if (char === ',' && !insideQuotes) {
+        } else if (char === delimiter && !insideQuotes) {
             fields.push(currentField);
             currentField = '';
         } else {
@@ -155,9 +155,12 @@ export const importCSVFile = async (filePath: string): Promise<void> => {
             throw new Error('Empty CSV file');
         }
         
-        // Detect format
+        // Detect format and delimiter
         const header = lines[0].toLowerCase();
         const isNewFormat = header.includes('katu') && header.includes('osoitenumero');
+        
+        // Detect delimiter: semicolon or comma
+        const delimiter = header.includes(';') ? ';' : ',';
         
         const subscribers: CSVSubscriber[] = [];
         
@@ -166,10 +169,10 @@ export const importCSVFile = async (filePath: string): Promise<void> => {
             let subscriber: CSVSubscriber | null;
             
             if (isNewFormat) {
-                const fields = lines[i].split(',').map(f => f.trim());
+                const fields = lines[i].split(delimiter).map(f => f.trim());
                 subscriber = parseNewFormatCSVLine(fields);
             } else {
-                subscriber = parseOldFormatCSVLine(lines[i]);
+                subscriber = parseOldFormatCSVLine(lines[i], delimiter);
             }
             
             if (subscriber) {

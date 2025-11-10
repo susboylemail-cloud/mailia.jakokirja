@@ -184,6 +184,8 @@
         <button class="tab-button admin-only" data-tab="delivery" style="display: none;">Jakelu</button>
         <button class="tab-button admin-only" data-tab="tracker" style="display: none;">Seuranta</button>
         <button class="tab-button admin-only" data-tab="messages" style="display: none;">Piirien viestit</button>
+        <!-- Dashboard/Reports tab hidden but kept in code for future use -->
+        <!-- <button class="tab-button admin-only" data-tab="dashboard" style="display: none;">Raportit</button> -->
     </div>
 
     <!-- Circuit selector - always visible -->
@@ -249,7 +251,12 @@
 
         <!-- Circuit Tracker Tab -->
         <div id="trackerTab" class="tab-content">
-            <h2>Jakelustatus</h2>
+            <div class="tracker-header">
+                <h2>Jakelustatus</h2>
+                <button id="refreshTrackerBtn" class="refresh-btn" title="Päivitä seuranta">
+                    <span class="refresh-icon">↻</span> Päivitä
+                </button>
+            </div>
             <div id="circuitTracker" class="circuit-tracker"></div>
         </div>
         
@@ -257,14 +264,101 @@
         <div id="messagesTab" class="tab-content">
             <div class="messages-header">
                 <h2>Piirien viestit</h2>
+                <button id="refreshMessagesBtn" class="refresh-btn" title="Päivitä viestit">
+                    <span class="refresh-icon">↻</span> Päivitä
+                </button>
             </div>
             <div id="routeMessages" class="route-messages"></div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboardTab" class="tab-content">
+            <div class="dashboard-header">
+                <h2>Raportit</h2>
+            </div>
+            
+            <!-- Daily Delivery Tracker -->
+            <div class="dashboard-section">
+                <h3>Tämän päivän toimitukset</h3>
+                <div class="delivery-tracker-container">
+                    <div class="tracker-big-number">
+                        <span id="todayDeliveryCount">0</span>
+                        <span class="tracker-label">lehteä toimitettu tänään</span>
+                    </div>
+                    <button id="refreshDailyCountBtn" class="btn-primary">🔄 Päivitä</button>
+                    <button id="exportDailyCountBtn" class="btn-success">📊 Lataa kuukauden raportti</button>
+                </div>
+            </div>
+
+            <!-- Monthly/Yearly Delivery Tracker -->
+            <div class="dashboard-section">
+                <div class="section-header-with-toggle">
+                    <h3>Toimitukset yhteensä</h3>
+                    <div class="toggle-switch">
+                        <input type="radio" id="toggleMonthly" name="periodToggle" value="monthly" checked>
+                        <label for="toggleMonthly">Kuukausi</label>
+                        <input type="radio" id="toggleYearly" name="periodToggle" value="yearly">
+                        <label for="toggleYearly">Vuosi</label>
+                    </div>
+                </div>
+                <div class="delivery-tracker-container">
+                    <div class="tracker-big-number">
+                        <span id="periodDeliveryCount">0</span>
+                        <span class="tracker-label" id="periodLabel">lehteä toimitettu tässä kuussa</span>
+                    </div>
+                    <div class="period-selector">
+                        <label id="monthSelectorLabel">Kuukausi:
+                            <select id="monthSelector">
+                                <option value="1">Tammikuu</option>
+                                <option value="2">Helmikuu</option>
+                                <option value="3">Maaliskuu</option>
+                                <option value="4">Huhtikuu</option>
+                                <option value="5">Toukokuu</option>
+                                <option value="6">Kesäkuu</option>
+                                <option value="7">Heinäkuu</option>
+                                <option value="8">Elokuu</option>
+                                <option value="9">Syyskuu</option>
+                                <option value="10">Lokakuu</option>
+                                <option value="11">Marraskuu</option>
+                                <option value="12">Joulukuu</option>
+                            </select>
+                        </label>
+                        <label>Vuosi:
+                            <select id="yearSelector">
+                                <option value="2024">2024</option>
+                                <option value="2025" selected>2025</option>
+                                <option value="2026">2026</option>
+                            </select>
+                        </label>
+                    </div>
+                    <button id="loadPeriodCountBtn" class="btn-primary">Lataa tiedot</button>
+                </div>
+            </div>
+
+            <!-- Route Times Report -->
+            <div class="dashboard-section">
+                <h3>Reittiajat</h3>
+                <div class="date-filter-container">
+                    <label>Alkaen: <input type="date" id="routeTimesStartDate" /></label>
+                    <label>Päättyen: <input type="date" id="routeTimesEndDate" /></label>
+                    <div class="circuit-multi-select-container">
+                        <label>Piirit:
+                            <button id="selectCircuitsBtn" class="btn-secondary">Valitse piirit</button>
+                        </label>
+                        <div id="selectedCircuitsDisplay" class="selected-circuits">Kaikki piirit</div>
+                    </div>
+                    <button id="loadRouteTimesBtn" class="btn-primary">Lataa tiedot</button>
+                    <button id="exportRouteTimesBtn" class="btn-success">📊 Lataa Excel</button>
+                </div>
+                <div id="routeTimesTable" class="table-container"></div>
+            </div>
         </div>
     </main>
     
     </div>
     <!-- End Main Application -->
 
+    <script src="api.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

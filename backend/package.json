@@ -4,13 +4,20 @@
   "description": "Backend server for Mailia delivery tracking system",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "nodemon",
+    "dev:old": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "postinstall": "npm run build",
     "migrate": "psql -d mailia_db -f database/schema.sql",
-    "import:csv": "ts-node scripts/import-csv.ts",
-    "create:admin": "ts-node scripts/create-admin.ts",
-    "sftp:sync": "ts-node src/services/sftpSync.ts"
+    "import:csv": "tsx scripts/import-csv.ts",
+    "create:admin": "tsx scripts/create-admin.ts",
+    "create:user": "tsx scripts/create-user.ts",
+    "sftp:sync": "tsx src/services/sftpSync.ts"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
   },
   "keywords": [
     "delivery",
@@ -44,9 +51,12 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.6",
+    "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.15.6",
     "@types/ssh2-sftp-client": "^9.0.3",
+    "nodemon": "^3.1.10",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.3.3"
   }
 }

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import { query } from '../config/database';
 import { User, JWTPayload } from '../types';
@@ -11,15 +11,15 @@ const router = Router();
 
 // Generate JWT tokens
 const generateAccessToken = (payload: JWTPayload): string => {
-    return jwt.sign(payload, process.env.JWT_SECRET!, {
-        expiresIn: process.env.JWT_EXPIRE || '15m'
-    });
+    return jwt.sign(payload, process.env.JWT_SECRET || 'default-secret', {
+        expiresIn: process.env.JWT_EXPIRES_IN || '15m'
+    } as any);
 };
 
 const generateRefreshToken = (payload: JWTPayload): string => {
-    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
-        expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d'
-    });
+    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'default-refresh-secret', {
+        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
+    } as any);
 };
 
 // Login

@@ -2177,10 +2177,12 @@ function normalizeProduct(product) {
         { pattern: /^UVES$/i, replacement: 'UV ES' },
         { pattern: /^HSES$/i, replacement: 'HS ES' },
         { pattern: /^UVHS$/i, replacement: 'UV HS' },
-        { pattern: /^UVHSLS$/i, replacement: 'UV HS' },
+        { pattern: /^UVHSLS$/i, replacement: 'UV HSLS' },
         { pattern: /^ESHSPS$/i, replacement: 'ES HSPS' },
         { pattern: /^ESHSP$/i, replacement: 'ES HSP' },
-        { pattern: /^UVESHS$/i, replacement: 'UV ES HS' }
+        { pattern: /^UVESHS$/i, replacement: 'UV ES HS' },
+        { pattern: /^UVSTF$/i, replacement: 'UV STF' },
+        { pattern: /^ESSTF$/i, replacement: 'ES STF' }
     ];
     
     for (const {pattern, replacement} of multiProductPatterns) {
@@ -2197,6 +2199,7 @@ function getProductColorClass(product) {
     // Map alternative products to base colors
     // All HS variants → HS (green)
     // All ES variants → ES (cyan)
+    // All ISA variants → ISA (yellow)
     // UV, JO, STF, LU keep their own colors
     const colorMap = {
         // Helsingin Sanomat variants
@@ -2206,11 +2209,19 @@ function getProductColorClass(product) {
         'HSLS': 'HS',      // Hesari lauantai-sunnuntai
         'HSP': 'HS',       // Hesari maanantai-perjantai
         'HSTS': 'HS',      // Hesari torstai-sunnuntai
+        'HSTO': 'HS',      // Hesari torstai-sunnuntai
         'MALA': 'HS',      // Hesari maanantai-lauantai
         // Etelä-Saimaa variants
         'ESPS': 'ES',      // Etelä-Saimaa perjantai-sunnuntai
         'ESLS': 'ES',      // Etelä-Saimaa lauantai-sunnuntai
-        'ESP': 'ES'        // Etelä-Saimaa maanantai-perjantai
+        'ESP': 'ES',       // Etelä-Saimaa maanantai-perjantai
+        'ESMP': 'ES',      // Etelä-Saimaa ma-pe
+        'ETSA': 'ES',      // Etelä-Saimaa ma-la
+        // Itä-Savo variants
+        'ISAP': 'ISA',     // Itä-Savo ma-pe
+        'ISALASU': 'ISA',  // Itä-Savo la-su
+        'ISAPESU': 'ISA',  // Itä-Savo pe-su
+        'ISASU': 'ISA'     // Itä-Savo sunnuntai
     };
     return colorMap[product] || product;
 }
@@ -2236,14 +2247,26 @@ function isProductValidForDay(product, dayOfWeek) {
         'HSPS': [FRIDAY, SATURDAY, SUNDAY],          // Hesari perjantai-sunnuntai
         'HSPE': [FRIDAY],                            // Hesari perjantai - Friday only
         'HSLS': [SATURDAY, SUNDAY],                  // Hesari lauantai-sunnuntai
-        'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai - Monday to Friday
+        'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai
         'HSTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY],           // Hesari torstai-sunnuntai
         'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
+        'HSPE': [FRIDAY],                            // Hesari perjantai
+        'HSTO': [THURSDAY, FRIDAY, SATURDAY, SUNDAY], // Hesari torstai-sunnuntai (sama kuin HSTS)
         // Etelä-Saimaa variants
         // Note: plain ES is a daily product (delivered every day), so it's not listed here
         'ESPS': [FRIDAY, SATURDAY, SUNDAY],          // Etelä-Saimaa perjantai-sunnuntai
         'ESLS': [SATURDAY, SUNDAY],                  // Etelä-Saimaa lauantai-sunnuntai
-        'ESP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]   // Etelä-Saimaa maanantai-perjantai
+        'ESP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],   // Etelä-Saimaa maanantai-perjantai
+        'ESMP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Etelä-Saimaa ma-pe (sama kuin ESP)
+        'ETSA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY], // Etelä-Saimaa ma-la
+        // Itä-Savo variants
+        'ISAP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Itä-Savo ma-pe
+        'ISALASU': [SATURDAY, SUNDAY],               // Itä-Savo la-su
+        'ISAPESU': [FRIDAY, SATURDAY, SUNDAY],       // Itä-Savo pe-su
+        'ISASU': [SUNDAY],                           // Itä-Savo sunnuntai
+        // Other products
+        'PASA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY], // Parikkalan Sanomat ma-la
+        'YHTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY] // Yhteishyvä to-su
     };
     
     // If the product has a specific schedule, check if today is valid
@@ -2251,7 +2274,7 @@ function isProductValidForDay(product, dayOfWeek) {
         return productSchedule[product].includes(dayOfWeek);
     }
     
-    // All other products (UV, HS, ES, JO, STF, LU, etc.) are always valid (every day)
+    // All other products (UV, HS, ES, JO, STF, LU, ISA, Muu, RL, PL, etc.) are always valid (every day)
     return true;
 }
 
@@ -2283,52 +2306,69 @@ function expandCombinedProducts(productString, dayOfWeek) {
 /**
  * Simplifies product display names based on delivery days
  * E.g., ESP (mon-fri) displays as "ES" on those days
+ * E.g., HSPE (friday) displays as "HS" on friday
  */
 function simplifyProductName(product, dayOfWeek) {
     const normalized = normalizeProduct(product);
     
-    // ESP -> ES on Monday-Friday
+    // Etelä-Saimaa variants -> ES
     if (normalized === 'ESP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
         return 'ES';
     }
-    // ESPS -> ES on Friday-Sunday
+    if (normalized === 'ESMP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
+        return 'ES';
+    }
     if (normalized === 'ESPS' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
         return 'ES';
     }
-    // ESLS -> ES on Saturday-Sunday
     if (normalized === 'ESLS' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
         return 'ES';
     }
-    // HSP -> HS on Monday-Friday
+    if (normalized === 'ETSA' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY].includes(dayOfWeek)) {
+        return 'ES';
+    }
+    
+    // Helsingin Sanomat variants -> HS
     if (normalized === 'HSP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    // HSPS -> HS on Friday-Sunday
     if (normalized === 'HSPS' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    // HSPE -> HS on Friday
     if (normalized === 'HSPE' && dayOfWeek === FRIDAY) {
         return 'HS';
     }
-    // HSLS -> HS on Saturday-Sunday  
     if (normalized === 'HSLS' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    // HSTS -> HS on Thursday-Sunday
     if (normalized === 'HSTS' && [THURSDAY, FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    // MALA -> HS on Monday-Saturday
+    if (normalized === 'HSTO' && [THURSDAY, FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'HS';
+    }
     if (normalized === 'MALA' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY].includes(dayOfWeek)) {
         return 'HS';
     }
-    // SH -> HS on Sunday
     if (normalized === 'SH' && dayOfWeek === SUNDAY) {
         return 'HS';
     }
     
-    // Return original for all other cases
+    // Itä-Savo variants -> ISA
+    if (normalized === 'ISAP' && [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY].includes(dayOfWeek)) {
+        return 'ISA';
+    }
+    if (normalized === 'ISALASU' && [SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'ISA';
+    }
+    if (normalized === 'ISAPESU' && [FRIDAY, SATURDAY, SUNDAY].includes(dayOfWeek)) {
+        return 'ISA';
+    }
+    if (normalized === 'ISASU' && dayOfWeek === SUNDAY) {
+        return 'ISA';
+    }
+    
+    // Return original for all other cases (UV, STF, JO, LU, PASA, YHTS, etc.)
     return product;
 }
 

@@ -1471,6 +1471,34 @@ main {
     color: white;
 }
 
+.product-badge.product-ISA {
+    background: #FFD700;            /* Gold for Itä-Savo */
+    color: #1A1D21;                 /* Dark text for contrast */
+}
+
+.product-badge.product-PASA {
+    background: #48C9B0;            /* Turquoise for Parikkalan Sanomat */
+    color: white;
+}
+
+.product-badge.product-YHTS {
+    background: #E74C3C;            /* Red for Yhteishyvä */
+    color: white;
+}
+
+.product-badge.product-MST {
+    background: #9B59B6;            /* Purple for Maaseudun Tulevaisuus */
+    color: white;
+}
+
+.product-badge.product-Muu,
+.product-badge.product-RL,
+.product-badge.product-PL,
+.product-badge.product-LUUM {
+    background: #95A5A6;            /* Gray for miscellaneous */
+    color: white;
+}
+
 .product-badge .count {
     margin-left: 0.4rem;
     background: rgba(255, 255, 255, 0.3);
@@ -1481,6 +1509,7 @@ main {
 }
 
 body.dark-mode .product-badge.product-UV .count,
+body.dark-mode .product-badge.product-ISA .count,
 body.dark-mode .product-badge.product-STF .count {
     background: rgba(0, 0, 0, 0.2);
 }
@@ -1874,6 +1903,34 @@ body.dark-mode .subscriber-name {
 
 .product-tag.product-LU {
     background: #FFA726;
+    color: white;
+}
+
+.product-tag.product-ISA {
+    background: #FFD700;            /* Gold for Itä-Savo */
+    color: #1A1D21;                 /* Dark text for contrast */
+}
+
+.product-tag.product-PASA {
+    background: #48C9B0;            /* Turquoise for Parikkalan Sanomat */
+    color: white;
+}
+
+.product-tag.product-YHTS {
+    background: #E74C3C;            /* Red for Yhteishyvä */
+    color: white;
+}
+
+.product-tag.product-MST {
+    background: #9B59B6;            /* Purple for Maaseudun Tulevaisuus */
+    color: white;
+}
+
+.product-tag.product-Muu,
+.product-tag.product-RL,
+.product-tag.product-PL,
+.product-tag.product-LUUM {
+    background: #95A5A6;            /* Gray for miscellaneous */
     color: white;
 }
 

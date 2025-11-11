@@ -1804,7 +1804,7 @@ function initializeRefreshButtons() {
                 const totalMessages = messages.length + storedLocalMessages.length;
 
                 if (totalMessages === 0) {
-                    showNotificationEnhanced('Ei viestejä tyhjennettävänä', 'info');
+                    showNotification('Ei viestejä tyhjennettävänä', 'info');
                     return;
                 }
 
@@ -1849,7 +1849,7 @@ function initializeRefreshButtons() {
                                         messagesContainer.innerHTML = '';
                                     }
 
-                                    showNotificationEnhanced(`${totalMessages} viestiä tyhjennetty`, 'success');
+                                    showNotification(`${totalMessages} viestiä tyhjennetty`, 'success');
                                     
                                     // Wait a moment for backend to process deletions, then refresh
                                     await new Promise(resolve => setTimeout(resolve, 300));
@@ -1857,7 +1857,7 @@ function initializeRefreshButtons() {
                                     close();
                                 } catch (error) {
                                     console.error('Error clearing messages:', error);
-                                    showNotificationEnhanced('Viestien tyhjennys epäonnistui', 'error');
+                                    showNotification('Viestien tyhjennys epäonnistui', 'error');
                                 } finally {
                                     setLoading(clearAllMessagesBtn, false);
                                 }
@@ -1867,7 +1867,7 @@ function initializeRefreshButtons() {
                 });
             } catch (error) {
                 console.error('Error loading messages for clear:', error);
-                showNotificationEnhanced('Virhe ladattaessa viestejä', 'error');
+                showNotification('Virhe ladattaessa viestejä', 'error');
             }
         });
     }
@@ -3368,7 +3368,26 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     });
     card.appendChild(reportBtn);
     
-    // Navigation removed - use "Näytä kartalla" feature instead (available for authorized users)
+    // Navigation link using OpenStreetMap (if not last)
+    if (!isLast) {
+        const nextAddress = getNextAddress(buildings, currentBuildingIndex, currentSubIndex);
+        if (nextAddress) {
+            const link = document.createElement('a');
+            link.className = 'nav-link';
+            const subscriberAddress = subscriber.address;
+            // Use OpenStreetMap directions instead of Google Maps
+            link.href = `https://www.openstreetmap.org/directions?from=&to=${encodeURIComponent(subscriberAddress + ', Imatra, Finland')}`;
+            link.target = '_blank';
+            link.title = `Navigoi osoitteeseen ${subscriberAddress}`;
+            link.innerHTML = `
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+            `;
+            card.appendChild(link);
+        }
+    }
     
     return card;
 }

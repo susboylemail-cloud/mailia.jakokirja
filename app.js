@@ -515,10 +515,14 @@ function initializeWebSocketListeners() {
         const data = event.detail;
         console.log('Message received event:', data);
         
-        // Show notification
-        const messageText = data.message || 'Uusi viesti';
-        const username = data.username || 'Tuntematon';
-        showNotification(`${username}: ${messageText}`, 'info');
+        // Only show notification if from another user
+        const currentUser = window.mailiaAPI.getCurrentUser();
+        const currentUsername = currentUser?.username;
+        if (data.username && data.username !== currentUsername) {
+            const messageText = data.message || 'Uusi viesti';
+            const username = data.username || 'Tuntematon';
+            showNotification(`${username}: ${messageText}`, 'info');
+        }
         
         // Refresh messages if messages view is active
         const messagesTab = document.querySelector('.tab-content.active#messagesTab');
@@ -1773,9 +1777,6 @@ function initializeRefreshButtons() {
     const clearAllMessagesBtn = document.getElementById('clearAllMessagesBtn');
     if (clearAllMessagesBtn) {
         clearAllMessagesBtn.addEventListener('click', async () => {
-            const confirmed = confirm('Haluatko varmasti merkitä kaikki viestit luetuiksi?');
-            if (!confirmed) return;
-
             clearAllMessagesBtn.classList.add('refreshing');
             clearAllMessagesBtn.disabled = true;
 
@@ -1787,6 +1788,9 @@ function initializeRefreshButtons() {
                     showNotification('Ei lukemattomia viestejä', 'info');
                     return;
                 }
+
+                const confirmed = confirm(`Haluatko varmasti merkitä kaikki ${unreadMessages.length} viestiä luetuiksi?`);
+                if (!confirmed) return;
 
                 // Mark all unread messages as read
                 const promises = unreadMessages.map(msg => window.mailiaAPI.markMessageAsRead(msg.id));
@@ -3489,7 +3493,7 @@ function saveRouteMessage(message) {
                     );
                 })
                 .then(() => {
-                    showNotification('Viesti lähetetty', 'success');
+                    // Refresh messages view if active
                     const messagesTab = document.querySelector('.tab-content.active#messagesTab');
                     if (messagesTab) { renderRouteMessages(); }
                 })
@@ -3519,7 +3523,7 @@ function saveRouteMessage(message) {
             'issue',  // message type
             `${message.reason} - ${message.address}` // message content
         ).then(() => {
-            showNotification('Viesti lähetetty', 'success');
+            // Refresh messages view if active (no notification here)
             const messagesTab = document.querySelector('.tab-content.active#messagesTab');
             if (messagesTab) { renderRouteMessages(); }
         }).catch(error => {
@@ -3584,9 +3588,8 @@ function initializeMessageSwipe() {
     // We'll add swipe handlers to message cards dynamically
 }
 
-function addSwipeToMessageCard(messageCard, messageId) {
-    if (!messageId || typeof messageId === 'string' && messageId.startsWith('offline-')) {
-        // Skip swipe for offline messages
+function addSwipeToMessageCard(messageCard, messageId, isOffline) {
+    if (!messageId) {
         return;
     }
 
@@ -3628,9 +3631,13 @@ function addSwipeToMessageCard(messageCard, messageId) {
         
         messageCard.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
         
-        // If swiped more than 100px, mark as read
+        // If swiped more than 100px, dismiss message
         if (diff > 100) {
-            await markMessageAsRead(messageCard, messageId);
+            if (isOffline) {
+                await dismissOfflineMessage(messageCard, messageId);
+            } else {
+                await markMessageAsRead(messageCard, messageId);
+            }
         } else {
             // Snap back
             messageCard.style.transform = '';
@@ -3651,6 +3658,23 @@ function addSwipeToMessageCard(messageCard, messageId) {
     
     messageCard.style.cursor = 'grab';
     messageCard.style.userSelect = 'none';
+}
+
+async function dismissOfflineMessage(messageCard, messageId) {
+    // Animate card off screen
+    messageCard.style.transform = 'translateX(100%)';
+    messageCard.style.opacity = '0';
+    
+    setTimeout(() => {
+        // Remove the offline message from localStorage
+        const messages = loadRouteMessages();
+        const index = parseInt(messageId.replace('offline-', ''));
+        if (index >= 0 && index < messages.length) {
+            messages.splice(index, 1);
+            localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+        }
+        renderRouteMessages();
+    }, 300);
 }
 
 async function markMessageAsRead(messageCard, messageId) {
@@ -4103,10 +4127,8 @@ async function renderRouteMessages() {
         messageCard.appendChild(messageHeader);
         messageCard.appendChild(messageBody);
 
-        // Add swipe-to-dismiss functionality only for synced messages
-        if (!message.is_offline) {
-            addSwipeToMessageCard(messageCard, message.id);
-        }
+        // Add swipe-to-dismiss functionality for all messages
+        addSwipeToMessageCard(messageCard, message.id, message.is_offline);
 
         messagesContainer.appendChild(messageCard);
     };

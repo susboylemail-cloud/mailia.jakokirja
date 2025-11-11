@@ -262,6 +262,145 @@ function initializeApp() {
     console.log('[initializeApp] effective role:', role);
     if (role === 'admin' || role === 'manager') {
         initializeDashboard();
+        // Reveal admin duplicates button
+        const btn = document.getElementById('adminDuplicatesBtn');
+        if (btn) btn.hidden = false;
+        // Check overlaps and toggle alert if needed
+        refreshAdminOverlapIndicator();
+    }
+}
+function initAdminDuplicatesUI() {
+    const btn = document.getElementById('adminDuplicatesBtn');
+    if (!btn) return;
+    btn.addEventListener('click', openAdminDuplicatesModal);
+}
+
+async function fetchAdminDuplicates() {
+    try {
+        const data = await window.mailiaAPI.makeRequest('/admin/duplicates');
+        return data;
+    } catch (e) {
+        console.error('Failed to fetch duplicates', e);
+        showNotification('Virhe ladattaessa päällekkäisyyksiä', 'error');
+        return null;
+    }
+}
+
+function formatCircuitBadges(circuits) {
+    return circuits.map(c => `<span class="circuit-badge">${c}</span>`).join('');
+}
+
+function renderOverlapTable(items, type) {
+    if (!items || !items.length) return `<p class='empty-msg'>Ei päällekkäisiä (${type}).</p>`;
+    return `<table class='overlap-table' aria-label='${type} päällekkäisyydet'>
+        <thead><tr><th>Avain</th><th>Piirit</th><th>Lkm</th><th>Esimerkki</th><th>Whitelist</th></tr></thead>
+        <tbody>
+        ${items.map(r => {
+            const key = r.key;
+            const rowId = `${type}-row-${key.replace(/[^a-z0-9]/gi,'_')}`;
+            return `<tr id='${rowId}'>
+                <td class='key-cell'>${key}</td>
+                <td>${formatCircuitBadges(r.circuits)}</td>
+                <td>${r.total}</td>
+                <td class='example-cell'>${r.example || ''}</td>
+                <td><button type='button' class='whitelist-add-btn' data-key='${key}' data-type='${type}'>Lisää</button></td>
+            </tr>`;
+        }).join('')}
+        </tbody>
+    </table>`;
+}
+
+function buildWhitelistPreview(whitelist) {
+    const b = whitelist?.buildings?.length || 0;
+    const u = whitelist?.units?.length || 0;
+    return `<div class='whitelist-summary'>Whitelist: ${b} rakennusta, ${u} yksikköä</div>`;
+}
+
+function openAdminDuplicatesModal() {
+    createModal({
+        title: 'Päällekkäiset osoitteet',
+        bodyHTML: `<div class='admin-duplicates-loading'>Ladataan...</div>`,
+        actions: [
+            { id: 'closeAdminDup', label: 'Sulje', variant: 'secondary', handler: ({ close }) => close() },
+            { id: 'saveWhitelist', label: 'Tallenna whitelist', variant: 'primary', handler: ({ close }) => submitWhitelistChanges(close) }
+        ],
+        ariaLabel: 'Admin päällekkäiset osoitteet'
+    });
+    // After slight delay fetch data
+    setTimeout(async () => {
+        const modalBody = document.querySelector('.modal-body');
+        const data = await fetchAdminDuplicates();
+        if (!data) { modalBody.innerHTML = '<p>Virhe datassa</p>'; return; }
+        const { overlaps, whitelist } = data;
+        const buildingsHTML = `<h4>Rakennukset</h4>${renderOverlapTable(overlaps.buildings, 'building')}`;
+        const unitsHTML = `<h4>Yksiköt</h4>${renderOverlapTable(overlaps.units, 'unit')}`;
+        modalBody.innerHTML = `
+            ${buildWhitelistPreview(whitelist)}
+            <div class='overlaps-section'>${buildingsHTML}${unitsHTML}</div>
+            <details class='current-whitelist'>
+              <summary>Nykyinen whitelist JSON</summary>
+              <pre id='whitelistJson'>${escapeHtml(JSON.stringify(whitelist, null, 2))}</pre>
+            </details>
+            <div class='pending-additions' aria-live='polite'>Ei valintoja</div>
+        `;
+        setupWhitelistAdditions(whitelist);
+    }, 50);
+}
+
+function escapeHtml(str) {
+    return str.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+
+let pendingWhitelist = { buildings: [], units: [] };
+
+function setupWhitelistAdditions(existing) {
+    pendingWhitelist = { buildings: [], units: [] };
+    const body = document.querySelector('.modal-body');
+    if (!body) return;
+    body.addEventListener('click', e => {
+        const btn = e.target.closest('.whitelist-add-btn');
+        if (!btn) return;
+        const key = btn.getAttribute('data-key');
+        const type = btn.getAttribute('data-type');
+        if (!key || !type) return;
+        const arr = pendingWhitelist[type === 'building' ? 'buildings' : 'units'];
+        if (!arr.some(entry => (typeof entry === 'string' ? entry.toLowerCase() === key.toLowerCase() : String(entry.key).toLowerCase() === key.toLowerCase()))) {
+            arr.push(key);
+            btn.disabled = true;
+            btn.textContent = 'Lisätty';
+            updatePendingAdditions();
+        }
+    });
+}
+
+function updatePendingAdditions() {
+    const el = document.querySelector('.pending-additions');
+    if (!el) return;
+    const b = pendingWhitelist.buildings.length;
+    const u = pendingWhitelist.units.length;
+    if (b === 0 && u === 0) {
+        el.textContent = 'Ei valintoja';
+    } else {
+        el.textContent = `Lisätään whitelist: ${b} rakennusta, ${u} yksikköä`;
+    }
+}
+
+async function submitWhitelistChanges(close) {
+    if (!pendingWhitelist.buildings.length && !pendingWhitelist.units.length) {
+        showNotification('Ei uusia kohteita', 'info');
+        return;
+    }
+    try {
+        await window.mailiaAPI.makeRequest('/admin/whitelist', {
+            method: 'PUT',
+            body: JSON.stringify({ mode: 'merge', buildings: pendingWhitelist.buildings, units: pendingWhitelist.units }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        showNotification('Whitelist päivitetty', 'success');
+        close();
+    } catch (e) {
+        console.error('Whitelist save failed', e);
+        showNotification('Whitelist tallennus epäonnistui', 'error');
     }
 }
 
@@ -485,18 +624,66 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
     buttons.push({ id: 'mapView', label: 'Näytä kartalla', variant: 'secondary', icon: 'map', handler: ({ close }) => { showCircuitMap(circuitId); close(); }});
     if (!routeData || status === 'not-started') {
         buttons.push({ id: 'startRoute', label: 'Aloita reitti', variant: 'primary', icon: 'play', handler: async ({ close }) => {
-            try { const route = await window.mailiaAPI.startRoute(circuitId); localStorage.setItem(`route_id_${circuitId}`, route.id); showNotification(`Reitti ${circuitId} aloitettu`, 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin aloitus epäonnistui', 'error'); }
+            try {
+                const route = await window.mailiaAPI.startRoute(circuitId);
+                localStorage.setItem(`route_id_${circuitId}`, route.id);
+                localStorage.setItem(`route_start_${circuitId}`, new Date(route.start_time || Date.now()).toISOString());
+                showNotification(`Reitti ${circuitId} aloitettu`, 'success');
+                if (currentCircuit === circuitId) {
+                    showSubscriberListWithAnimation();
+                    updateRouteButtons(circuitId);
+                }
+                renderCircuitTracker();
+                close();
+            } catch(e){ console.error(e); showNotification('Reitin aloitus epäonnistui', 'error'); }
         }});
         buttons.push({ id: 'completeRoute', label: 'Merkitse valmiiksi', variant: 'secondary', icon: 'check', handler: async ({ close }) => {
-            try { let routeId = routeData?.id; if (!routeId) { const route = await window.mailiaAPI.startRoute(circuitId); routeId = route.id; localStorage.setItem(`route_id_${circuitId}`, route.id); } await window.mailiaAPI.resetRoute(routeId, 'completed'); showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin merkkaus epäonnistui', 'error'); }
+            try {
+                let routeId = routeData?.id;
+                if (!routeId) {
+                    const route = await window.mailiaAPI.startRoute(circuitId);
+                    routeId = route.id;
+                    localStorage.setItem(`route_id_${circuitId}`, route.id);
+                    localStorage.setItem(`route_start_${circuitId}`, new Date(route.start_time || Date.now()).toISOString());
+                }
+                await window.mailiaAPI.resetRoute(routeId, 'completed');
+                localStorage.setItem(`route_end_${circuitId}`, new Date().toISOString());
+                showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+                if (currentCircuit === circuitId) {
+                    hideSubscriberListWithAnimation();
+                    updateRouteButtons(circuitId);
+                }
+                renderCircuitTracker();
+                close();
+            } catch(e){ console.error(e); showNotification('Reitin merkkaus epäonnistui', 'error'); }
         }});
     } else {
         buttons.push({ id: 'resetRoute', label: 'Nollaa reitti', variant: 'secondary', icon: 'reset', handler: async ({ close }) => {
-            try { await window.mailiaAPI.resetRoute(routeData.id, 'not-started'); showNotification('Jakelustatus nollattu', 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin nollaus epäonnistui', 'error'); }
+            try {
+                await window.mailiaAPI.resetRoute(routeData.id, 'not-started');
+                localStorage.removeItem(`route_start_${circuitId}`);
+                localStorage.removeItem(`route_end_${circuitId}`);
+                showNotification('Jakelustatus nollattu', 'success');
+                if (currentCircuit === circuitId) {
+                    updateRouteButtons(circuitId);
+                }
+                renderCircuitTracker();
+                close();
+            } catch(e){ console.error(e); showNotification('Reitin nollaus epäonnistui', 'error'); }
         }});
         if (status !== 'completed') {
             buttons.push({ id: 'completeRoute', label: 'Merkitse valmiiksi', variant: 'primary', icon: 'check', handler: async ({ close }) => {
-                try { await window.mailiaAPI.resetRoute(routeData.id, 'completed'); showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin merkkaus epäonnistui', 'error'); }
+                try {
+                    await window.mailiaAPI.resetRoute(routeData.id, 'completed');
+                    localStorage.setItem(`route_end_${circuitId}`, new Date().toISOString());
+                    showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+                    if (currentCircuit === circuitId) {
+                        hideSubscriberListWithAnimation();
+                        updateRouteButtons(circuitId);
+                    }
+                    renderCircuitTracker();
+                    close();
+                } catch(e){ console.error(e); showNotification('Reitin merkkaus epäonnistui', 'error'); }
             }});
         }
     }
@@ -1147,6 +1334,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize stamp animation
     initializeLogoAnimation();
+    initAdminDuplicatesUI();
 });
 
 // Logo Animation - Simple fade in (no stamp animation needed)
@@ -1730,6 +1918,9 @@ function parseOldFormatCSVLine(line) {
     
     // Skip if no address
     if (!address) return null;
+
+    // Fix repeated address artifacts like "SALAMAKUJA 5 SALAMAKUJA 5"
+    address = fixRepeatedAddress(address);
     
     // Parse products - handle semicolons, commas, spaces, and UVES
     // First, replace UVES with "UV ES" to split it
@@ -1778,10 +1969,13 @@ function parseNewFormatCSVLine(line) {
         // Skip if no street or number
         if (!street || !number) return null;
         
-        // Build address
-        let address = `${street} ${number}`;
+    // Build address
+    let address = `${street} ${number}`;
         if (stairwell) address += ` ${stairwell}`;
         if (apartment) address += ` ${apartment}`;
+
+    // Fix repeated address artifacts like "SALAMAKUJA 5 SALAMAKUJA 5"
+    address = fixRepeatedAddress(address);
         
         // Parse products - extract product codes from brackets
         // Also handle space-separated products like "ES HSPS"
@@ -1867,6 +2061,28 @@ function extractApartmentSpecification(fullAddress, buildingAddress) {
     }
     
     return spec;
+}
+
+// Collapse accidental repeated address like "SALAMAKUJA 5 SALAMAKUJA 5"
+function fixRepeatedAddress(address) {
+    if (!address) return address;
+    const a = address.trim().replace(/\s+/g, ' ');
+    const words = a.split(' ');
+    // Only attempt if there are at least 4 tokens and an even count
+    if (words.length >= 4 && words.length % 2 === 0) {
+        const half = words.length / 2;
+        const first = words.slice(0, half).join(' ');
+        const second = words.slice(half).join(' ');
+        if (first.toUpperCase() === second.toUpperCase()) {
+            return first;
+        }
+    }
+    // Also collapse duplicated street token at start e.g. "PILVIKUJA PILVIKUJA 5 B 6" -> "PILVIKUJA 5 B 6"
+    const streetDupMatch = a.match(/^([A-ZÅÄÖ]+)\s+\1\s+(.*)$/i);
+    if (streetDupMatch) {
+        return `${streetDupMatch[1]} ${streetDupMatch[2]}`.trim();
+    }
+    return a;
 }
 
 // Circuit Selector
@@ -2104,7 +2320,32 @@ async function loadCircuitDataFromCSV(circuitId) {
             return [];
         }
         const text = await response.text();
-        const data = parseCircuitCSV(text, filename);
+        let data = parseCircuitCSV(text, filename);
+        const beforeCount = data.length;
+        // Dedupe exact same unit-level addresses while merging products
+        const seen = new Map();
+        const orderKeys = [];
+        const norm = (s) => String(s || '').toUpperCase().replace(/\s+/g, ' ').trim();
+        data.forEach(sub => {
+            // Normalize repeated tokens again here in case parser missed patterns
+            sub.address = fixRepeatedAddress(sub.address);
+            const key = norm(sub.address);
+            if (!seen.has(key)) {
+                seen.set(key, { ...sub, products: [...sub.products] });
+                orderKeys.push(key);
+            } else {
+                const prev = seen.get(key);
+                // Merge products and keep the earliest orderIndex
+                const merged = Array.from(new Set([...(prev.products||[]), ...(sub.products||[]) ]));
+                prev.products = merged;
+                prev.orderIndex = Math.min(prev.orderIndex ?? Infinity, sub.orderIndex ?? Infinity);
+            }
+        });
+        data = orderKeys.map(k => seen.get(k));
+        const afterCount = data.length;
+        if (afterCount !== beforeCount) {
+            console.log(`[dedupe] Circuit ${circuitId}: ${beforeCount} -> ${afterCount} after collapsing duplicates`);
+        }
         
         // Cache the loaded data
         allData[circuitId] = data;
@@ -2133,7 +2374,9 @@ async function loadCircuit(circuitId) {
         deliveryContent.style.display = 'block';
         
         renderCoverSheet(circuitId, subscribers);
-        renderSubscriberList(circuitId, subscribers);
+    renderSubscriberList(circuitId, subscribers);
+    // After rendering, check for local duplicates for admin alert icon
+    try { maybeFlagAdminOverlapIcon(subscribers); } catch(e){ console.warn('duplicate check failed', e); }
         updateRouteButtons(circuitId);
         
         // Hide subscriber list initially - it will be shown when route starts
@@ -2167,6 +2410,49 @@ async function loadCircuit(circuitId) {
     } catch (error) {
         console.error('Error in loadCircuit:', error);
         throw error; // Re-throw to be caught by selectCircuit
+    }
+}
+
+// Toggle admin duplicates button alert state based on backend overlaps or local duplicates
+async function refreshAdminOverlapIndicator() {
+    const role = getEffectiveUserRole();
+    if (!(role === 'admin' || role === 'manager')) return;
+    const btn = document.getElementById('adminDuplicatesBtn');
+    if (!btn) return;
+    try {
+        const data = await fetchAdminDuplicates();
+        const count = (data?.overlaps?.buildings?.length || 0) + (data?.overlaps?.units?.length || 0);
+        if (count > 0) {
+            btn.classList.add('alert');
+            btn.setAttribute('title', 'Päällekkäisiä osoitteita havaittu');
+        } else {
+            btn.classList.remove('alert');
+            btn.removeAttribute('title');
+        }
+    } catch(e) {
+        // ignore
+    }
+}
+
+// If the currently loaded circuit itself has exact duplicate unit addresses, flag the admin icon
+function maybeFlagAdminOverlapIcon(subscribers) {
+    const role = getEffectiveUserRole();
+    if (!(role === 'admin' || role === 'manager')) return;
+    const btn = document.getElementById('adminDuplicatesBtn');
+    if (!btn) return;
+    const norm = (s) => String(s || '').toUpperCase().replace(/\s+/g, ' ').trim();
+    const counts = new Map();
+    for (const sub of subscribers) {
+        const key = norm(sub.address);
+        counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const hasLocalDup = Array.from(counts.values()).some(v => v > 1);
+    if (hasLocalDup) {
+        btn.classList.add('alert');
+        btn.setAttribute('title', 'Piirissä päällekkäisiä osoitteita');
+        showNotification('Piirissä havaittiin päällekkäisiä osoitteita (katso Admin ▶ Ristikkäiset osoitteet)', 'info');
+    } else {
+        // Do not remove here; backend overlaps may still exist. Let refreshAdminOverlapIndicator decide.
     }
 }
 
@@ -2488,6 +2774,8 @@ function simplifyProductName(product, dayOfWeek) {
 function renderSubscriberList(circuitId, subscribers) {
     const listContainer = document.getElementById('subscriberList');
     listContainer.innerHTML = '';
+    // Reset admin numbering counter for this render
+    window.__deliveryCounter = 1;
     
     // Get current day of week
     const today = new Date().getDay();
@@ -2624,6 +2912,17 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const card = document.createElement('div');
     card.className = 'subscriber-card';
     card.dataset.products = subscriber.products.join(',');
+    // Admin-only subtle numbering badge (increments across visible list)
+    const roleForBadge = getEffectiveUserRole();
+    if (roleForBadge === 'admin' || roleForBadge === 'manager') {
+        if (typeof window.__deliveryCounter !== 'number') {
+            window.__deliveryCounter = 1;
+        }
+        const numberBadge = document.createElement('span');
+        numberBadge.className = 'delivery-index-badge';
+        numberBadge.textContent = String(window.__deliveryCounter++);
+        card.appendChild(numberBadge);
+    }
     
     // Add spacing class for new staircase
     if (isNewStaircase) {
@@ -2956,7 +3255,10 @@ function saveRouteMessage(message) {
         if (window.mailiaAPI) {
             window.mailiaAPI.startRoute(message.circuit)
                 .then(route => {
+                    // Persist start state locally for UI consistency
                     localStorage.setItem(`route_id_${message.circuit}`, route.id);
+                    localStorage.setItem(`route_start_${message.circuit}`, new Date(route.start_time || Date.now()).toISOString());
+                    updateRouteButtons(message.circuit);
                     // Now send the message
                     return window.mailiaAPI.sendMessage(
                         route.id,
@@ -2965,10 +3267,13 @@ function saveRouteMessage(message) {
                     );
                 })
                 .then(() => {
-                    console.log('Route created and message saved');
+                    showNotification('Viesti lähetetty', 'success');
+                    const messagesTab = document.querySelector('.tab-content.active#messagesTab');
+                    if (messagesTab) { renderRouteMessages(); }
                 })
                 .catch(error => {
                     console.error('Failed to create route or save message:', error);
+                    showNotification('Viestin lähetys epäonnistui (tallennettu paikallisesti)', 'error');
                     // Fallback to localStorage
                     const messages = loadRouteMessages();
                     messages.push(message);
@@ -2980,6 +3285,7 @@ function saveRouteMessage(message) {
             const messages = loadRouteMessages();
             messages.push(message);
             localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+            showNotification('Viesti tallennettu offline-tilassa', 'info');
             return;
         }
     }
@@ -2991,9 +3297,12 @@ function saveRouteMessage(message) {
             'issue',  // message type
             `${message.reason} - ${message.address}` // message content
         ).then(() => {
-            console.log('Message saved to database and broadcasted');
+            showNotification('Viesti lähetetty', 'success');
+            const messagesTab = document.querySelector('.tab-content.active#messagesTab');
+            if (messagesTab) { renderRouteMessages(); }
         }).catch(error => {
             console.error('Failed to save message:', error);
+            showNotification('Viestin lähetys epäonnistui (tallennettu paikallisesti)', 'error');
             // Fallback to localStorage
             const messages = loadRouteMessages();
             messages.push(message);
@@ -3004,6 +3313,7 @@ function saveRouteMessage(message) {
         const messages = loadRouteMessages();
         messages.push(message);
         localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+        showNotification('Viesti tallennettu offline-tilassa', 'info');
     }
 }
 

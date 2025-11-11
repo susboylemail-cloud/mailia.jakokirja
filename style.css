@@ -1,3 +1,21 @@
+/* Admin duplicates UI */
+.overlap-table { width:100%; border-collapse: collapse; margin: .75rem 0; font-size:.85rem; }
+.overlap-table th, .overlap-table td { border:1px solid var(--border-color); padding:.4rem .5rem; text-align:left; }
+.overlap-table th { background: var(--card-bg); position:sticky; top:0; }
+.circuit-badge { display:inline-block; background: var(--accent-bg, #334); color:#fff; padding:.15rem .45rem; border-radius: 12px; margin:0 .15rem .15rem 0; font-size:.65rem; letter-spacing:.5px; }
+.whitelist-summary { font-weight:600; margin-bottom:.5rem; }
+.whitelist-add-btn { background: var(--primary-btn-bg,#2d6cdf); color:#fff; border:none; padding:.3rem .6rem; border-radius:4px; cursor:pointer; font-size:.7rem; }
+.whitelist-add-btn[disabled] { opacity:.5; cursor:default; }
+.pending-additions { margin-top:.75rem; font-size:.75rem; color: var(--text-color); }
+.empty-msg { font-style:italic; color: var(--text-muted,#666); }
+details.current-whitelist { margin-top:1rem; }
+details.current-whitelist pre { background: var(--code-bg,#111); color:#eee; padding:.75rem; border-radius:6px; max-height:180px; overflow:auto; font-size:.65rem; }
+/* Overlap alert indicator on admin duplicates button */
+#adminDuplicatesBtn.alert { position:relative; }
+#adminDuplicatesBtn.alert::after {
+    content:''; position:absolute; top:-4px; right:-4px; width:14px; height:14px; background:#d93025; border:2px solid var(--card-bg); border-radius:50%; box-shadow:0 0 0 2px rgba(217,48,37,0.4); animation:pulseOverlap 1.4s ease-in-out infinite;
+}
+@keyframes pulseOverlap { 0%{ transform:scale(.9); box-shadow:0 0 0 2px rgba(217,48,37,0.4);} 50%{ transform:scale(1.15); box-shadow:0 0 0 4px rgba(217,48,37,0.2);} 100%{ transform:scale(.9); box-shadow:0 0 0 2px rgba(217,48,37,0.4);} }
 /* CSS Variables */
 :root {
     /* New Dark Theme Color Palette */
@@ -127,7 +145,7 @@ body.dark-mode {
     color: var(--text-color);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 2rem;
+    padding: 2rem 2rem 2.4rem 2rem; /* extra bottom padding to avoid actions overlap */
     width: 90%;
     max-width: 440px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.45);
@@ -135,7 +153,23 @@ body.dark-mode {
 
 .app-modal h3 { margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600; }
 
-.app-modal .modal-actions { display:flex; gap:.75rem; justify-content:flex-end; margin-top:1.25rem; }
+.app-modal .modal-actions { display:flex; gap:.75rem; justify-content:flex-end; margin-top:1.6rem; }
+
+/* Form control spacing inside modal */
+.app-modal select,
+.app-modal textarea,
+.app-modal input[type="text"],
+.app-modal input[type="number"],
+.app-modal input[type="email"],
+.app-modal input[type="password"] {
+        margin-top: .35rem;
+        margin-bottom: .9rem;
+}
+
+@media (max-width: 520px) {
+    .app-modal { padding: 1.4rem 1.2rem 2.1rem 1.2rem; }
+    .app-modal .modal-actions { flex-wrap: wrap; gap:.6rem; margin-top:1.3rem; }
+}
 
 .modal-btn-primary {
     padding:.75rem 1.5rem;
@@ -1911,6 +1945,29 @@ body.dark-mode .building-header {
     touch-action: pan-y; /* Allow vertical scrolling while handling horizontal swipes */
 }
 
+/* Admin-only subtle sequential index badge */
+.delivery-index-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.08);
+    color: var(--text-color);
+    font-size: 0.55rem;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 10px;
+    letter-spacing: .5px;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    opacity: .55;
+}
+
+body.dark-mode .delivery-index-badge {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    opacity: .45;
+}
+
 /* Add spacing for new staircase within same building */
 .subscriber-card.new-staircase {
     margin-top: 0.75rem;
@@ -2527,6 +2584,17 @@ body.dark-mode .circuit-menu-button:hover {
     /* Position will be set dynamically by JavaScript */
 }
 
+/* Ensure form controls inside custom dialogs have spacing */
+.custom-dialog-content select,
+.custom-dialog-content textarea,
+.custom-dialog-content input[type="text"],
+.custom-dialog-content input[type="number"],
+.custom-dialog-content input[type="email"],
+.custom-dialog-content input[type="password"] {
+    margin-top: .35rem;
+    margin-bottom: .9rem;
+}
+
 .custom-dialog-message {
     font-size: 1.1rem;
     margin-bottom: 1.5rem;
@@ -2538,6 +2606,7 @@ body.dark-mode .circuit-menu-button:hover {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
+    margin-top: 1rem; /* ensure space above actions so they don't overlap content */
 }
 
 .custom-dialog-btn {

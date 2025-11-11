@@ -11,6 +11,7 @@ Backend server for the Mailia delivery tracking system with real-time synchroniz
 - **Working Time Tracking**: Comprehensive time tracking and reporting
 - **RESTful API**: Complete API for circuit, route, and delivery management
 - **PostgreSQL Database**: Robust data persistence with proper relations
+- **Duplicate Overlap Guard**: CSV import detects cross-circuit building/unit overlaps and can skip non-whitelisted duplicates
 
 ## Tech Stack
 
@@ -45,10 +46,20 @@ Backend server for the Mailia delivery tracking system with real-time synchroniz
    cp .env.example .env
    ```
    
-   Edit `.env` with your configuration:
+  Edit `.env` with your configuration. For local development against a non-SSL Postgres, prefer discrete DB_* vars and disable SSL:
    ```env
-   # Database
-   DATABASE_URL=postgresql://postgres:password@localhost:5432/mailia_db
+  # Database (local dev)
+  USE_DATABASE_URL=false
+  DB_SSL=false
+  DB_HOST=localhost
+  DB_PORT=5432
+  DB_NAME=mailia_db
+  DB_USER=postgres
+  DB_PASSWORD=yourlocalpassword
+   
+  # Alternatively for hosted environments (e.g. Heroku/Railway)
+  # USE_DATABASE_URL=true
+  # DATABASE_URL=postgresql://user:pass@host:5432/dbname
    
    # JWT Secrets
    JWT_SECRET=your-super-secret-jwt-key-change-this
@@ -71,6 +82,19 @@ Backend server for the Mailia delivery tracking system with real-time synchroniz
    psql -d mailia_db -f database/schema.sql
    ```
 
+5. (Optional) Configure duplicate overlap handling
+
+  Create a `duplicates-whitelist.json` in the project root to mark intentional shared buildings/units:
+
+  ```json
+  {
+    "buildings": ["keskuskatu 10"],
+    "units": [ { "key": "keskuskatu 10|a|12", "circuits": ["KP18"], "reason": "shared entrance" } ]
+  }
+  ```
+
+  During CSV import, overlaps not in this whitelist are skipped unless `IMPORT_ALLOW_OVERLAP=true`.
+
 5. **Create initial admin user** (run in psql):
    ```sql
    INSERT INTO users (username, email, password_hash, full_name, role)
@@ -92,6 +116,57 @@ npm run dev
 ```
 
 Server runs on `http://localhost:3000`
+
+If you need to run the server detached from your terminal (e.g., to run quick local HTTP tests in the same shell), you can use:
+
+```powershell
+# Windows PowerShell
+Start-Process -FilePath 'node' -ArgumentList 'dist/server.js' -WorkingDirectory '<repo>\backend'
+```
+
+### Windows PowerShell quick tests
+
+Build, start (detached), health check:
+
+```powershell
+cd '<repo>\backend'
+npm run build
+Start-Process -FilePath 'node' -ArgumentList 'dist/server.js' -WorkingDirectory (Get-Location)
+Invoke-RestMethod -Uri 'http://localhost:3000/health' -Method Get | ConvertTo-Json -Depth 3
+```
+
+Login and route lifecycle via PowerShell:
+
+```powershell
+# Login
+$body = @{ username='admin'; password='admin123' } | ConvertTo-Json
+$login = Invoke-RestMethod -Uri 'http://localhost:3000/api/auth/login' -Method Post -ContentType 'application/json' -Body $body
+$login | ConvertTo-Json -Depth 5
+$token = $login.accessToken
+
+# Start route
+$startBody = @{ circuitId='KP3'; routeDate=(Get-Date).ToString('yyyy-MM-dd') } | ConvertTo-Json
+Invoke-RestMethod -Uri 'http://localhost:3000/api/routes/start' -Headers @{ Authorization = "Bearer $token" } -Method Post -ContentType 'application/json' -Body $startBody | ConvertTo-Json -Depth 5
+
+# Complete route (replace 123 with your route id)
+Invoke-RestMethod -Uri 'http://localhost:3000/api/routes/123/complete' -Headers @{ Authorization = "Bearer $token" } -Method Post | ConvertTo-Json -Depth 5
+```
+
+Or use the included helper scripts (recommended to avoid quoting issues):
+
+```powershell
+# Login
+node scripts/http-login.mjs 'http://localhost:3000' 'admin' 'admin123'
+
+# Start a route for KP3 today
+node scripts/start-route.mjs 'http://localhost:3000' 'admin' 'admin123' 'KP3'
+
+# Complete route (replace <id>)
+node scripts/complete-route.mjs 'http://localhost:3000' 'admin' 'admin123' <id>
+
+# Watch WebSocket route:updated events
+node scripts/ws-watch-route-updates.mjs 'http://localhost:3000' 'admin' 'admin123'
+```
 
 ### Production
 
@@ -394,6 +469,11 @@ Check PostgreSQL is running and credentials are correct:
 psql -U postgres -d mailia_db
 ```
 
+If you see "The server does not support SSL connections" in logs when running locally, ensure:
+
+- `USE_DATABASE_URL=false` and `DB_SSL=false` are set in `.env`
+- You restarted the server after changing `.env`
+
 ### SFTP sync not working
 
 Test SFTP connection manually:
@@ -411,6 +491,22 @@ Ensure CORS is configured for your frontend URL in `.env`:
 ```env
 CLIENT_URL=http://localhost:5500
 ```
+
+### CSV import skips addresses
+
+If you see `High-risk overlap` warnings in logs, the importer detected an address overlapping another circuit.
+
+- If intentional, add it to `duplicates-whitelist.json` (project root) and re-run the import.
+- To force accept temporarily, set `IMPORT_ALLOW_OVERLAP=true` in environment.
+
+To create a review list and suggestions:
+
+```bash
+node scripts/find-duplicates.js
+node scripts/remediate-duplicates.js --write-suggestions
+```
+
+Review `remediation-report.csv` and curate `duplicates-whitelist.json` using `duplicates-whitelist.suggestions.json` as a starting point.
 
 ## License
 

@@ -8,7 +8,9 @@
     "postinstall": "cd backend && npm install",
     "serve": "http-server -p 5500 .",
     "test:e2e": "playwright test",
-    "ci": "npm run serve & sleep 2 && npm run test:e2e"
+    "ci": "npm run serve & sleep 2 && npm run test:e2e",
+    "scan:duplicates": "node scripts/find-duplicates.js",
+    "remediate:duplicates": "node scripts/remediate-duplicates.js"
   },
   "engines": {
     "node": "18.x",

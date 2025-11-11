@@ -1,0 +1,27 @@
+# Node and build artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+logs/
+**/logs/
+.cache/
+.DS_Store
+
+# Env files
+.env
+**/.env
+.env.local
+.env.production
+
+# Reports and generated CSV/JSON
+duplicates-report.json
+duplicates-report.md
+remediation-report.json
+remediation-report.csv
+duplicates-whitelist.suggestions.json
+
+# OS/editor
+Thumbs.db
+.vscode/
+.idea/

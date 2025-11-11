@@ -124,9 +124,19 @@ router.post('/start',
                 [userId, circuit.rows[0].id, routeDate]
             );
 
+            // Get circuit_id string for broadcast context
+            const circuitResult = await query(
+                'SELECT circuit_id FROM circuits WHERE id = $1',
+                [result.rows[0].circuit_id]
+            );
+            const circuitIdStr = circuitResult.rows[0]?.circuit_id;
+
             broadcastRouteUpdate(result.rows[0].id, {
                 action: 'started',
-                route: result.rows[0]
+                route: result.rows[0],
+                circuitId: circuitIdStr,
+                status: 'in-progress',
+                startTime: result.rows[0].start_time
             });
 
             res.json(result.rows[0]);
@@ -155,9 +165,20 @@ router.post('/:routeId/complete', authenticate, async (req: AuthRequest, res) =>
             return res.status(404).json({ error: 'Route not found' });
         }
 
+        // Get circuit_id string for the route
+        const circuitResult = await query(
+            'SELECT circuit_id FROM circuits WHERE id = $1',
+            [result.rows[0].circuit_id]
+        );
+        const circuitIdStr = circuitResult.rows[0]?.circuit_id;
+
         broadcastRouteUpdate(parseInt(routeId), {
             action: 'completed',
-            route: result.rows[0]
+            route: result.rows[0],
+            circuitId: circuitIdStr,
+            status: 'completed',
+            startTime: result.rows[0].start_time,
+            endTime: result.rows[0].end_time
         });
 
         res.json(result.rows[0]);

@@ -20,21 +20,21 @@ import messageRoutes from './routes/messages';
 import dashboardRoutes from './routes/dashboard';
 import { initializeWebSocket } from './services/websocket';
 import { startSFTPSync } from './services/sftpSync';
-// import pool from './config/database';
+import pool from './config/database';
 
 dotenv.config();
 
 // Test database connection on startup
-// pool.connect((err, client, release) => {
-//     if (err) {
-//         logger.error('Failed to connect to database:', err);
-//         process.exit(1);
-//     }
-//     logger.info('Database connected successfully');
-//     if (client) {
-//         release();
-//     }
-// });
+pool.connect((err, client, release) => {
+    if (err) {
+        logger.error('Failed to connect to database:', err);
+        process.exit(1);
+    }
+    logger.info('Database connected successfully');
+    if (client) {
+        release();
+    }
+});
 
 const app: Express = express();
 
@@ -89,8 +89,19 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'production') {
     const frontendPath = path.join(__dirname, '../../');
     app.use(express.static(frontendPath, {
-        maxAge: '1d',
-        etag: true
+        maxAge: '1y', // Cache for 1 year for versioned assets
+        etag: true,
+        immutable: true, // Assets with version query params are immutable
+        setHeaders: (res, filepath) => {
+            // Longer cache for versioned assets (with ?v= query)
+            if (filepath.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+                res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            }
+            // Shorter cache for HTML
+            if (filepath.endsWith('.html')) {
+                res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+            }
+        }
     }));
 }
 

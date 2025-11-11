@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Mailia delivery tracking system for Imatra postal circuits",
   "scripts": {
-    "build": "cd backend && npm install && npm run build",
+    "build": "npm run build:css && npm run build:js && cd backend && npm install && npm run build",
+    "build:css": "csso style.css -o style.min.css",
+    "build:js": "terser app.js -o app.min.js -c -m && terser api.js -o api.min.js -c -m",
     "start": "cd backend && npm start",
     "postinstall": "cd backend && npm install",
     "serve": "http-server -p 5500 .",
@@ -25,9 +27,11 @@
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "autoprefixer": "^10.4.22",
+    "csso-cli": "^4.0.2",
     "http-server": "^14.1.1",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.17"
+    "tailwindcss": "^4.1.17",
+    "terser": "^5.44.1"
   },
   "main": "api.js",
   "directories": {

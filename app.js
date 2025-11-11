@@ -926,9 +926,136 @@ function initCircuitSearchEnhancements() {
 }
 
 // ----- Service Worker Registration -----
+let deferredPWAPrompt = null;
+
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js').catch(err => console.warn('SW registration failed', err));
+        navigator.serviceWorker.register('service-worker.js')
+            .then(registration => {
+                console.log('[SW] Registered successfully');
+                
+                // Check for updates periodically
+                setInterval(() => {
+                    registration.update();
+                }, 60 * 60 * 1000); // Check every hour
+                
+                // Listen for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker available, show update prompt
+                            showUpdateNotification();
+                        }
+                    });
+                });
+            })
+            .catch(err => console.warn('[SW] Registration failed', err));
+    }
+}
+
+function showUpdateNotification() {
+    const updateMsg = document.createElement('div');
+    updateMsg.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #007bff;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10001;
+        font-weight: 500;
+    `;
+    updateMsg.innerHTML = `
+        Uusi versio saatavilla! 
+        <button style="margin-left: 10px; padding: 4px 12px; background: white; color: #007bff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+            Päivitä nyt
+        </button>
+    `;
+    
+    updateMsg.querySelector('button').addEventListener('click', () => {
+        window.location.reload();
+    });
+    
+    document.body.appendChild(updateMsg);
+}
+
+// PWA Install Prompt
+function initPWAInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPWAPrompt = e;
+        
+        // Show install button if user is authenticated
+        if (isAuthenticated) {
+            showPWAInstallButton();
+        }
+    });
+    
+    // Track successful installs
+    window.addEventListener('appinstalled', () => {
+        console.log('[PWA] App installed successfully');
+        deferredPWAPrompt = null;
+        hidePWAInstallButton();
+    });
+}
+
+function showPWAInstallButton() {
+    // Check if button already exists
+    if (document.getElementById('pwaInstallBtn')) return;
+    
+    const installBtn = document.createElement('button');
+    installBtn.id = 'pwaInstallBtn';
+    installBtn.innerHTML = '📲 Asenna sovellus';
+    installBtn.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        z-index: 1000;
+        transition: all 0.3s ease;
+    `;
+    
+    installBtn.addEventListener('click', async () => {
+        if (!deferredPWAPrompt) return;
+        
+        deferredPWAPrompt.prompt();
+        const { outcome } = await deferredPWAPrompt.userChoice;
+        console.log('[PWA] Install prompt outcome:', outcome);
+        
+        deferredPWAPrompt = null;
+        hidePWAInstallButton();
+    });
+    
+    installBtn.addEventListener('mouseenter', () => {
+        installBtn.style.transform = 'scale(1.05)';
+        installBtn.style.boxShadow = '0 6px 16px rgba(0,123,255,0.4)';
+    });
+    
+    installBtn.addEventListener('mouseleave', () => {
+        installBtn.style.transform = 'scale(1)';
+        installBtn.style.boxShadow = '0 4px 12px rgba(0,123,255,0.3)';
+    });
+    
+    document.body.appendChild(installBtn);
+}
+
+function hidePWAInstallButton() {
+    const btn = document.getElementById('pwaInstallBtn');
+    if (btn) {
+        btn.style.opacity = '0';
+        setTimeout(() => btn.remove(), 300);
     }
 }
 
@@ -938,6 +1065,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initJumpNextUndelivered();
     initCircuitSearchEnhancements();
     registerServiceWorker();
+    initPWAInstallPrompt();
 });
 
 function showLoginScreen() {

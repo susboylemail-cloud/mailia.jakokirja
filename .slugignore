@@ -6,3 +6,9 @@
 # Exclude CSV data files from the slug (already imported to DB)
 *.csv
 **/*.csv
+
+# Exclude source files when minified versions exist
+# Uncomment these when using minified builds in production
+# app.js
+# api.js
+# style.css

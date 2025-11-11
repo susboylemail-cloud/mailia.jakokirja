@@ -1810,25 +1810,97 @@ function extractCircuitId(filename) {
     return filename.replace(' DATA.csv', '').replace('.csv', '').replace(/\s+/g, '').toUpperCase();
 }
 
+function splitCsvRows(text) {
+    const rows = [];
+    let insideQuotes = false;
+    let current = '';
+    const sanitized = text.replace(/\ufeff/g, '');
+
+    for (let i = 0; i < sanitized.length; i++) {
+        const char = sanitized[i];
+        const nextChar = sanitized[i + 1];
+
+        if (char === '"') {
+            if (insideQuotes && nextChar === '"') {
+                current += '"';
+                i++;
+            } else {
+                insideQuotes = !insideQuotes;
+                current += char;
+            }
+        } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+            if (char === '\r' && nextChar === '\n') {
+                i++;
+            }
+            if (current.length > 0) {
+                rows.push(current.replace(/\r/g, ''));
+                current = '';
+            }
+        } else {
+            current += char;
+        }
+    }
+
+    if (current.length > 0) {
+        rows.push(current.replace(/\r/g, ''));
+    }
+
+    return rows.filter(row => row.trim().length > 0);
+}
+
+function tokenizeCsvFields(line, delimiter) {
+    const fields = [];
+    let currentField = '';
+    let insideQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+
+        if (char === '"') {
+            if (insideQuotes && nextChar === '"') {
+                currentField += '"';
+                i++;
+            } else {
+                insideQuotes = !insideQuotes;
+            }
+        } else if (char === delimiter && !insideQuotes) {
+            fields.push(currentField);
+            currentField = '';
+        } else {
+            currentField += char;
+        }
+    }
+
+    fields.push(currentField);
+    return fields.map(field => field.replace(/\r/g, ''));
+}
+
 function parseCircuitCSV(text, filename) {
-    const lines = text.trim().split('\n');
+    const rows = splitCsvRows(text);
+    if (!rows.length) {
+        return [];
+    }
+
     const subscribers = [];
-    
-    // Detect CSV format by checking the header
-    const header = lines[0].toLowerCase();
+    const headerRaw = rows[0];
+    const header = headerRaw.toLowerCase();
     const isNewFormat = header.includes('katu') && header.includes('osoitenumero');
-    
-    // Skip header line
-    for (let i = 1; i < lines.length; i++) {
-        const subscriber = isNewFormat ? parseNewFormatCSVLine(lines[i]) : parseOldFormatCSVLine(lines[i]);
+    const detectedDelimiter = headerRaw.includes(';') && !headerRaw.includes(',') ? ';' : ',';
+
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row.trim()) continue;
+        const subscriber = isNewFormat
+            ? parseNewFormatCSVLine(row, detectedDelimiter)
+            : parseOldFormatCSVLine(row, detectedDelimiter);
         if (subscriber) {
-            // Add original order index to maintain CSV order
             subscriber.orderIndex = i;
             subscribers.push(subscriber);
         }
     }
-    
-    return subscribers;
+
+    return dedupeParsedSubscribers(subscribers);
 }
 
 // Helper function to clean up angle bracket markings from text
@@ -1839,38 +1911,10 @@ function cleanAngleBrackets(text) {
     return text.replace(/<[^>]*>/g, '').trim();
 }
 
-function parseOldFormatCSVLine(line) {
-    // Parse CSV line with proper quote handling
-    // Detect delimiter: semicolon or comma
-    const delimiter = line.includes(';') ? ';' : ',';
-    
-    const fields = [];
-    let currentField = '';
-    let insideQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        const nextChar = line[i + 1];
-        
-        if (char === '"') {
-            if (insideQuotes && nextChar === '"') {
-                // Escaped quote
-                currentField += '"';
-                i++;
-            } else {
-                // Toggle quote state
-                insideQuotes = !insideQuotes;
-            }
-        } else if (char === delimiter && !insideQuotes) {
-            // Field separator
-            fields.push(currentField);
-            currentField = '';
-        } else {
-            currentField += char;
-        }
-    }
-    fields.push(currentField);
-    
+function parseOldFormatCSVLine(line, delimiter = ',') {
+    const effectiveDelimiter = delimiter || (line.includes(';') ? ';' : ',');
+    const fields = tokenizeCsvFields(line, effectiveDelimiter);
+
     // Handle different CSV formats
     let streetName, houseNumber, name, productsStr;
     
@@ -1950,14 +1994,11 @@ function parseOldFormatCSVLine(line) {
         name,
         buildingAddress: extractBuildingAddress(address)
     };
-    
-    return null;
 }
 
-function parseNewFormatCSVLine(line) {
-    // Parse new format: Katu,Osoitenumero,Porras/Huom,Asunto,Tilaaja,Tilaukset
-    const fields = line.split(',').map(f => f.trim());
-    
+function parseNewFormatCSVLine(line, delimiter = ',') {
+    const fields = tokenizeCsvFields(line, delimiter).map(f => f.trim());
+
     if (fields.length >= 6) {
         const street = fields[0].trim();
         const number = fields[1].trim();
@@ -1968,14 +2009,12 @@ function parseNewFormatCSVLine(line) {
         
         // Skip if no street or number
         if (!street || !number) return null;
-        
-    // Build address
-    let address = `${street} ${number}`;
+
+        let address = `${street} ${number}`;
         if (stairwell) address += ` ${stairwell}`;
         if (apartment) address += ` ${apartment}`;
 
-    // Fix repeated address artifacts like "SALAMAKUJA 5 SALAMAKUJA 5"
-    address = fixRepeatedAddress(address);
+        address = fixRepeatedAddress(address);
         
         // Parse products - extract product codes from brackets
         // Also handle space-separated products like "ES HSPS"
@@ -2004,6 +2043,70 @@ function parseNewFormatCSVLine(line) {
     }
     
     return null;
+}
+
+function normalizeAddressForDedup(address) {
+    if (!address) return '';
+    return fixRepeatedAddress(address).toUpperCase().replace(/\s+/g, ' ').trim();
+}
+
+function appendDistinctName(list, name) {
+    if (!name) return;
+    const normalized = name.trim().toLowerCase();
+    if (!normalized) return;
+    const exists = list.some(existing => existing.trim().toLowerCase() === normalized);
+    if (!exists) {
+        list.push(name.trim());
+    }
+}
+
+function mergeProductLists(target, source) {
+    const seen = new Set(target.map(p => p.toUpperCase()));
+    source.forEach(product => {
+        const normalized = product.toUpperCase();
+        if (!seen.has(normalized)) {
+            seen.add(normalized);
+            target.push(product);
+        }
+    });
+}
+
+function dedupeParsedSubscribers(subscribers) {
+    if (!subscribers.length) return subscribers;
+
+    const byAddress = new Map();
+    const order = [];
+
+    subscribers.forEach((subscriber, index) => {
+        const key = normalizeAddressForDedup(subscriber.address) || `__NO_ADDRESS__${index}`;
+
+        if (!byAddress.has(key)) {
+            const copy = { ...subscriber, products: [...subscriber.products] };
+            copy.orderIndex = subscriber.orderIndex ?? index;
+            copy._names = [];
+            appendDistinctName(copy._names, subscriber.name);
+            order.push(key);
+            byAddress.set(key, copy);
+        } else {
+            const existing = byAddress.get(key);
+            mergeProductLists(existing.products, subscriber.products || []);
+            existing.orderIndex = Math.min(existing.orderIndex, subscriber.orderIndex ?? index);
+            appendDistinctName(existing._names, subscriber.name);
+        }
+    });
+
+    const deduped = order
+        .map(key => byAddress.get(key))
+        .map(entry => {
+            if (entry._names && entry._names.length) {
+                entry.name = entry._names.join(' / ');
+            }
+            delete entry._names;
+            return entry;
+        })
+        .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+
+    return deduped;
 }
 
 function extractBuildingAddress(address) {

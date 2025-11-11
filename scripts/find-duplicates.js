@@ -48,8 +48,46 @@ function parseCsvLine(line){
   return out.map(s => s.replace(/^\"|\"$/g,'').trim());
 }
 
+function splitCsvRows(text) {
+  const rows = [];
+  let insideQuotes = false;
+  let current = '';
+  const sanitized = text.replace(/\ufeff/g, '');
+
+  for (let i = 0; i < sanitized.length; i++) {
+    const char = sanitized[i];
+    const nextChar = sanitized[i + 1];
+
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        insideQuotes = !insideQuotes;
+        current += char;
+      }
+    } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i++;
+      }
+      if (current.length > 0) {
+        rows.push(current.replace(/\r/g, ''));
+        current = '';
+      }
+    } else {
+      current += char;
+    }
+  }
+
+  if (current.length > 0) {
+    rows.push(current.replace(/\r/g, ''));
+  }
+
+  return rows.filter(row => row.trim().length > 0);
+}
+
 function parseCSV(content){
-  const lines = content.split(/\r?\n/).filter(l=>l.trim().length>0);
+  const lines = splitCsvRows(content);
   if (lines.length === 0) return { format: 'empty', rows: [], header: [] };
   const headerFields = parseCsvLine(lines[0]);
   const format = detectFormat(headerFields);

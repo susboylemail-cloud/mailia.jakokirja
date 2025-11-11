@@ -43,16 +43,53 @@ export const extractCircuitId = (filename: string): string => {
     return filename.replace(' DATA.csv', '').replace('.csv', '').replace(/\s+/g, '').toUpperCase();
 };
 
-// Parse old format CSV (same as frontend)
-const parseOldFormatCSVLine = (line: string, delimiter: string = ','): CSVSubscriber | null => {
+const splitCsvRows = (text: string): string[] => {
+    const rows: string[] = [];
+    let insideQuotes = false;
+    let current = '';
+    const sanitized = text.replace(/\ufeff/g, '');
+
+    for (let i = 0; i < sanitized.length; i++) {
+        const char = sanitized[i];
+        const nextChar = sanitized[i + 1];
+
+        if (char === '"') {
+            if (insideQuotes && nextChar === '"') {
+                current += '"';
+                i++;
+            } else {
+                insideQuotes = !insideQuotes;
+                current += char;
+            }
+        } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+            if (char === '\r' && nextChar === '\n') {
+                i++;
+            }
+            if (current.length > 0) {
+                rows.push(current.replace(/\r/g, ''));
+                current = '';
+            }
+        } else {
+            current += char;
+        }
+    }
+
+    if (current.length > 0) {
+        rows.push(current.replace(/\r/g, ''));
+    }
+
+    return rows.filter(row => row.trim().length > 0);
+};
+
+const tokenizeCsvFields = (line: string, delimiter: string): string[] => {
     const fields: string[] = [];
     let currentField = '';
     let insideQuotes = false;
-    
+
     for (let i = 0; i < line.length; i++) {
         const char = line[i];
         const nextChar = line[i + 1];
-        
+
         if (char === '"') {
             if (insideQuotes && nextChar === '"') {
                 currentField += '"';
@@ -68,6 +105,14 @@ const parseOldFormatCSVLine = (line: string, delimiter: string = ','): CSVSubscr
         }
     }
     fields.push(currentField);
+
+    return fields.map(field => field.replace(/\r/g, ''));
+};
+
+// Parse old format CSV (same as frontend)
+const parseOldFormatCSVLine = (line: string, delimiter: string = ','): CSVSubscriber | null => {
+    const effectiveDelimiter = delimiter || (line.includes(';') ? ';' : ',');
+    const fields = tokenizeCsvFields(line, effectiveDelimiter);
     
     if (fields.length >= 5) {
         const street = fields[1].trim();
@@ -157,32 +202,34 @@ export const importCSVFile = async (filePath: string): Promise<void> => {
         logger.info(`Importing CSV file: ${filename} as circuit ${circuitId}`);
         
         const fileContent = await fs.readFile(filePath, 'utf-8');
-        const lines = fileContent.trim().split('\n');
-        
-        if (lines.length === 0) {
+        const rows = splitCsvRows(fileContent);
+
+        if (rows.length === 0) {
             throw new Error('Empty CSV file');
         }
         
         // Detect format and delimiter
-        const header = lines[0].toLowerCase();
+        const header = rows[0].toLowerCase();
         const isNewFormat = header.includes('katu') && header.includes('osoitenumero');
-        
-        // Detect delimiter: semicolon or comma
-        const delimiter = header.includes(';') ? ';' : ',';
-        
-    let subscribers: CSVSubscriber[] = [];
-        
-        // Parse each line
-        for (let i = 1; i < lines.length; i++) {
+        const headerDelimiter = rows[0].includes(';') && !rows[0].includes(',') ? ';' : ',';
+
+        let subscribers: CSVSubscriber[] = [];
+
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row.trim()) {
+                continue;
+            }
+
             let subscriber: CSVSubscriber | null;
-            
+
             if (isNewFormat) {
-                const fields = lines[i].split(delimiter).map(f => f.trim());
+                const fields = tokenizeCsvFields(row, headerDelimiter).map(f => f.trim());
                 subscriber = parseNewFormatCSVLine(fields);
             } else {
-                subscriber = parseOldFormatCSVLine(lines[i], delimiter);
+                subscriber = parseOldFormatCSVLine(row, headerDelimiter);
             }
-            
+
             if (subscriber) {
                 // Apply repeated address fix & recompute buildingAddress
                 subscriber.address = fixRepeatedAddress(subscriber.address);

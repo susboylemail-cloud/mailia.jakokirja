@@ -2820,7 +2820,7 @@ function renderCoverSheet(circuitId, subscribers) {
     // Display product counts
     productCounts.innerHTML = '';
     
-    // Add map view button for all users
+    // Add map view button first
     const mapButton = document.createElement('button');
     mapButton.className = 'map-view-btn';
     mapButton.innerHTML = `
@@ -2850,7 +2850,7 @@ function renderCoverSheet(circuitId, subscribers) {
     `;
     mapButton.onclick = (e) => {
         e.stopPropagation();
-        showMaponMap(circuitId);
+        showCircuitMap(circuitId);
     };
     
     // Add hover effect
@@ -3368,9 +3368,8 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     });
     card.appendChild(reportBtn);
     
-    // Navigation link for authorized users only (using OpenStreetMap)
-    const currentUser = window.mailiaAPI?.getCurrentUser();
-    if (currentUser && currentUser.username === 'paivystys.imatra' && !isLast) {
+    // Navigation link using OpenStreetMap (if not last)
+    if (!isLast) {
         const nextAddress = getNextAddress(buildings, currentBuildingIndex, currentSubIndex);
         if (nextAddress) {
             const link = document.createElement('a');
@@ -5836,49 +5835,94 @@ async function showMaponMap(circuitId) {
 // Initialize Mapon map with geocoded addresses
 async function initializeMaponMapWithGeocoding(circuitId, circuitData, mapContainer, infoPanel, excludedInfo) {
     try {
-        // Use Nominatim for geocoding (free and open)
+        // Use Nominatim for geocoding with caching
         const locations = [];
         let geocodedCount = 0;
+        let cachedCount = 0;
 
         showNotification('Haetaan osoitteiden sijainteja...', 'info');
 
-        for (const subscriber of circuitData) {
-            const fullAddress = `${subscriber.address}, Imatra, Finland`;
+        // Initialize geocoding cache
+        const cache = await initGeocodingCache();
+
+        // Group by street to reduce API calls
+        const streetGroups = {};
+        circuitData.forEach(subscriber => {
+            const street = subscriber.address.split(' ')[0]; // Extract street name
+            if (!streetGroups[street]) streetGroups[street] = [];
+            streetGroups[street].push(subscriber);
+        });
+
+        // Process in batches of 3 requests at a time (respectful to Nominatim)
+        const batchSize = 3;
+        const streets = Object.keys(streetGroups);
+        
+        for (let i = 0; i < circuitData.length; i += batchSize) {
+            const batch = circuitData.slice(i, i + batchSize);
             
-            try {
-                // Use Nominatim geocoding service
-                const encodedAddress = encodeURIComponent(fullAddress);
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`);
+            await Promise.all(batch.map(async (subscriber) => {
+                const fullAddress = `${subscriber.address}, Imatra, Finland`;
                 
-                if (!response.ok) {
-                    throw new Error('Geocoding failed');
+                try {
+                    // Check cache first
+                    const cached = await getGeocodingCache(cache, fullAddress);
+                    
+                    if (cached) {
+                        locations.push({
+                            lat: cached.lat,
+                            lon: cached.lon,
+                            address: subscriber.address,
+                            name: subscriber.name,
+                            products: subscriber.products
+                        });
+                        geocodedCount++;
+                        cachedCount++;
+                    } else {
+                        // Use Nominatim geocoding service
+                        const encodedAddress = encodeURIComponent(fullAddress);
+                        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`);
+                        
+                        if (!response.ok) {
+                            throw new Error('Geocoding failed');
+                        }
+                        
+                        const data = await response.json();
+                        
+                        if (data && data.length > 0) {
+                            const coords = {
+                                lat: parseFloat(data[0].lat),
+                                lon: parseFloat(data[0].lon)
+                            };
+                            
+                            // Save to cache
+                            await saveGeocodingCache(cache, fullAddress, coords);
+                            
+                            locations.push({
+                                lat: coords.lat,
+                                lon: coords.lon,
+                                address: subscriber.address,
+                                name: subscriber.name,
+                                products: subscriber.products
+                            });
+                            geocodedCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Could not geocode ${fullAddress}:`, error);
                 }
-                
-                const data = await response.json();
-                
-                if (data && data.length > 0) {
-                    locations.push({
-                        lat: parseFloat(data[0].lat),
-                        lon: parseFloat(data[0].lon),
-                        address: subscriber.address,
-                        name: subscriber.name,
-                        products: subscriber.products
-                    });
-                    geocodedCount++;
-                }
-                
-                // Respect Nominatim usage policy (1 request per second)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-            } catch (error) {
-                console.warn(`Could not geocode ${fullAddress}:`, error);
-            }
+            }));
 
             // Update progress
             infoPanel.innerHTML = `
                 <p style="margin: 0;">Ladataan... <strong>${geocodedCount}/${circuitData.length} osoitetta</strong></p>
+                <p style="margin: 0; font-size: 0.85rem; color: #aaa;">${cachedCount > 0 ? `(${cachedCount} välimuistista)` : ''}</p>
                 <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon</p>
             `;
+            
+            // Respectful delay between batches (only for non-cached items)
+            if (i + batchSize < circuitData.length) {
+                await new Promise(resolve => setTimeout(resolve, 400));
+            }
         }
 
         if (locations.length === 0) {
@@ -5981,6 +6025,60 @@ async function loadLeafletLibrary() {
         document.head.appendChild(script);
     });
 }
+
+// Geocoding cache functions for faster map loading
+async function initGeocodingCache() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('MailiaGeocoding', 1);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('locations')) {
+                const store = db.createObjectStore('locations', { keyPath: 'address' });
+                store.createIndex('timestamp', 'timestamp', { unique: false });
+            }
+        };
+    });
+}
+
+async function getGeocodingCache(db, address) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['locations'], 'readonly');
+        const store = transaction.objectStore('locations');
+        const request = store.get(address);
+        
+        request.onsuccess = () => {
+            const result = request.result;
+            // Cache valid for 30 days
+            if (result && (Date.now() - result.timestamp) < 30 * 24 * 60 * 60 * 1000) {
+                resolve({ lat: result.lat, lon: result.lon });
+            } else {
+                resolve(null);
+            }
+        };
+        request.onerror = () => resolve(null); // Fail gracefully
+    });
+}
+
+async function saveGeocodingCache(db, address, coords) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['locations'], 'readwrite');
+        const store = transaction.objectStore('locations');
+        const request = store.put({
+            address,
+            lat: coords.lat,
+            lon: coords.lon,
+            timestamp: Date.now()
+        });
+        
+        request.onsuccess = () => resolve();
+        request.onerror = () => resolve(); // Fail gracefully
+    });
+}
+
 
 
 

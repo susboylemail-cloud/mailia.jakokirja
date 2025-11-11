@@ -98,6 +98,95 @@
             font-weight: 600;
         }
         
+        /* Collapsible sections */
+        .collapsible-section {
+            margin-bottom: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .collapsible-section:hover {
+            border-color: var(--primary-blue);
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+        }
+        
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            background: var(--warm-gray);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+        
+        .collapsible-header:hover {
+            background: var(--border-color);
+        }
+        
+        .collapsible-header:active {
+            background: var(--primary-blue);
+            color: white;
+        }
+        
+        .collapsible-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+            flex: 1;
+        }
+        
+        .collapsible-header:active .collapsible-title {
+            color: white;
+        }
+        
+        .collapsible-icon {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+            stroke: var(--text-color);
+            flex-shrink: 0;
+        }
+        
+        .collapsible-header:active .collapsible-icon {
+            stroke: white;
+        }
+        
+        .collapsible-section.active .collapsible-icon {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            padding: 0 1.25rem;
+        }
+        
+        .collapsible-section.active .collapsible-content {
+            max-height: 2000px;
+            padding: 1rem 1.25rem 1.25rem 1.25rem;
+        }
+        
+        .collapsible-content ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .collapsible-content li {
+            margin-bottom: 0.5rem;
+            line-height: 1.7;
+        }
+        
+        .collapsible-content p {
+            margin: 0 0 0.75rem 0;
+            line-height: 1.7;
+        }
+        
         @media (max-width: 768px) {
             .help-container {
                 padding: 1.5rem;
@@ -115,6 +204,14 @@
                 padding: 0.6rem 1.2rem;
                 font-size: 0.9rem;
             }
+            
+            .collapsible-title {
+                font-size: 1rem;
+            }
+            
+            .collapsible-header {
+                padding: 0.875rem 1rem;
+            }
         }
     </style>
     <script>
@@ -129,6 +226,17 @@
                 window.location.href = 'index.html';
             }
         }
+        
+        function toggleCollapsible(element) {
+            const section = element.closest('.collapsible-section');
+            section.classList.toggle('active');
+        }
+        
+        // Expand all sections by default
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('.collapsible-section');
+            sections.forEach(section => section.classList.add('active'));
+        });
     </script>
 </head>
 <body class="dark-mode">
@@ -150,67 +258,262 @@
                 </a>
             </div>
 
-            <div class="help-section">
-                <h2>1. Valmistelut ja reitin valinta</h2>
-                <p>Ennen jakelun aloittamista voit tarkistaa reitin tiedot:</p>
-                <ul>
-                    <li><strong>Lehtimäärät:</strong> Tarkista jaettavien lehtien määrät kansilehdeltä.</li>
-                    <li><strong>Piirin valinta:</strong>
-                        <ul>
-                            <li>Etsi piiri hakutoiminnolla.</li>
-                            <li>Merkitse usein jakamasi piirit suosikiksi tähdellä. Suosikkipiirit näkyvät listan kärjessä.</li>
-                        </ul>
-                    </li>
-                </ul>
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">1. Valmistelut ja reitin valinta</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Ennen jakelun aloittamista voit tarkistaa reitin tiedot:</p>
+                    <ul>
+                        <li><strong>Lehtimäärät:</strong> Tarkista jaettavien lehtien määrät kansilehdeltä.</li>
+                        <li><strong>Piirin valinta:</strong>
+                            <ul>
+                                <li>Etsi piiri hakutoiminnolla.</li>
+                                <li>Merkitse usein jakamasi piirit suosikiksi tähdellä. Suosikkipiirit näkyvät listan kärjessä.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
-            <div class="help-section">
-                <h2>2. Jakelun suorittaminen</h2>
-                <p>Näin jakelet reitin tilaukset:</p>
-                <ul>
-                    <li><strong>Reitin aloitus:</strong> Paina "Aloita reitti". Sovellus lähettää automaattisesti kuittauksen päivystäjälle.</li>
-                    <li><strong>Jakelun kuittaus (2 tapaa):</strong>
-                        <ul>
-                            <li><strong>Pyyhkäisy (oletus):</strong> Pyyhkäise jaettua tilausta oikealle. Tilaus piiloutuu näkymästä.</li>
-                            <li><strong>Kuittausruudut:</strong> Ota käyttöön asetuksista. Kuitaa tilaus napauttamalla sen vieressä olevaa ruutua.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Näytä kartalla:</strong> Näytä koko piirin osoitteet kartalla painikkeesta "Näytä kartalla". Per-osoite navigointi on poistettu.</li>
-                </ul>
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">2. Jakelun suorittaminen</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Näin jakelet reitin tilaukset:</p>
+                    <ul>
+                        <li><strong>Reitin aloitus:</strong> Paina "Aloita reitti". Sovellus lähettää automaattisesti kuittauksen päivystäjälle.</li>
+                        <li><strong>Jakelun kuittaus (2 tapaa):</strong>
+                            <ul>
+                                <li><strong>Pyyhkäisy (oletus):</strong> Pyyhkäise jaettua tilausta oikealle. Tilaus piiloutuu näkymästä.</li>
+                                <li><strong>Kuittausruudut:</strong> Ota käyttöön asetuksista. Kuitaa tilaus napauttamalla sen vieressä olevaa ruutua.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Näytä kartalla:</strong> Näytä koko piirin osoitteet kartalla painikkeesta "Näytä kartalla". Per-osoite navigointi on poistettu.</li>
+                    </ul>
+                </div>
             </div>
 
-            <div class="help-section">
-                <h2>3. Ongelmatilanteet</h2>
-                <p>Jos kohtaat ongelmia:</p>
-                <ul>
-                    <li><strong>Jakeluhäiriö:</strong> Ilmoita ongelma (esim. laatikko täynnä, ei pääsyä) painamalla huutomerkkikuvaketta.</li>
-                    <li><strong>Yhteys päivystäjälle:</strong> Soita päivystäjälle yläpalkin puhelinkuvakkeesta.</li>
-                </ul>
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">3. Ongelmatilanteet</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Jos kohtaat ongelmia:</p>
+                    <ul>
+                        <li><strong>Jakeluhäiriö:</strong> Ilmoita ongelma (esim. laatikko täynnä, ei pääsyä) painamalla huutomerkkikuvaketta.</li>
+                        <li><strong>Yhteys päivystäjälle:</strong> Soita päivystäjälle yläpalkin puhelinkuvakkeesta.</li>
+                    </ul>
+                </div>
             </div>
 
-            <div class="help-section">
-                <h2>4. Reitin päättäminen</h2>
-                <p>Kun olet jakanut kaikki tilaukset:</p>
-                <ul>
-                    <li><strong>Reitti valmis:</strong> Paina "Reitti valmis".</li>
-                    <li>Sovellus lähettää kuittauksen päivystäjälle ja palaa reittivalikkoon.</li>
-                </ul>
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">4. Reitin päättäminen</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Kun olet jakanut kaikki tilaukset:</p>
+                    <ul>
+                        <li><strong>Reitti valmis:</strong> Paina "Reitti valmis".</li>
+                        <li>Sovellus lähettää kuittauksen päivystäjälle ja palaa reittivalikkoon.</li>
+                    </ul>
+                </div>
             </div>
 
-            <div class="help-section">
-                <h2>5. Asetukset</h2>
-                <p>Muokkaa sovelluksen toimintaa yläpalkista:</p>
-                <ul>
-                    <li><strong>Ulkoasu:</strong> Vaihda vaalean ja tumman tilan välillä.</li>
-                    <li><strong>Asetukset:</strong> Avaa asetusvalikko yläpalkista:
-                        <ul>
-                            <li><strong>Piilota STF-tilaajat:</strong> Suodata STF-tilaukset pois näkyvistä.</li>
-                            <li><strong>Kuittausruudut käytössä:</strong> Vaihda pyyhkäisyn tilalle ruudut.</li>
-                            <li><strong>Piilota kuitatut tilaukset:</strong> Piilota jaetut tilaukset automaattisesti.</li>
-                        </ul>
-                    </li>
-                </ul>
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">5. Asetukset</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Muokkaa sovelluksen toimintaa yläpalkista:</p>
+                    <ul>
+                        <li><strong>Ulkoasu:</strong> Vaihda vaalean ja tumman tilan välillä.</li>
+                        <li><strong>Asetukset:</strong> Avaa asetusvalikko yläpalkista:
+                            <ul>
+                                <li><strong>Piilota STF-tilaajat:</strong> Suodata STF-tilaukset pois näkyvistä.</li>
+                                <li><strong>Kuittausruudut käytössä:</strong> Vaihda pyyhkäisyn tilalle ruudut.</li>
+                                <li><strong>Piilota kuitatut tilaukset:</strong> Piilota jaetut tilaukset automaattisesti.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
+
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">6. Avaintiedot (Päivystäjä)</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Päivystäjä voi lisätä tärkeitä huomioita osoitteisiin:</p>
+                    <ul>
+                        <li><strong>Käyttötarkoitus:</strong> Pysyvien ja tärkeiden huomioiden (esim. avainkoodit, erikoisohjeet) lisäys tilaajan osoitteeseen.</li>
+                        <li><strong>Avaintiedon lisäys:</strong> Päivystäjä voi klikata tilaajan kortilla "Muokkaa avaintietoja" -nappia.</li>
+                        <li><strong>Näkyvyys:</strong> Avaintiedot näkyvät kaikille jakajille oranssissa laatikossa tilaajan tiedoissa.</li>
+                        <li><strong>Reaaliaikainen päivitys:</strong> Muutokset näkyvät heti kaikilla laitteilla, joissa piiri on auki.</li>
+                        <li><strong>Poisto:</strong> Päivystäjä voi tyhjentää avaintiedon "Tyhjennä"-napilla.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">7. Jakeluhäiriön ilmoitus kuvalla</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Voit nyt liittää kuvan jakeluhäiriöilmoitukseen:</p>
+                    <ul>
+                        <li><strong>Uusi ominaisuus:</strong> Voit liittää kuvan häiriöilmoitukseen ongelman dokumentoimiseksi.</li>
+                        <li><strong>Kuvan liittäminen:</strong> Paina huutomerkkikuvaketta ja valitse "Liitä kuva".</li>
+                        <li><strong>Esikatselu:</strong> Kuva näkyy heti esikatseluna ennen lähettämistä.</li>
+                        <li><strong>Käyttötarkoitus:</strong> Dokumentoi ongelma (esim. täysi postilaatikko, rikkoutunut lukko).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">8. Viestit-välilehti</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Seuraa ja hallinnoi jakeluhäiriöitä:</p>
+                    <ul>
+                        <li><strong>Toiminto:</strong> Päivän jakeluhäiriöilmoitusten selaus ja hallinta.</li>
+                        <li><strong>Viestien selaus:</strong> Näet kaikki päivän jakeluhäiriöilmoitukset.</li>
+                        <li><strong>Suodatus:</strong> Viestit voi suodattaa piirin mukaan.</li>
+                        <li><strong>Päivitys:</strong> Päivitä viestilistaus klikkaamalla päivitysnappia.</li>
+                        <li><strong>Reitin aloitus:</strong> Voit aloittaa reitin suoraan viestistä painamalla "Aloita reitti".</li>
+                        <li><strong>Tyhjennys:</strong> Päivystäjä voi tyhjentää kaikki viestit "Tyhjennä kaikki" -napilla.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">9. Seuranta-välilehti (Päivystäjä)</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Päivystäjä näkee kaikkien jakajien reitit reaaliajassa:</p>
+                    <ul>
+                        <li><strong>Käyttötarkoitus:</strong> Jakajien reittien reaaliaikainen seuranta ja hallinta.</li>
+                        <li><strong>Reitin tila:</strong> Värillä merkitty tila:
+                            <ul>
+                                <li><strong>Punainen:</strong> Aloittamaton</li>
+                                <li><strong>Vihreä:</strong> Aloitettu</li>
+                                <li><strong>Sininen:</strong> Valmis</li>
+                            </ul>
+                        </li>
+                        <li><strong>Ajastiedot:</strong> Näet aloitus- ja lopetusajat.</li>
+                        <li><strong>Edistyminen:</strong> Progress bar näyttää kuinka monta tilausta on jaettu (STF ei mukana).</li>
+                        <li><strong>Reitin hallinta:</strong> Klikkaa reittiä avataksesi hallintatoiminnot (Aloita reitti, Merkitse valmiiksi, Nollaa reitti).</li>
+                        <li><strong>Reitin tilan muutos:</strong> Vaihtoehtoinen tapa muuttaa reitin tilaa ilman reitin avaamista.</li>
+                        <li><strong>Automaattinen päivitys:</strong> Seuranta päivittyy automaattisesti 30 sekunnin välein.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">10. Offline-tila</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Sovellus toimii myös ilman verkkoyhteyttä:</p>
+                    <ul>
+                        <li><strong>Toiminta:</strong> Sovellus toimii ilman verkkoyhteyttä.</li>
+                        <li><strong>Automaattinen synkronointi:</strong> Kun yhteys palaa, muutokset lähetetään automaattisesti palvelimelle.</li>
+                        <li><strong>Offline-banneri:</strong> Punainen banneri ilmoittaa kun yhteys on poikki.</li>
+                        <li><strong>Välimuisti:</strong> Piirit ja tilaukset tallennetaan laitteelle.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">11. Työajanseuranta</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Sovellus tallentaa automaattisesti työaikasi:</p>
+                    <ul>
+                        <li><strong>Automaattinen:</strong> Työaika tallentuu automaattisesti reitin aloituksesta ja valmiiksi merkitsemisestä.</li>
+                        <li><strong>Aloitus:</strong> Kun aloitat reitin, aloitusaika tallennetaan.</li>
+                        <li><strong>Lopetus:</strong> Kun merkitset reitin valmiiksi, lopetusaika tallennetaan.</li>
+                        <li><strong>Raportointi:</strong> Päivystäjä voi tarkastella työaikoja hallintapaneelista.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">12. Reitin uudelleenaloitus</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <p>Voit aloittaa valmiin reitin uudelleen:</p>
+                    <ul>
+                        <li><strong>Toiminto:</strong> Valmiiksi merkityn reitin voi aloittaa uudelleen "Aloita reitti" -napilla.</li>
+                        <li><strong>Uudelleenaloitus:</strong> Kun reitti on merkitty valmiiksi, voit aloittaa sen uudelleen "Aloita reitti" -napilla.</li>
+                        <li><strong>Tilausten palautus:</strong> Kaikki osoitteet tulevat takaisin näkyviin.</li>
+                        <li><strong>Aiemmat kuitaukset:</strong> Edelliset kuitaukset säilyvät, mutta voit kuitata ne uudelleen tarvittaessa.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-section active">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h2 class="collapsible-title">Vinkkejä</h2>
+                    <svg class="collapsible-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="collapsible-content">
+                    <ul>
+                        <li><strong>Tehokkuus:</strong> Merkitse usein jaettavat piirit suosikeiksi nopeampaa valintaa varten.</li>
+                        <li><strong>Suosikkipiirit:</strong> Merkitse useimmin jakamasi piirit suosikeiksi nopeampaa valintaa varten.</li>
+                        <li><strong>Seuranta:</strong> Progress bar näyttää kuinka monta tilausta on vielä jakamatta.</li>
+                        <li><strong>Progress bar:</strong> Seuraa edistymistäsi progress baristä - se näyttää kuinka monta tilausta on vielä jakamatta (STF-tilaukset eivät näy kokonaismäärässä).</li>
+                        <li><strong>Tuote-tagit:</strong> Jokainen tuote näkyy omalla värillään ja lyhenteellään tilaajan kortilla.</li>
+                        <li><strong>Yleistä:</strong> Kaikki muutokset (kuitaukset, avaintiedot) päivittyvät reaaliajassa laitteiden välillä.</li>
+                        <li><strong>Reaaliaikainen päivitys:</strong> Kaikki muutokset (kuitaukset, avaintiedot, viestit) päivittyvät automaattisesti kaikilla laitteilla.</li>
+                        <li><strong>Manuaalinen päivitys:</strong> Jos automaattinen päivitys ei toimi, voit päivittää Seuranta- ja Viestit-välilehdet manuaalisesti päivitysnapilla.</li>
+                    </ul>
+                </div>
+            </div>
+
         </div>
     </main>
 

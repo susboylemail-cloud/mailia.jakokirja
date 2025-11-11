@@ -85,6 +85,9 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploaded photos
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
     const frontendPath = path.join(__dirname, '../../');

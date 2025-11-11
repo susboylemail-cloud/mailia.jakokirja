@@ -5,6 +5,7 @@ import logger from '../config/logger';
 
 export interface AuthRequest extends Request {
     user?: JWTPayload;
+    file?: Express.Multer.File;
 }
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {

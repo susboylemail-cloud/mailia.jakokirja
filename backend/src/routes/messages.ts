@@ -1,11 +1,45 @@
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { query } from '../config/database';
 import { io } from '../services/websocket';
 import logger from '../config/logger';
 
 const router = Router();
+
+// Configure multer for photo uploads
+const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+        const uploadDir = path.join(__dirname, '../../uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (_req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'issue-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (_req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif|webp/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'));
+        }
+    }
+});
 
 // Get all messages for today (for admin view)
 router.get('/today', authenticate, async (_req: AuthRequest, res): Promise<void> => {
@@ -72,6 +106,46 @@ router.post('/',
         } catch (error) {
             logger.error('Create message error:', error);
             res.status(500).json({ error: 'Failed to create message' });
+        }
+    }
+);
+
+// Create a message with photo
+router.post('/:routeId',
+    authenticate,
+    upload.single('photo'),
+    async (req: AuthRequest, res): Promise<void> => {
+        try {
+            const { routeId } = req.params;
+            const { message_type, message_content } = req.body;
+            const userId = req.user!.userId;
+
+            // Get photo URL if file was uploaded
+            let photoUrl: string | null = null;
+            if (req.file) {
+                photoUrl = `/uploads/${req.file.filename}`;
+            }
+
+            const result = await query(
+                `INSERT INTO route_messages (route_id, user_id, message_type, message, photo_url)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING *`,
+                [routeId, userId, message_type, message_content, photoUrl]
+            );
+
+            // Broadcast to all clients
+            const messageData = {
+                ...result.rows[0],
+                username: req.user!.username
+            };
+            
+            io?.emit('message:received', messageData);
+            logger.info('Broadcasted message:received with photo to all clients', messageData);
+
+            res.json(result.rows[0]);
+        } catch (error) {
+            logger.error('Create message with photo error:', error);
+            res.status(500).json({ error: 'Failed to create message with photo' });
         }
     }
 );

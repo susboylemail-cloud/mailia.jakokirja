@@ -18,10 +18,11 @@ async function fixKP25Data() {
     console.log('1. Updating Wolffintie 18...');
     
     const subscriber18 = await client.query(
-      `SELECT id FROM subscribers 
-       WHERE circuit_id = 'KP25' 
-       AND UPPER(address) LIKE '%WOLFFINTIE 18%'
-       AND is_active = true`
+      `SELECT s.id FROM subscribers s
+       JOIN circuits c ON s.circuit_id = c.id
+       WHERE c.circuit_id = 'KP25' 
+       AND UPPER(s.address) LIKE '%WOLFFINTIE 18%'
+       AND s.is_active = true`
     );
 
     if (subscriber18.rows.length > 0) {
@@ -54,10 +55,11 @@ async function fixKP25Data() {
     console.log('\n2. Updating Wolffintie 12 → 11...');
     
     const subscriber12 = await client.query(
-      `SELECT id, address FROM subscribers 
-       WHERE circuit_id = 'KP25' 
-       AND UPPER(address) LIKE '%WOLFFINTIE 12%'
-       AND is_active = true`
+      `SELECT s.id, s.address FROM subscribers s
+       JOIN circuits c ON s.circuit_id = c.id
+       WHERE c.circuit_id = 'KP25' 
+       AND UPPER(s.address) LIKE '%WOLFFINTIE 12%'
+       AND s.is_active = true`
     );
 
     if (subscriber12.rows.length > 0) {

@@ -1985,7 +1985,7 @@ body.dark-mode .building-header {
     display: flex;
     align-items: center;
     gap: 1.25rem;
-    transition: max-height 0.5s ease-out, opacity 0.4s ease-out, margin 0.4s ease-out, padding 0.4s ease-out;
+    transition: max-height 0.5s ease-out, opacity 0.4s ease-out, margin 0.4s ease-out, padding 0.4s ease-out, transform 0.2s ease, box-shadow 0.2s ease;
     max-height: 500px;
     opacity: 1;
     overflow: hidden;

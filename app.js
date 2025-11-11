@@ -1791,38 +1791,61 @@ function initializeRefreshButtons() {
     const clearAllMessagesBtn = document.getElementById('clearAllMessagesBtn');
     if (clearAllMessagesBtn) {
         clearAllMessagesBtn.addEventListener('click', async () => {
-            clearAllMessagesBtn.classList.add('refreshing');
-            clearAllMessagesBtn.disabled = true;
-
             try {
                 const messages = await window.mailiaAPI.getTodayMessages();
-                const unreadMessages = messages.filter(m => !m.is_read);
+                const storedLocalMessages = loadRouteMessages();
+                const totalMessages = messages.length + storedLocalMessages.length;
 
-                if (unreadMessages.length === 0) {
-                    showNotification('Ei lukemattomia viestejä', 'info');
+                if (totalMessages === 0) {
+                    showNotificationEnhanced('Ei viestejä tyhjennettävänä', 'info');
                     return;
                 }
 
-                const confirmed = confirm(`Haluatko varmasti merkitä kaikki ${unreadMessages.length} viestiä luetuiksi?`);
-                if (!confirmed) return;
+                // Use custom modal instead of confirm
+                createModal({
+                    title: 'Tyhjennä kaikki viestit',
+                    bodyHTML: `<p style="margin: 0;">Haluatko varmasti tyhjentää kaikki ${totalMessages} viestiä?</p>`,
+                    ariaLabel: 'Vahvista viestien tyhjennys',
+                    actions: [
+                        {
+                            label: 'Peruuta',
+                            variant: 'secondary',
+                            handler: ({ close }) => close()
+                        },
+                        {
+                            label: 'Tyhjennä',
+                            variant: 'primary',
+                            handler: async ({ close }) => {
+                                setLoading(clearAllMessagesBtn, true);
+                                
+                                try {
+                                    // Delete all backend messages
+                                    if (messages.length > 0) {
+                                        const deletePromises = messages.map(msg => 
+                                            window.mailiaAPI.makeRequest(`/routes/messages/${msg.id}`, { method: 'DELETE' })
+                                        );
+                                        await Promise.allSettled(deletePromises);
+                                    }
 
-                // Mark all unread messages as read
-                const promises = unreadMessages.map(msg => window.mailiaAPI.markMessageAsRead(msg.id));
-                await Promise.all(promises);
+                                    // Clear offline messages
+                                    localStorage.removeItem('mailiaRouteMessages');
 
-                // Clear offline messages
-                localStorage.removeItem('mailiaRouteMessages');
-
-                showNotification(`${unreadMessages.length} viestiä merkitty luetuksi`, 'success');
-                await renderRouteMessages();
+                                    showNotificationEnhanced(`${totalMessages} viestiä tyhjennetty`, 'success');
+                                    await renderRouteMessages();
+                                    close();
+                                } catch (error) {
+                                    console.error('Error clearing messages:', error);
+                                    showNotificationEnhanced('Viestien tyhjennys epäonnistui', 'error');
+                                } finally {
+                                    setLoading(clearAllMessagesBtn, false);
+                                }
+                            }
+                        }
+                    ]
+                });
             } catch (error) {
-                console.error('Error clearing messages:', error);
-                showNotification('Viestien tyhjennys epäonnistui', 'error');
-            } finally {
-                setTimeout(() => {
-                    clearAllMessagesBtn.classList.remove('refreshing');
-                    clearAllMessagesBtn.disabled = false;
-                }, 500);
+                console.error('Error loading messages for clear:', error);
+                showNotificationEnhanced('Virhe ladattaessa viestejä', 'error');
             }
         });
     }
@@ -3496,6 +3519,16 @@ function initializeSwipeToMark(card, checkbox, circuitId, address, subscriberId 
 // legacy reportUndelivered removed; replaced by openDeliveryIssueDialog
 
 function saveRouteMessage(message) {
+    // Check if we're online first
+    if (!navigator.onLine) {
+        console.log('Offline: saving message locally');
+        const messages = loadRouteMessages();
+        messages.push(message);
+        localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+        showNotificationEnhanced('Viesti tallennettu offline-tilassa', 'info');
+        return;
+    }
+    
     // Get current route ID
     let routeId = localStorage.getItem(`route_id_${message.circuit}`);
     
@@ -3504,9 +3537,10 @@ function saveRouteMessage(message) {
         console.log('No route ID found, creating route for circuit:', message.circuit);
         
         // Create route via API
-        if (window.mailiaAPI) {
+        if (window.mailiaAPI && window.mailiaAPI.isAuthenticated()) {
             window.mailiaAPI.startRoute(message.circuit)
                 .then(route => {
+                    console.log('Route created successfully:', route);
                     // Persist start state locally for UI consistency
                     localStorage.setItem(`route_id_${message.circuit}`, route.id);
                     localStorage.setItem(`route_start_${message.circuit}`, new Date(route.start_time || Date.now()).toISOString());
@@ -3519,13 +3553,22 @@ function saveRouteMessage(message) {
                     );
                 })
                 .then(() => {
+                    console.log('Message sent successfully');
+                    announceToScreenReader('Viesti lähetetty');
                     // Refresh messages view if active
                     const messagesTab = document.querySelector('.tab-content.active#messagesTab');
                     if (messagesTab) { renderRouteMessages(); }
                 })
                 .catch(error => {
                     console.error('Failed to create route or save message:', error);
-                    showNotification('Viestin lähetys epäonnistui (tallennettu paikallisesti)', 'error');
+                    
+                    // Check if it's a network error
+                    if (error.message === 'Failed to fetch' || error.message === 'NetworkError') {
+                        showNotificationEnhanced('Verkkovirhe: Viesti tallennettu paikallisesti', 'warning');
+                    } else {
+                        showNotificationEnhanced(`Virhe: ${error.message || 'Tuntematon virhe'}`, 'error');
+                    }
+                    
                     // Fallback to localStorage
                     const messages = loadRouteMessages();
                     messages.push(message);
@@ -3537,24 +3580,33 @@ function saveRouteMessage(message) {
             const messages = loadRouteMessages();
             messages.push(message);
             localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
-            showNotification('Viesti tallennettu offline-tilassa', 'info');
+            showNotificationEnhanced('Viesti tallennettu paikallisesti', 'info');
             return;
         }
     }
     
     // Send message to backend API
-    if (window.mailiaAPI) {
+    if (window.mailiaAPI && window.mailiaAPI.isAuthenticated()) {
         window.mailiaAPI.sendMessage(
             parseInt(routeId),
             'issue',  // message type
             `${message.reason} - ${message.address}` // message content
         ).then(() => {
+            console.log('Message sent successfully to route:', routeId);
+            announceToScreenReader('Viesti lähetetty');
             // Refresh messages view if active (no notification here)
             const messagesTab = document.querySelector('.tab-content.active#messagesTab');
             if (messagesTab) { renderRouteMessages(); }
         }).catch(error => {
             console.error('Failed to save message:', error);
-            showNotification('Viestin lähetys epäonnistui (tallennettu paikallisesti)', 'error');
+            
+            // Check if it's a network error
+            if (error.message === 'Failed to fetch' || error.message === 'NetworkError') {
+                showNotificationEnhanced('Verkkovirhe: Viesti tallennettu paikallisesti', 'warning');
+            } else {
+                showNotificationEnhanced(`Virhe: ${error.message || 'Tuntematon virhe'}`, 'error');
+            }
+            
             // Fallback to localStorage
             const messages = loadRouteMessages();
             messages.push(message);
@@ -3565,7 +3617,7 @@ function saveRouteMessage(message) {
         const messages = loadRouteMessages();
         messages.push(message);
         localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
-        showNotification('Viesti tallennettu offline-tilassa', 'info');
+        showNotificationEnhanced('Viesti tallennettu paikallisesti', 'info');
     }
 }
 
@@ -5024,8 +5076,16 @@ async function showCircuitMap(circuitId) {
         return;
     }
     
-    // Get circuit data and filter out STF addresses
-    const circuitData = allData[circuitId];
+    // Load circuit data if not already loaded (important for Seuranta tab)
+    let circuitData;
+    try {
+        circuitData = await loadCircuitData(circuitId);
+    } catch (error) {
+        console.error('Error loading circuit data for map:', error);
+        showNotification('Virhe ladattaessa piirin tietoja', 'error');
+        return;
+    }
+    
     if (!circuitData || circuitData.length === 0) {
         showNotification('Ei osoitteita tälle piirille', 'error');
         return;

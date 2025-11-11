@@ -5903,9 +5903,27 @@ async function showCircuitMap(circuitId) {
         document.body.appendChild(mapOverlay);
 
         // Close button handler
-        document.getElementById('closeCircuitMapBtn').addEventListener('click', () => {
+        // Overlay close helpers
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeOverlay();
+            }
+        };
+        const onOverlayClick = (e) => {
+            if (e.target === mapOverlay) {
+                closeOverlay();
+            }
+        };
+        function closeOverlay() {
+            document.removeEventListener('keydown', onKeyDown);
+            mapOverlay.removeEventListener('click', onOverlayClick);
             mapOverlay.remove();
-        });
+        }
+
+        document.getElementById('closeCircuitMapBtn').addEventListener('click', closeOverlay);
+        mapOverlay.addEventListener('click', onOverlayClick);
+        document.addEventListener('keydown', onKeyDown);
 
         // Initialize map with geocoding
         await initializeCircuitMapWithGeocoding(circuitId, filteredData, mapContainer, infoPanel, excludedInfo);

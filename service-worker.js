@@ -1,5 +1,5 @@
 // Mailia Service Worker - Offline Support & Caching
-const CACHE_VERSION = 'mailia-v73';
+const CACHE_VERSION = 'mailia-v74';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -8,17 +8,17 @@ const API_CACHE = `${CACHE_VERSION}-api`;
 const STATIC_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=73',
-    '/app.js?v=73',
-    '/api.js?v=73',
-    '/manifest.json?v=73',
+    '/style.css?v=74',
+    '/app.js?v=74',
+    '/api.js?v=74',
+    '/manifest.json?v=74',
     '/icons/icon-192.png',
     '/icons/icon-512.png'
 ];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker v72...');
+    console.log(`[SW] Installing ${CACHE_VERSION}...`);
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then((cache) => {
@@ -31,7 +31,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker v72...');
+    console.log(`[SW] Activating ${CACHE_VERSION}...`);
     event.waitUntil(
         caches.keys()
             .then((cacheNames) => {

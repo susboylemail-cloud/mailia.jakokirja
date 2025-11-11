@@ -638,11 +638,8 @@ function showNotification(message, type = 'info') {
 function showCircuitManagementMenu(circuitId, routeData, status) {
     const buttons = [];
     
-    // Only show Mapon map for paivystys.imatra user
-    const currentUser = window.mailiaAPI?.getCurrentUser();
-    if (currentUser && currentUser.username === 'paivystys.imatra') {
-        buttons.push({ id: 'maponView', label: 'Näytä kartalla', variant: 'secondary', icon: 'map', handler: ({ close }) => { showMaponMap(circuitId); close(); }});
-    }
+    // Näytä kartalla: available for all users
+    buttons.push({ id: 'maponView', label: 'Näytä kartalla', variant: 'secondary', icon: 'map', handler: ({ close }) => { showCircuitMap(circuitId); close(); }});
     
     if (!routeData || status === 'not-started') {
         buttons.push({ id: 'startRoute', label: 'Aloita reitti', variant: 'primary', icon: 'play', handler: async ({ close }) => {
@@ -3520,47 +3517,12 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     });
     card.appendChild(reportBtn);
     
-    // Navigation link using OpenStreetMap (if not last)
-    if (!isLast) {
-        const nextAddress = getNextAddress(buildings, currentBuildingIndex, currentSubIndex);
-        if (nextAddress) {
-            const link = document.createElement('a');
-            link.className = 'nav-link';
-            const subscriberAddress = subscriber.address;
-            // Use OpenStreetMap directions instead of Google Maps
-            link.href = `https://www.openstreetmap.org/directions?from=&to=${encodeURIComponent(subscriberAddress + ', Imatra, Finland')}`;
-            link.target = '_blank';
-            link.title = `Navigoi osoitteeseen ${subscriberAddress}`;
-            link.innerHTML = `
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-            `;
-            card.appendChild(link);
-        }
-    }
+    // Removed per-address navigation link (Navigate To)
     
     return card;
 }
 
-function getNextAddress(buildings, currentBuildingIndex, currentSubIndex) {
-    const currentBuilding = buildings[currentBuildingIndex];
-    const currentBuildingSubscribers = currentBuilding.subscribers;
-    
-    // Try next subscriber in same building
-    if (currentSubIndex < currentBuildingSubscribers.length - 1) {
-        return currentBuildingSubscribers[currentSubIndex + 1].address;
-    }
-    
-    // Try first subscriber in next building
-    if (currentBuildingIndex < buildings.length - 1) {
-        const nextBuilding = buildings[currentBuildingIndex + 1];
-        return nextBuilding.subscribers[0].address;
-    }
-    
-    return null;
-}
+// Removed helper getNextAddress since Navigate To was removed
 
 // Swipe to Mark as Delivered Functionality
 function initializeSwipeToMark(card, checkbox, circuitId, address, subscriberId = null) {
@@ -5849,14 +5811,11 @@ if (typeof window.loadCircuit === 'function') {
 }
 
 // ========================================
-// MAPON.COM INTEGRATION
+// CIRCUIT MAP VIEW WITH GEOCODING (Leaflet + OpenStreetMap)
 // ========================================
 
-const MAPON_API_KEY = 'b6a5ce738b76b134d06e8b072a754918019a9ed7';
-const MAPON_API_BASE = 'https://mapon.com/api/v1';
-
-// Show Mapon map with route visualization and geocoding
-async function showMaponMap(circuitId) {
+// Unified public API for showing a circuit map with geocoded addresses
+async function showCircuitMap(circuitId) {
     try {
         // Load circuit data
         const circuitData = await loadCircuitData(circuitId);
@@ -5910,7 +5869,7 @@ async function showMaponMap(circuitId) {
 
         // Create fullscreen map overlay
         const mapOverlay = document.createElement('div');
-        mapOverlay.id = 'maponOverlay';
+        mapOverlay.id = 'circuitMapOverlay';
 
         // Create header
         const mapHeader = document.createElement('div');
@@ -5923,14 +5882,12 @@ async function showMaponMap(circuitId) {
                 </svg>
                 ${circuitNames[circuitId] || circuitId} - Karttanäkymä
             </h3>
-            <button id="closeMaponBtn" class="map-overlay-close-btn">
-                ✕ Sulje
-            </button>
+            <button id="closeCircuitMapBtn" class="map-overlay-close-btn">✕ Sulje</button>
         `;
 
         // Create map container
         const mapContainer = document.createElement('div');
-        mapContainer.id = 'maponMapContainer';
+        mapContainer.id = 'circuitMapContainer';
 
         // Create info panel
         const infoPanel = document.createElement('div');
@@ -5946,21 +5903,20 @@ async function showMaponMap(circuitId) {
         document.body.appendChild(mapOverlay);
 
         // Close button handler
-        document.getElementById('closeMaponBtn').addEventListener('click', () => {
+        document.getElementById('closeCircuitMapBtn').addEventListener('click', () => {
             mapOverlay.remove();
         });
 
         // Initialize map with geocoding
-        await initializeMaponMapWithGeocoding(circuitId, filteredData, mapContainer, infoPanel, excludedInfo);
-
+        await initializeCircuitMapWithGeocoding(circuitId, filteredData, mapContainer, infoPanel, excludedInfo);
     } catch (error) {
-        console.error('Error showing Mapon map:', error);
+        console.error('Error showing circuit map:', error);
         showNotification('Kartan lataus epäonnistui', 'error');
     }
 }
 
-// Initialize Mapon map with geocoded addresses
-async function initializeMaponMapWithGeocoding(circuitId, circuitData, mapContainer, infoPanel, excludedInfo) {
+// Initialize circuit map with geocoded addresses
+async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapContainer, infoPanel, excludedInfo) {
     try {
         // Use Nominatim for geocoding with caching
         const locations = [];

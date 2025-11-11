@@ -2820,53 +2820,50 @@ function renderCoverSheet(circuitId, subscribers) {
     // Display product counts
     productCounts.innerHTML = '';
     
-    // Add map view button for authorized users only
-    const currentUser = window.mailiaAPI?.getCurrentUser();
-    if (currentUser && currentUser.username === 'paivystys.imatra') {
-        const mapButton = document.createElement('button');
-        mapButton.className = 'map-view-btn';
-        mapButton.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            Näytä kartalla
-        `;
-        mapButton.style.cssText = `
-            width: 100%;
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        `;
-        mapButton.onclick = (e) => {
-            e.stopPropagation();
-            showMaponMap(circuitId);
-        };
-        
-        // Add hover effect
-        mapButton.addEventListener('mouseenter', () => {
-            mapButton.style.transform = 'translateY(-2px)';
-            mapButton.style.boxShadow = '0 4px 12px rgba(23, 162, 184, 0.4)';
-        });
-        mapButton.addEventListener('mouseleave', () => {
-            mapButton.style.transform = 'translateY(0)';
-            mapButton.style.boxShadow = '0 2px 8px rgba(23, 162, 184, 0.3)';
-        });
-        
-        productCounts.appendChild(mapButton);
-    }
+    // Add map view button for all users
+    const mapButton = document.createElement('button');
+    mapButton.className = 'map-view-btn';
+    mapButton.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        Näytä kartalla
+    `;
+    mapButton.style.cssText = `
+        width: 100%;
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    `;
+    mapButton.onclick = (e) => {
+        e.stopPropagation();
+        showMaponMap(circuitId);
+    };
+    
+    // Add hover effect
+    mapButton.addEventListener('mouseenter', () => {
+        mapButton.style.transform = 'translateY(-2px)';
+        mapButton.style.boxShadow = '0 4px 12px rgba(23, 162, 184, 0.4)';
+    });
+    mapButton.addEventListener('mouseleave', () => {
+        mapButton.style.transform = 'translateY(0)';
+        mapButton.style.boxShadow = '0 2px 8px rgba(23, 162, 184, 0.3)';
+    });
+    
+    productCounts.appendChild(mapButton);
     
     // Add product badges
     Object.entries(products).sort().forEach(([product, count]) => {

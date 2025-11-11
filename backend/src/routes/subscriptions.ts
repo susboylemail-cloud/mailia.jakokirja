@@ -247,14 +247,18 @@ router.put('/subscribers/:id/key-info',
                 return res.status(404).json({ error: 'Subscriber not found' });
             }
 
+            const subscriber = result.rows[0];
+            
             // Broadcast update to all connected clients
             const socketIO = await getIO();
             if (socketIO) {
                 socketIO.emit('subscriber_updated', {
                     action: 'key_info_updated',
-                    subscriber: result.rows[0]
+                    circuitId: subscriber.circuit_id,
+                    subscriberId: subscriber.id,
+                    subscriber: subscriber
                 });
-                logger.info(`Broadcasted key info update for subscriber ${id}`);
+                logger.info(`Broadcasted key info update for subscriber ${id} on circuit ${subscriber.circuit_id}`);
             }
 
             res.json({

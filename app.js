@@ -20,7 +20,11 @@ function createModal({ title, bodyHTML, actions = [], ariaLabel = null, initialF
         btn.type = 'button';
         btn.id = a.id || '';
         btn.className = a.variant === 'primary' ? 'modal-btn-primary' : 'modal-btn-secondary';
-        btn.addEventListener('click', () => a.handler && a.handler({ close }));
+        btn.addEventListener('click', async () => {
+            if (a.handler) {
+                await a.handler({ close });
+            }
+        });
         actionsContainer.appendChild(btn);
     });
 
@@ -635,13 +639,20 @@ function initializeWebSocketListeners() {
         // Reload circuit if it matches current view
         if (currentCircuit && data.circuitId === currentCircuit) {
             console.log('Reloading current circuit due to subscriber update...');
+            
+            // Clear cache to force reload from backend
+            delete allData[currentCircuit];
+            
             await loadCircuit(currentCircuit);
-            showNotification(
-                data.action === 'created' 
-                    ? 'Uusi tilaaja lisätty piirille' 
-                    : 'Tilaaja päivitetty',
-                'success'
-            );
+            
+            // Show notification based on action
+            if (data.action === 'key_info_updated') {
+                showNotification('Avaintiedot päivitetty', 'success');
+            } else if (data.action === 'created') {
+                showNotification('Uusi tilaaja lisätty piirille', 'success');
+            } else {
+                showNotification('Tilaaja päivitetty', 'success');
+            }
         }
     });
     
@@ -834,10 +845,51 @@ function showRouteStatusModal(circuitId, routeData) {
     const resetBtn = box.querySelector('[data-action="reset"]');
     const completeBtn = box.querySelector('[data-action="complete"]');
     if (resetBtn) resetBtn.addEventListener('click', async () => {
-        try { await window.mailiaAPI.resetRoute(routeData.id, 'not-started'); showNotification('Jakelustatus nollattu', 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin nollaus epäonnistui', 'error'); }
+        try {
+            await window.mailiaAPI.resetRoute(routeData.id, 'not-started');
+            
+            // Update localStorage to reflect the reset
+            localStorage.removeItem(`route_start_${circuitId}`);
+            localStorage.removeItem(`route_end_${circuitId}`);
+            
+            showNotification('Jakelustatus nollattu', 'success');
+            renderCircuitTracker();
+            
+            // Update route buttons if this is the current circuit
+            if (currentCircuit === circuitId) {
+                updateRouteButtons(circuitId);
+            }
+            
+            close();
+        } catch(e) {
+            console.error(e);
+            showNotification('Reitin nollaus epäonnistui', 'error');
+        }
     });
     if (completeBtn) completeBtn.addEventListener('click', async () => {
-        try { await window.mailiaAPI.resetRoute(routeData.id, 'completed'); showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success'); renderCircuitTracker(); close(); } catch(e){ console.error(e); showNotification('Reitin merkkaus epäonnistui', 'error'); }
+        try {
+            await window.mailiaAPI.resetRoute(routeData.id, 'completed');
+            
+            // Update localStorage to reflect the completion
+            const now = new Date().toISOString();
+            if (!localStorage.getItem(`route_start_${circuitId}`)) {
+                localStorage.setItem(`route_start_${circuitId}`, now);
+            }
+            localStorage.setItem(`route_end_${circuitId}`, now);
+            
+            showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+            renderCircuitTracker();
+            
+            // Update route buttons if this is the current circuit
+            if (currentCircuit === circuitId) {
+                updateRouteButtons(circuitId);
+            }
+            
+            close();
+        } catch(e) {
+            console.error(e);
+            showNotification('Reitin merkkaus epäonnistui', 'error');
+        }
     });
 }
 
@@ -1201,6 +1253,13 @@ function showLoginScreen() {
         loginScreen.style.opacity = '1';
         mainApp.style.display = 'none';
         
+        // Reset login button state
+        const loginButton = document.querySelector('.phone-login-button');
+        if (loginButton) {
+            loginButton.disabled = false;
+            loginButton.textContent = 'Kirjaudu sisään';
+        }
+        
         // Verify the styles were applied
         setTimeout(() => {
             const loginScreenComputed = window.getComputedStyle(loginScreen).display;
@@ -1246,6 +1305,13 @@ async function handleLogout() {
         if (passwordInput) passwordInput.value = '';
         if (loginError) loginError.style.display = 'none';
         
+        // Reset login button state
+        const loginButton = document.querySelector('.phone-login-button');
+        if (loginButton) {
+            loginButton.disabled = false;
+            loginButton.textContent = 'Kirjaudu sisään';
+        }
+        
         // Remove zoom-transition class if it exists
         const loginScreen = document.getElementById('loginScreen');
         if (loginScreen) {
@@ -1257,6 +1323,13 @@ async function handleLogout() {
         console.error('Logout error:', error);
         // Force show login screen even if logout fails
         showLoginScreen();
+        
+        // Reset login button state in case of error
+        const loginButton = document.querySelector('.phone-login-button');
+        if (loginButton) {
+            loginButton.disabled = false;
+            loginButton.textContent = 'Kirjaudu sisään';
+        }
         
         // Remove zoom-transition class if it exists
         const loginScreen = document.getElementById('loginScreen');
@@ -2876,7 +2949,8 @@ async function loadCircuitData(circuitId) {
                 products: products,
                 buildingAddress: sub.building_address,
                 orderIndex: sub.order_index,
-                id: sub.id // Keep backend ID for updates
+                id: sub.id, // Keep backend ID for updates
+                key_info: sub.key_info || null // Include key information
             };
         });
 
@@ -4332,6 +4406,14 @@ async function startRoute(circuitId) {
             console.error('Failed to start route in backend:', error);
             // Continue with localStorage-only mode
         }
+    }
+    
+    // If route was previously completed, reload the circuit to restore subscriber cards
+    if (wasCompleted) {
+        console.log('Reloading circuit after completing and restarting route...');
+        // Clear cache to force reload
+        delete allData[circuitId];
+        await loadCircuit(circuitId);
     }
     
     // Show the subscriber list with cascading animation

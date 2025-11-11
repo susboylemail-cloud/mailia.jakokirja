@@ -1858,16 +1858,17 @@ main {
 .product-badge {
     display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.65rem 1rem;
-    border-radius: 22px;
+    justify-content: center;
+    padding: 0.4rem 0.6rem;
+    border-radius: 50%;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     line-height: 1;
-    min-height: 44px;
-    max-width: 100%;
-    width: auto;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    min-width: 36px;
+    min-height: 36px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    gap: 0.25rem;
+    flex-direction: column;
 }
 
 /* Product-specific colors for badges */
@@ -1930,21 +1931,9 @@ main {
 }
 
 .product-badge .count {
-    margin-left: 0.5rem;
-    background: rgba(0, 0, 0, 0.25);
-    padding: 0.25rem 0.6rem;
-    border-radius: 12px;
     font-weight: 800;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     line-height: 1;
-    min-width: 24px;
-    text-align: center;
-}
-
-body.dark-mode .product-badge.product-UV .count,
-body.dark-mode .product-badge.product-ISA .count {
-    background: rgba(0, 0, 0, 0.35);
-    color: #1A1D21;
 }
 
 /* Route Buttons */
@@ -2335,35 +2324,25 @@ body.dark-mode .subscriber-name {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    white-space: nowrap;
     background: var(--primary-blue);
-    color: transparent; /* hide any text */
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
+    color: white;
     position: relative;
-    overflow: hidden;
-    text-indent: -9999px; /* fully hide text while keeping accessible name */
 }
 
 /* Quantity badge for products (e.g., UV2, ES2, HS2) */
 .quantity-badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: rgba(233, 30, 99, 0.95); /* material red */
-    color: white;
-    border-radius: 50%;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 3px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    margin-left: 2px;
     font-size: 10px;
-    line-height: 1;
     font-weight: 700;
-    border: 2px solid var(--card-bg);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    opacity: 0.9;
 }
 
 /* Product-specific colors for tags */

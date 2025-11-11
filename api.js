@@ -242,7 +242,7 @@ class MailiaAPI {
     }
 
     async deleteMessage(messageId) {
-        return await this.makeRequest(`/routes/messages/${messageId}`, {
+        return await this.makeRequest(`/messages/${messageId}`, {
             method: 'DELETE'
         });
     }

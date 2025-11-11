@@ -2080,6 +2080,7 @@ body.dark-mode .delivery-index-badge {
 
 .subscriber-info {
     flex: 1;
+    padding-left: 2.5rem; /* Add left padding to avoid overlap with delivery number */
 }
 
 .subscriber-address {

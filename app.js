@@ -3768,15 +3768,25 @@ function applyFilters() {
         }
     });
     
-    // Hide empty building groups and update delivery counts
+    // Re-number visible cards and hide empty building groups
     setTimeout(() => {
         const buildingGroups = document.querySelectorAll('.building-group');
+        let visibleCounter = 1;
+        
         buildingGroups.forEach(group => {
             const visibleCards = Array.from(group.querySelectorAll('.subscriber-card'))
                 .filter(card => card.style.display !== 'none');
             
             if (visibleCards.length > 0) {
                 group.style.display = '';
+                
+                // Re-number visible cards in this group
+                visibleCards.forEach(card => {
+                    const numberBadge = card.querySelector('.delivery-order-number');
+                    if (numberBadge) {
+                        numberBadge.textContent = String(visibleCounter++);
+                    }
+                });
                 
                 // Update delivery count badge to reflect visible deliveries only
                 const countBadge = group.querySelector('.building-delivery-count');

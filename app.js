@@ -3137,18 +3137,16 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const card = document.createElement('div');
     card.className = 'subscriber-card';
     card.dataset.products = subscriber.products.join(',');
-    // Admin-only subtle numbering badge (increments across visible list)
-    const roleForBadge = getEffectiveUserRole();
-    if (roleForBadge === 'admin' || roleForBadge === 'manager') {
-        const counterHolder = typeof window !== 'undefined' ? window : globalThis;
-        if (typeof counterHolder.__deliveryCounter !== 'number') {
-            counterHolder.__deliveryCounter = 1;
-        }
-        const numberBadge = document.createElement('span');
-        numberBadge.className = 'delivery-index-badge';
-        numberBadge.textContent = String(counterHolder.__deliveryCounter++);
-        card.appendChild(numberBadge);
+    
+    // Delivery numbering badge for ALL users (top-left corner)
+    const counterHolder = typeof window !== 'undefined' ? window : globalThis;
+    if (typeof counterHolder.__deliveryCounter !== 'number') {
+        counterHolder.__deliveryCounter = 1;
     }
+    const numberBadge = document.createElement('span');
+    numberBadge.className = 'delivery-order-number';
+    numberBadge.textContent = String(counterHolder.__deliveryCounter++);
+    card.appendChild(numberBadge);
     
     // Add spacing class for new staircase
     if (isNewStaircase) {
@@ -4984,10 +4982,17 @@ async function showCircuitMap(circuitId) {
 
     // Filter out STF addresses
     const filteredData = circuitData.filter(subscriber => {
-        const products = Array.isArray(subscriber.products) 
-            ? subscriber.products.join(',').toUpperCase()
-            : String(subscriber.products || '').toUpperCase();
-        return !products.includes('STF');
+        if (!subscriber.products || subscriber.products.length === 0) {
+            return true; // Include if no products
+        }
+        
+        // Check if any product contains 'STF'
+        const hasSTF = subscriber.products.some(product => {
+            const productStr = typeof product === 'object' ? (product.code || product.name || '') : String(product);
+            return productStr.toUpperCase().includes('STF');
+        });
+        
+        return !hasSTF; // Exclude if has STF
     });
 
     if (filteredData.length === 0) {

@@ -460,8 +460,12 @@ function initializeWebSocketListeners() {
             // Refresh route status display
             updateRouteButtons(currentCircuit);
             
-            // Show notification
-            showNotification(`Reitin tila päivitetty käyttäjältä: ${data.updatedBy}`, 'info');
+            // Show notification only if the update is from another user
+            const currentUser = window.mailiaAPI.getCurrentUser();
+            const currentUsername = currentUser?.username;
+            if (data.updatedBy && data.updatedBy !== currentUsername) {
+                showNotification(`Reitin tila päivitetty käyttäjältä: ${data.updatedBy}`, 'info');
+            }
         } else {
             console.log('Circuit mismatch or no current circuit, not updating buttons');
         }
@@ -1760,6 +1764,46 @@ function initializeRefreshButtons() {
                 setTimeout(() => {
                     refreshMessagesBtn.classList.remove('refreshing');
                     refreshMessagesBtn.disabled = false;
+                }, 500);
+            }
+        });
+    }
+
+    // Clear all messages button
+    const clearAllMessagesBtn = document.getElementById('clearAllMessagesBtn');
+    if (clearAllMessagesBtn) {
+        clearAllMessagesBtn.addEventListener('click', async () => {
+            const confirmed = confirm('Haluatko varmasti merkitä kaikki viestit luetuiksi?');
+            if (!confirmed) return;
+
+            clearAllMessagesBtn.classList.add('refreshing');
+            clearAllMessagesBtn.disabled = true;
+
+            try {
+                const messages = await window.mailiaAPI.getTodayMessages();
+                const unreadMessages = messages.filter(m => !m.is_read);
+
+                if (unreadMessages.length === 0) {
+                    showNotification('Ei lukemattomia viestejä', 'info');
+                    return;
+                }
+
+                // Mark all unread messages as read
+                const promises = unreadMessages.map(msg => window.mailiaAPI.markMessageAsRead(msg.id));
+                await Promise.all(promises);
+
+                // Clear offline messages
+                localStorage.removeItem('mailiaRouteMessages');
+
+                showNotification(`${unreadMessages.length} viestiä merkitty luetuksi`, 'success');
+                await renderRouteMessages();
+            } catch (error) {
+                console.error('Error clearing messages:', error);
+                showNotification('Viestien tyhjennys epäonnistui', 'error');
+            } finally {
+                setTimeout(() => {
+                    clearAllMessagesBtn.classList.remove('refreshing');
+                    clearAllMessagesBtn.disabled = false;
                 }, 500);
             }
         });
@@ -3541,6 +3585,11 @@ function initializeMessageSwipe() {
 }
 
 function addSwipeToMessageCard(messageCard, messageId) {
+    if (!messageId || typeof messageId === 'string' && messageId.startsWith('offline-')) {
+        // Skip swipe for offline messages
+        return;
+    }
+
     let startX = 0;
     let currentX = 0;
     let isSwiping = false;

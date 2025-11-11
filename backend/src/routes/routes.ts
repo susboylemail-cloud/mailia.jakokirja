@@ -103,6 +103,7 @@ router.post('/start',
 
             const { circuitId, routeDate } = req.body;
             const userId = req.user!.userId;
+            const username = req.user!.username;
 
             // Get circuit database ID
             const circuit = await query(
@@ -136,7 +137,8 @@ router.post('/start',
                 route: result.rows[0],
                 circuitId: circuitIdStr,
                 status: 'in-progress',
-                startTime: result.rows[0].start_time
+                startTime: result.rows[0].start_time,
+                updatedBy: username
             });
 
             res.json(result.rows[0]);
@@ -152,6 +154,7 @@ router.post('/:routeId/complete', authenticate, async (req: AuthRequest, res) =>
     try {
         const { routeId } = req.params;
         const userId = req.user!.userId;
+        const username = req.user!.username;
 
         const result = await query(
             `UPDATE routes 
@@ -178,7 +181,8 @@ router.post('/:routeId/complete', authenticate, async (req: AuthRequest, res) =>
             circuitId: circuitIdStr,
             status: 'completed',
             startTime: result.rows[0].start_time,
-            endTime: result.rows[0].end_time
+            endTime: result.rows[0].end_time,
+            updatedBy: username
         });
 
         res.json(result.rows[0]);
@@ -194,6 +198,7 @@ router.post('/:routeId/reset', authenticate, async (req: AuthRequest, res) => {
         const { routeId } = req.params;
         const { newStatus } = req.body; // 'not-started' or 'completed'
         const userRole = req.user!.role;
+        const username = req.user!.username;
 
         // Only admins and managers can reset routes
         if (userRole !== 'admin' && userRole !== 'manager') {
@@ -237,7 +242,8 @@ router.post('/:routeId/reset', authenticate, async (req: AuthRequest, res) => {
             circuitId,
             status: newStatus,
             startTime: result.rows[0].start_time,
-            endTime: result.rows[0].end_time
+            endTime: result.rows[0].end_time,
+            updatedBy: username
         });
 
         res.json(result.rows[0]);

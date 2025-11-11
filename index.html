@@ -276,9 +276,14 @@
         <div id="messagesTab" class="tab-content">
             <div class="messages-header">
                 <h2>Piirien viestit</h2>
-                <button id="refreshMessagesBtn" class="refresh-btn" title="Päivitä viestit">
-                    <span class="refresh-icon">↻</span> Päivitä
-                </button>
+                <div class="messages-header-actions">
+                    <button id="clearAllMessagesBtn" class="refresh-btn" title="Tyhjennä kaikki">
+                        <span class="refresh-icon">🗑️</span> Tyhjennä
+                    </button>
+                    <button id="refreshMessagesBtn" class="refresh-btn" title="Päivitä viestit">
+                        <span class="refresh-icon">↻</span> Päivitä
+                    </button>
+                </div>
             </div>
             <div id="routeMessages" class="route-messages"></div>
         </div>

@@ -183,9 +183,6 @@ export const broadcastRouteUpdate = (routeId: number, update: any) => {
         // Broadcast to ALL connected clients (global)
         io.emit('route:updated', updateData);
         logger.info(`Broadcasted route:updated to all clients (route ${routeId})`, updateData);
-        
-        // Also broadcast to route room for redundancy
-        io.to(`route:${routeId}`).emit('route:updated', updateData);
     }
 };
 

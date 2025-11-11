@@ -23,7 +23,7 @@ router.get('/today', authenticate, async (_req: AuthRequest, res): Promise<void>
             JOIN routes r ON rm.route_id = r.id
             JOIN circuits c ON r.circuit_id = c.id
             JOIN users u ON rm.user_id = u.id
-            WHERE r.route_date = $1 AND rm.is_read = false
+            WHERE r.route_date = $1
             ORDER BY rm.created_at DESC
         `;
 

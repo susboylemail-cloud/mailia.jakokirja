@@ -701,7 +701,13 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
         reset: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>'
     };
     const bodyHTML = `<div class="route-mgmt-buttons">${buttons.map(b=>`<button type=\"button\" data-btn=\"${b.id}\" class=\"modal-btn-${b.variant}\">${iconMap[b.icon]||''}<span>${b.label}</span></button>`).join('')}</div>`;
-    const { box, close } = createModal({ title: `Hallitse reittiä ${circuitId}`, bodyHTML, actions:[{ id:'closeMgmt', label:'Sulje', variant:'secondary', handler: ({close})=>close()}], ariaLabel:`Reitin ${circuitId} hallinta` });
+    const { box, close } = createModal({
+        title: `Hallitse reittiä ${circuitId}`,
+        bodyHTML,
+        actions:[{ id:'closeMgmt', label:'Sulje', variant:'secondary', handler: ({close})=>close()}],
+        ariaLabel:`Reitin ${circuitId} hallinta`,
+        initialFocusSelector: '#closeMgmt'
+    });
     buttons.forEach(b=>{ const el=box.querySelector(`[data-btn="${b.id}"]`); if(el) el.addEventListener('click', ()=>b.handler({ close })); });
 }
 
@@ -1860,6 +1866,70 @@ function splitCsvRows(text) {
     return rows.filter(row => row.trim().length > 0);
 }
 
+function normalizeSubscriberKeyPiece(value) {
+    let normalized = String(value || '').replace(/\s+/g, ' ').trim();
+    if (typeof normalized.normalize === 'function') {
+        normalized = normalized
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+    }
+    return normalized.toUpperCase();
+}
+
+function collapseDuplicateSubscribers(subscribers, keyFn) {
+    const seen = new Map();
+    const order = [];
+    const buildKey = typeof keyFn === 'function'
+        ? keyFn
+        : (sub) => `${normalizeSubscriberKeyPiece(sub.address)}|${normalizeSubscriberKeyPiece(sub.name)}`;
+
+    subscribers.forEach((subscriber, index) => {
+        const keyCandidate = buildKey(subscriber, index);
+        const key = keyCandidate ? keyCandidate : `__idx-${index}`;
+
+        if (!seen.has(key)) {
+            const clone = {
+                ...subscriber,
+                products: Array.isArray(subscriber.products) ? [...subscriber.products] : []
+            };
+            if (clone.orderIndex === undefined || clone.orderIndex === null) {
+                clone.orderIndex = index;
+            }
+            seen.set(key, clone);
+            order.push(key);
+        } else {
+            const existing = seen.get(key);
+            const mergedProducts = new Set([
+                ...(existing.products || []),
+                ...(Array.isArray(subscriber.products) ? subscriber.products : [])
+            ]);
+            existing.products = Array.from(mergedProducts);
+
+            if (subscriber.orderIndex !== undefined && subscriber.orderIndex !== null) {
+                if (existing.orderIndex === undefined || existing.orderIndex === null) {
+                    existing.orderIndex = subscriber.orderIndex;
+                } else {
+                    existing.orderIndex = Math.min(existing.orderIndex, subscriber.orderIndex);
+                }
+            }
+
+            if (!existing.id && subscriber.id) {
+                existing.id = subscriber.id;
+            }
+
+            if (!existing.buildingAddress && subscriber.buildingAddress) {
+                existing.buildingAddress = subscriber.buildingAddress;
+            }
+
+            if (!existing.name && subscriber.name) {
+                existing.name = subscriber.name;
+            }
+        }
+    });
+
+    return order.map(key => seen.get(key));
+}
+
 function tokenizeCsvFields(line, delimiter) {
     const fields = [];
     let currentField = '';
@@ -2396,7 +2466,7 @@ async function loadCircuitData(circuitId) {
                 .map(p => p.product_code);
             
             return {
-                address: sub.address,
+                address: fixRepeatedAddress(sub.address),
                 name: sub.name,
                 products: products,
                 buildingAddress: sub.building_address,
@@ -2404,12 +2474,19 @@ async function loadCircuitData(circuitId) {
                 id: sub.id // Keep backend ID for updates
             };
         });
+
+        const beforeCount = subscribers.length;
+        const deduped = collapseDuplicateSubscribers(subscribers);
+        if (deduped.length !== beforeCount) {
+            console.log(`[dedupe] Circuit ${circuitId}: ${beforeCount} -> ${deduped.length} after collapsing backend duplicates`);
+        }
+        
         
         // Cache the loaded data
-        allData[circuitId] = subscribers;
-        console.log(`Loaded circuit ${circuitId} from backend (${subscribers.length} subscribers)`);
+        allData[circuitId] = deduped;
+        console.log(`Loaded circuit ${circuitId} from backend (${deduped.length} subscribers)`);
         
-        return subscribers;
+        return deduped;
     } catch (err) {
         console.error(`Error loading circuit ${circuitId} from backend:`, err);
         
@@ -2435,28 +2512,12 @@ async function loadCircuitDataFromCSV(circuitId) {
             return [];
         }
         const text = await response.text();
-        let data = parseCircuitCSV(text, filename);
+        let data = parseCircuitCSV(text, filename).map(sub => ({
+            ...sub,
+            address: fixRepeatedAddress(sub.address)
+        }));
         const beforeCount = data.length;
-        // Dedupe exact same unit-level addresses while merging products
-        const seen = new Map();
-        const orderKeys = [];
-        const norm = (s) => String(s || '').toUpperCase().replace(/\s+/g, ' ').trim();
-        data.forEach(sub => {
-            // Normalize repeated tokens again here in case parser missed patterns
-            sub.address = fixRepeatedAddress(sub.address);
-            const key = norm(sub.address);
-            if (!seen.has(key)) {
-                seen.set(key, { ...sub, products: [...sub.products] });
-                orderKeys.push(key);
-            } else {
-                const prev = seen.get(key);
-                // Merge products and keep the earliest orderIndex
-                const merged = Array.from(new Set([...(prev.products||[]), ...(sub.products||[]) ]));
-                prev.products = merged;
-                prev.orderIndex = Math.min(prev.orderIndex ?? Infinity, sub.orderIndex ?? Infinity);
-            }
-        });
-        data = orderKeys.map(k => seen.get(k));
+        data = collapseDuplicateSubscribers(data, (subscriber) => normalizeSubscriberKeyPiece(subscriber.address));
         const afterCount = data.length;
         if (afterCount !== beforeCount) {
             console.log(`[dedupe] Circuit ${circuitId}: ${beforeCount} -> ${afterCount} after collapsing duplicates`);
@@ -2890,7 +2951,8 @@ function renderSubscriberList(circuitId, subscribers) {
     const listContainer = document.getElementById('subscriberList');
     listContainer.innerHTML = '';
     // Reset admin numbering counter for this render
-    window.__deliveryCounter = 1;
+    const counterStore = typeof window !== 'undefined' ? window : globalThis;
+    counterStore.__deliveryCounter = 1;
     
     // Get current day of week
     const today = new Date().getDay();
@@ -3030,12 +3092,13 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     // Admin-only subtle numbering badge (increments across visible list)
     const roleForBadge = getEffectiveUserRole();
     if (roleForBadge === 'admin' || roleForBadge === 'manager') {
-        if (typeof window.__deliveryCounter !== 'number') {
-            window.__deliveryCounter = 1;
+        const counterHolder = typeof window !== 'undefined' ? window : globalThis;
+        if (typeof counterHolder.__deliveryCounter !== 'number') {
+            counterHolder.__deliveryCounter = 1;
         }
         const numberBadge = document.createElement('span');
         numberBadge.className = 'delivery-index-badge';
-        numberBadge.textContent = String(window.__deliveryCounter++);
+        numberBadge.textContent = String(counterHolder.__deliveryCounter++);
         card.appendChild(numberBadge);
     }
     
@@ -3924,67 +3987,143 @@ function calculateDuration(start, end) {
 // Route Messages (Admin Panel)
 async function renderRouteMessages() {
     const messagesContainer = document.getElementById('routeMessages');
+    if (!messagesContainer) {
+        return;
+    }
+
+    const appendMessageCard = (message) => {
+        const messageCard = document.createElement('div');
+        messageCard.className = 'message-card';
+        if (message.is_read) {
+            messageCard.classList.add('message-read');
+        }
+        if (message.is_offline) {
+            messageCard.classList.add('message-offline');
+        }
+
+        const timestampValue = message.created_at || message.timestamp || new Date().toISOString();
+        const timestamp = new Date(timestampValue);
+        const formattedDate = timestamp.toLocaleString('fi-FI');
+
+        // Create elements safely to prevent XSS
+        const messageHeader = document.createElement('div');
+        messageHeader.className = 'message-header';
+
+        const circuitSpan = document.createElement('span');
+        circuitSpan.className = 'message-circuit';
+        circuitSpan.textContent = message.circuit_id || message.circuit_name || 'N/A';
+
+        const timestampSpan = document.createElement('span');
+        timestampSpan.className = 'message-timestamp';
+        timestampSpan.textContent = formattedDate;
+
+        const metaWrap = document.createElement('div');
+        metaWrap.className = 'message-meta';
+        metaWrap.appendChild(timestampSpan);
+
+        if (message.is_offline) {
+            const offlineBadge = document.createElement('span');
+            offlineBadge.className = 'message-badge offline';
+            offlineBadge.textContent = 'Offline-viesti';
+            metaWrap.appendChild(offlineBadge);
+        } else if (message.is_read) {
+            const readBadge = document.createElement('span');
+            readBadge.className = 'message-badge read';
+            readBadge.textContent = 'Luettu';
+            metaWrap.appendChild(readBadge);
+        }
+
+        messageHeader.appendChild(circuitSpan);
+        messageHeader.appendChild(metaWrap);
+
+        const messageBody = document.createElement('div');
+        messageBody.className = 'message-body';
+
+        const messageText = document.createElement('div');
+        messageText.className = 'message-text';
+        messageText.textContent = message.message || 'Ei viestiä';
+
+        const messageUser = document.createElement('div');
+        messageUser.className = 'message-user';
+        messageUser.innerHTML = '<strong>Lähettäjä:</strong> ';
+        messageUser.appendChild(document.createTextNode(message.username || 'Tuntematon'));
+
+        messageBody.appendChild(messageText);
+        messageBody.appendChild(messageUser);
+
+        messageCard.appendChild(messageHeader);
+        messageCard.appendChild(messageBody);
+
+        // Add swipe-to-dismiss functionality only for synced messages
+        if (!message.is_offline) {
+            addSwipeToMessageCard(messageCard, message.id);
+        }
+
+        messagesContainer.appendChild(messageCard);
+    };
     
     try {
         // Fetch messages from backend API
         const messages = await window.mailiaAPI.getTodayMessages();
+
+        // Merge in any locally stored offline reports that haven't synced yet
+        const storedLocalMessages = loadRouteMessages();
+        let remainingLocal = storedLocalMessages;
+
+        if (Array.isArray(messages) && messages.length > 0 && storedLocalMessages.length > 0) {
+            remainingLocal = storedLocalMessages.filter(entry => {
+                const composed = `${entry.reason || ''} - ${entry.address || ''}`.trim();
+                return !messages.some(apiMessage => (apiMessage.message || '').trim() === composed);
+            });
+
+            if (remainingLocal.length !== storedLocalMessages.length) {
+                localStorage.setItem('mailiaRouteMessages', JSON.stringify(remainingLocal));
+            }
+        }
+
+        const offlineMessages = remainingLocal.map((entry, index) => ({
+            id: `offline-${index}`,
+            circuit_id: entry.circuit,
+            circuit_name: circuitNames[entry.circuit] || entry.circuit || 'N/A',
+            message: `${entry.reason || ''}${entry.reason ? ' - ' : ''}${entry.address || ''}`.trim(),
+            username: entry.name || 'Tuntematon',
+            created_at: entry.timestamp || new Date().toISOString(),
+            is_offline: true
+        }));
+
+        const combinedMessages = [...(Array.isArray(messages) ? messages : []), ...offlineMessages];
+        const sortedMessages = combinedMessages.sort((a, b) => {
+            const aDate = new Date(a.created_at || a.timestamp || 0).getTime();
+            const bDate = new Date(b.created_at || b.timestamp || 0).getTime();
+            return bDate - aDate;
+        });
         
-        if (!messages || messages.length === 0) {
+        if (!sortedMessages || sortedMessages.length === 0) {
             messagesContainer.innerHTML = '<p class="no-messages">Ei viestejä</p>';
             return;
         }
         
         messagesContainer.innerHTML = '';
-        
-        // Messages are already sorted by created_at DESC from backend
-        messages.forEach((message, index) => {
-            const messageCard = document.createElement('div');
-            messageCard.className = 'message-card';
-            
-            const timestamp = new Date(message.created_at);
-            const formattedDate = timestamp.toLocaleString('fi-FI');
-            
-            // Create elements safely to prevent XSS
-            const messageHeader = document.createElement('div');
-            messageHeader.className = 'message-header';
-            
-            const circuitSpan = document.createElement('span');
-            circuitSpan.className = 'message-circuit';
-            circuitSpan.textContent = message.circuit_id || message.circuit_name || 'N/A';
-            
-            const timestampSpan = document.createElement('span');
-            timestampSpan.className = 'message-timestamp';
-            timestampSpan.textContent = formattedDate;
-            
-            messageHeader.appendChild(circuitSpan);
-            messageHeader.appendChild(timestampSpan);
-            
-            const messageBody = document.createElement('div');
-            messageBody.className = 'message-body';
-            
-            const messageText = document.createElement('div');
-            messageText.className = 'message-text';
-            messageText.textContent = message.message;
-            
-            const messageUser = document.createElement('div');
-            messageUser.className = 'message-user';
-            messageUser.innerHTML = '<strong>Lähettäjä:</strong> ';
-            messageUser.appendChild(document.createTextNode(message.username || 'Tuntematon'));
-            
-            messageBody.appendChild(messageText);
-            messageBody.appendChild(messageUser);
-            
-            messageCard.appendChild(messageHeader);
-            messageCard.appendChild(messageBody);
-            
-            // Add swipe-to-dismiss functionality
-            addSwipeToMessageCard(messageCard, message.id);
-            
-            messagesContainer.appendChild(messageCard);
-        });
+        sortedMessages.forEach(appendMessageCard);
     } catch (error) {
         console.error('Error fetching messages:', error);
-        messagesContainer.innerHTML = '<p class="no-messages">Virhe viestien lataamisessa</p>';
+        const offlineOnly = loadRouteMessages();
+        if (offlineOnly.length > 0) {
+            messagesContainer.innerHTML = '';
+            offlineOnly
+                .map((entry, index) => ({
+                    id: `offline-${index}`,
+                    circuit_id: entry.circuit,
+                    circuit_name: circuitNames[entry.circuit] || entry.circuit || 'N/A',
+                    message: `${entry.reason || ''}${entry.reason ? ' - ' : ''}${entry.address || ''}`.trim(),
+                    username: entry.name || 'Tuntematon',
+                    created_at: entry.timestamp || new Date().toISOString(),
+                    is_offline: true
+                }))
+                .forEach(appendMessageCard);
+        } else {
+            messagesContainer.innerHTML = '<p class="no-messages">Virhe viestien lataamisessa</p>';
+        }
     }
 }
 

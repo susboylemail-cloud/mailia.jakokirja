@@ -158,7 +158,7 @@ body.dark-mode {
 .route-mgmt-buttons {
     display: flex;
     flex-direction: column;
-    gap: .75rem;
+    gap: 1rem;
     margin-top: .5rem;
 }
 
@@ -167,11 +167,41 @@ body.dark-mode {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: .6rem;
+    gap: .65rem;
+    padding: .85rem 1.1rem;
+    border-radius: 10px;
+    transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+.route-mgmt-buttons button:focus-visible {
+    outline: 2px solid rgba(74, 144, 226, 0.5);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.15);
+}
+
+.route-mgmt-buttons button:focus {
+    outline: none;
 }
 
 .route-mgmt-buttons svg {
     flex-shrink: 0;
+}
+
+.route-status-actions {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    margin-top: .25rem;
+}
+
+.route-status-actions .modal-btn-secondary,
+.route-status-actions .modal-btn-primary {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .85rem 1.1rem;
 }
 
 /* Form control spacing inside modal */
@@ -2545,16 +2575,27 @@ body.dark-mode .circuit-menu-button:hover {
 .message-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: .75rem;
+    flex-wrap: wrap;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid var(--border-color);
+}
+
+.message-meta {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .message-circuit {
     font-weight: 700;
     color: var(--primary-blue);
     font-size: 1.1rem;
+    flex: 1;
 }
 
 .message-timestamp {
@@ -2566,6 +2607,46 @@ body.dark-mode .circuit-menu-button:hover {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.message-badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+}
+
+.message-badge.read {
+    background: rgba(110, 164, 92, 0.15);
+    color: #3a7a32;
+}
+
+.message-badge.offline {
+    background: rgba(74, 144, 226, 0.15);
+    color: #2c6fb9;
+}
+
+body.dark-mode .message-badge.read {
+    background: rgba(90, 160, 90, 0.25);
+    color: #a6e0a0;
+}
+
+body.dark-mode .message-badge.offline {
+    background: rgba(74, 144, 226, 0.25);
+    color: #7ab8ff;
+}
+
+.message-card.message-read {
+    border-left-color: rgba(90, 160, 90, 0.5);
+    opacity: 0.85;
+}
+
+.message-card.message-offline {
+    border-left-color: var(--primary-blue);
+    border-left-style: dashed;
+    cursor: default;
 }
 
 .message-body > div {

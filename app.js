@@ -93,7 +93,7 @@ function openDeliveryIssueDialog(subscriber, circuitId) {
             </label>`).join('')}
           </div>
         </div>` : '';
-    const bodyHTML = `
+                const bodyHTML = `
         ${productHTML}
         <select id='reportIssue' style='width:100%;padding:.75rem;border:2px solid var(--border-color);border-radius:8px;font-size:1rem;margin-bottom:1rem;background:var(--card-bg);color:var(--text-color);'>
           <option value=''>Valitse syy</option>
@@ -5962,13 +5962,13 @@ async function initializeMaponMapWithGeocoding(circuitId, circuitData, mapContai
         locations.forEach((location, index) => {
             const marker = L.marker([location.lat, location.lon]).addTo(map);
             
-            const productsHtml = location.products.map(p => `<span style="background: #007bff; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8rem; margin-right: 4px;">${p}</span>`).join('');
-            
+            const productsHtml = location.products.map(p => `<span class="map-product-badge">${p}</span>`).join('');
+
             marker.bindPopup(`
-                <div style="min-width: 200px;">
-                    <strong style="font-size: 1.1rem;">${index + 1}. ${location.address}</strong><br>
+                <div class="map-popup">
+                    <strong class="map-popup-title">${index + 1}. ${location.address}</strong><br>
                     ${location.name ? `<em>${location.name}</em><br>` : ''}
-                    <div style="margin-top: 8px;">${productsHtml}</div>
+                    <div class="map-product-badges">${productsHtml}</div>
                 </div>
             `);
             

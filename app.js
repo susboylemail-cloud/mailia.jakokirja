@@ -1824,13 +1824,28 @@ function initializeRefreshButtons() {
                                         const deletePromises = messages.map(msg => 
                                             window.mailiaAPI.deleteMessage(msg.id)
                                         );
-                                        await Promise.allSettled(deletePromises);
+                                        const results = await Promise.allSettled(deletePromises);
+                                        
+                                        // Check if any deletions failed
+                                        const failures = results.filter(r => r.status === 'rejected');
+                                        if (failures.length > 0) {
+                                            console.error('Some message deletions failed:', failures);
+                                        }
                                     }
 
                                     // Clear offline messages
                                     localStorage.removeItem('mailiaRouteMessages');
 
+                                    // Clear the UI immediately before refreshing
+                                    const messagesContainer = document.getElementById('routeMessages');
+                                    if (messagesContainer) {
+                                        messagesContainer.innerHTML = '';
+                                    }
+
                                     showNotificationEnhanced(`${totalMessages} viestiä tyhjennetty`, 'success');
+                                    
+                                    // Wait a moment for backend to process deletions, then refresh
+                                    await new Promise(resolve => setTimeout(resolve, 300));
                                     await renderRouteMessages();
                                     close();
                                 } catch (error) {

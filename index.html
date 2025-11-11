@@ -5,8 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mailia - Jakelu</title>
     <!-- Removed Google Fonts; using system font stack for performance -->
-    <link rel="stylesheet" href="style.css?v=69">
-    <link rel="manifest" href="manifest.json?v=69">
+    
+    <!-- Preload critical resources for faster page load -->
+    <link rel="preload" href="style.css?v=71" as="style">
+    <link rel="preload" href="api.js?v=71" as="script">
+    <link rel="preload" href="app.js?v=71" as="script">
+    
+    <link rel="stylesheet" href="style.css?v=71">
+    <link rel="manifest" href="manifest.json?v=71">
     <meta name="theme-color" content="#1A1D21">
 </head>
 <body class="dark-mode">
@@ -441,8 +447,8 @@
         </div>
     </div>
 
-    <script src="api.js?v=70"></script>
-    <script src="app.js?v=70"></script>
+    <script src="api.js?v=71" defer></script>
+    <script src="app.js?v=71" defer></script>
     <!-- Toast container for notifications (accessible) -->
     <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 </body>

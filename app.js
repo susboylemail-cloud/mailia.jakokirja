@@ -928,7 +928,7 @@ let deferredPWAPrompt = null;
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js?v=74')
+        navigator.serviceWorker.register('service-worker.js?v=74')
             .then(registration => {
                 console.log('[SW] Registered successfully');
                 
@@ -943,16 +943,21 @@ function registerServiceWorker() {
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                             // New service worker available, show update prompt
-                            showUpdateNotification();
+                            showUpdateNotification(registration);
                         }
                     });
                 });
+
+                // If there's already a waiting service worker (e.g., on reload), prompt immediately
+                if (registration.waiting) {
+                    showUpdateNotification(registration);
+                }
             })
             .catch(err => console.warn('[SW] Registration failed', err));
     }
 }
 
-function showUpdateNotification() {
+function showUpdateNotification(registration) {
     const updateMsg = document.createElement('div');
     updateMsg.style.cssText = `
         position: fixed;
@@ -974,8 +979,28 @@ function showUpdateNotification() {
         </button>
     `;
     
+    const reloadOnControllerChange = () => {
+        const onControllerChange = () => {
+            navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+            // Give the new SW a tick to take over, then reload
+            setTimeout(() => window.location.reload(), 50);
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+    };
+
     updateMsg.querySelector('button').addEventListener('click', () => {
-        window.location.reload();
+        try {
+            if (registration && registration.waiting) {
+                // Ask the waiting SW to activate immediately
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                reloadOnControllerChange();
+            } else {
+                // Fallback: force a reload
+                window.location.reload();
+            }
+        } catch (_) {
+            window.location.reload();
+        }
     });
     
     document.body.appendChild(updateMsg);

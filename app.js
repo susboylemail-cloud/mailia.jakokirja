@@ -4990,28 +4990,54 @@ async function showCircuitMap(circuitId) {
         return;
     }
 
-    // Filter out STF addresses
-    const filteredData = circuitData.filter(subscriber => {
+    // Get current day of week for filtering products
+    const today = new Date().getDay();
+
+    // Filter subscribers to only include those with valid products for today
+    const filteredData = circuitData.map(subscriber => {
         if (!subscriber.products || subscriber.products.length === 0) {
-            return true; // Include if no products
+            return null; // Exclude if no products
         }
         
-        // Check if any product contains 'STF'
-        const hasSTF = subscriber.products.some(product => {
+        // Filter products to only those valid for today (excluding STF and invalid day products)
+        const validProducts = [];
+        subscriber.products.forEach(product => {
             const productStr = typeof product === 'object' ? (product.code || product.name || '') : String(product);
-            return productStr.toUpperCase().includes('STF');
+            const normalized = normalizeProduct(productStr);
+            
+            // Skip STF products
+            if (normalized.toUpperCase().includes('STF')) {
+                return;
+            }
+            
+            // Split combined products (e.g., "ES HS" -> ["ES", "HS"])
+            const individualProducts = normalized.split(/\s+/);
+            individualProducts.forEach(individualProduct => {
+                if (isProductValidForDay(individualProduct, today)) {
+                    validProducts.push(individualProduct);
+                }
+            });
         });
         
-        return !hasSTF; // Exclude if has STF
-    });
+        // If no valid products for today, exclude this subscriber
+        if (validProducts.length === 0) {
+            return null;
+        }
+        
+        // Return subscriber with filtered products
+        return {
+            ...subscriber,
+            products: validProducts
+        };
+    }).filter(sub => sub !== null);
 
     if (filteredData.length === 0) {
-        showNotification('Ei näytettäviä osoitteita (kaikki STF)', 'info');
+        showNotification('Ei näytettäviä osoitteita tänään', 'info');
         return;
     }
 
-    const stfCount = circuitData.length - filteredData.length;
-    const stfInfo = stfCount > 0 ? ` (${stfCount} STF-osoitetta piilotettu)` : '';
+    const excludedCount = circuitData.length - filteredData.length;
+    const excludedInfo = excludedCount > 0 ? ` (${excludedCount} osoitetta piilotettu)` : '';
 
     // Create fullscreen map overlay
     const mapOverlay = document.createElement('div');
@@ -5078,7 +5104,7 @@ async function showCircuitMap(circuitId) {
         border-top: 2px solid #444;
     `;
     infoPanel.innerHTML = `
-        <p style="margin: 0;">Yhteensä: <strong>${filteredData.length} osoitetta</strong>${stfInfo}</p>
+        <p style="margin: 0;">Yhteensä: <strong>${filteredData.length} osoitetta</strong>${excludedInfo}</p>
     `;
 
     mapOverlay.appendChild(mapHeader);

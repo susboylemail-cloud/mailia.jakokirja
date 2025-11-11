@@ -637,8 +637,13 @@ function showNotification(message, type = 'info') {
 
 function showCircuitManagementMenu(circuitId, routeData, status) {
     const buttons = [];
-    buttons.push({ id: 'mapView', label: 'Google Maps', variant: 'secondary', icon: 'map', handler: ({ close }) => { showCircuitMap(circuitId); close(); }});
-    buttons.push({ id: 'maponView', label: 'Mapon Kartta', variant: 'secondary', icon: 'map-pin', handler: ({ close }) => { showMaponMap(circuitId); close(); }});
+    
+    // Only show Mapon map for paivystys.imatra user
+    const currentUser = window.mailiaAPI?.getCurrentUser();
+    if (currentUser && currentUser.username === 'paivystys.imatra') {
+        buttons.push({ id: 'maponView', label: 'Näytä kartalla', variant: 'secondary', icon: 'map', handler: ({ close }) => { showMaponMap(circuitId); close(); }});
+    }
+    
     if (!routeData || status === 'not-started') {
         buttons.push({ id: 'startRoute', label: 'Aloita reitti', variant: 'primary', icon: 'play', handler: async ({ close }) => {
             try {
@@ -6013,7 +6018,7 @@ enhanceDeliveryCheckboxes();
 const MAPON_API_KEY = 'b6a5ce738b76b134d06e8b072a754918019a9ed7';
 const MAPON_API_BASE = 'https://mapon.com/api/v1';
 
-// Show Mapon map with route visualization
+// Show Mapon map with route visualization and geocoding
 async function showMaponMap(circuitId) {
     try {
         // Load circuit data
@@ -6063,6 +6068,9 @@ async function showMaponMap(circuitId) {
             return;
         }
 
+        const excludedCount = circuitData.length - filteredData.length;
+        const excludedInfo = excludedCount > 0 ? ` (${excludedCount} osoitetta piilotettu)` : '';
+
         // Create fullscreen map overlay
         const mapOverlay = document.createElement('div');
         mapOverlay.id = 'maponOverlay';
@@ -6094,7 +6102,7 @@ async function showMaponMap(circuitId) {
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
-                ${circuitNames[circuitId] || circuitId} - Mapon Kartta
+                ${circuitNames[circuitId] || circuitId} - Karttanäkymä
             </h3>
             <button id="closeMaponBtn" style="
                 background: #dc3545;
@@ -6111,16 +6119,17 @@ async function showMaponMap(circuitId) {
         `;
 
         // Create map container
-        const mapContainer = document.createElement('iframe');
-        mapContainer.id = 'maponFrame';
+        const mapContainer = document.createElement('div');
+        mapContainer.id = 'maponMapContainer';
         mapContainer.style.cssText = `
             flex: 1;
             width: 100%;
-            border: none;
+            position: relative;
         `;
 
         // Create info panel
         const infoPanel = document.createElement('div');
+        infoPanel.id = 'mapInfoPanel';
         infoPanel.style.cssText = `
             background: #2c2c2c;
             padding: 1rem;
@@ -6131,7 +6140,7 @@ async function showMaponMap(circuitId) {
             align-items: center;
         `;
         infoPanel.innerHTML = `
-            <p style="margin: 0;">Yhteensä: <strong>${filteredData.length} osoitetta</strong></p>
+            <p style="margin: 0;">Haetaan sijaintitietoja...</p>
             <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon</p>
         `;
 
@@ -6145,11 +6154,8 @@ async function showMaponMap(circuitId) {
             mapOverlay.remove();
         });
 
-        // Generate Mapon map URL with waypoints
-        const addresses = filteredData.map(sub => `${sub.address}, Imatra, Finland`);
-        const maponUrl = await generateMaponMapUrl(circuitId, addresses, filteredData);
-        
-        mapContainer.src = maponUrl;
+        // Initialize map with geocoding
+        await initializeMaponMapWithGeocoding(circuitId, filteredData, mapContainer, infoPanel, excludedInfo);
 
     } catch (error) {
         console.error('Error showing Mapon map:', error);
@@ -6157,67 +6163,153 @@ async function showMaponMap(circuitId) {
     }
 }
 
-// Generate Mapon map URL with route
-async function generateMaponMapUrl(circuitId, addresses, subscribers) {
+// Initialize Mapon map with geocoded addresses
+async function initializeMaponMapWithGeocoding(circuitId, circuitData, mapContainer, infoPanel, excludedInfo) {
     try {
-        // For now, create a simple embedded map view
-        // Mapon's main use is fleet tracking, so we'll create a visualization URL
-        
-        // Get coordinates for the first address to center the map
-        const centerAddress = encodeURIComponent(addresses[0]);
-        
-        // Create a simple visualization showing the circuit area
-        // Note: For full Mapon integration, you'd typically use their Route Planner API
-        const baseUrl = 'https://www.google.com/maps/embed/v1/place';
-        const apiKey = 'AIzaSyBiwMg_-LguiW6w8tMl0N-VGXqIJd3AYdQ'; // Fallback to Google for visualization
-        
-        const mapUrl = `${baseUrl}?key=${apiKey}&q=${centerAddress}&zoom=14&maptype=roadmap`;
-        
-        showNotification(`Näytetään ${subscribers.length} osoitetta`, 'success');
-        
-        return mapUrl;
-        
+        // Use Nominatim for geocoding (free and open)
+        const locations = [];
+        let geocodedCount = 0;
+
+        showNotification('Haetaan osoitteiden sijainteja...', 'info');
+
+        for (const subscriber of circuitData) {
+            const fullAddress = `${subscriber.address}, Imatra, Finland`;
+            
+            try {
+                // Use Nominatim geocoding service
+                const encodedAddress = encodeURIComponent(fullAddress);
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`);
+                
+                if (!response.ok) {
+                    throw new Error('Geocoding failed');
+                }
+                
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    locations.push({
+                        lat: parseFloat(data[0].lat),
+                        lon: parseFloat(data[0].lon),
+                        address: subscriber.address,
+                        name: subscriber.name,
+                        products: subscriber.products
+                    });
+                    geocodedCount++;
+                }
+                
+                // Respect Nominatim usage policy (1 request per second)
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+            } catch (error) {
+                console.warn(`Could not geocode ${fullAddress}:`, error);
+            }
+
+            // Update progress
+            infoPanel.innerHTML = `
+                <p style="margin: 0;">Ladataan... <strong>${geocodedCount}/${circuitData.length} osoitetta</strong></p>
+                <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon</p>
+            `;
+        }
+
+        if (locations.length === 0) {
+            showNotification('Osoitteiden sijainteja ei löytynyt', 'error');
+            infoPanel.innerHTML = `
+                <p style="margin: 0;">Virhe: Ei sijaintitietoja</p>
+                <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon</p>
+            `;
+            return;
+        }
+
+        // Calculate center point
+        const avgLat = locations.reduce((sum, loc) => sum + loc.lat, 0) / locations.length;
+        const avgLon = locations.reduce((sum, loc) => sum + loc.lon, 0) / locations.length;
+
+        // Create interactive map with Leaflet (using OpenStreetMap)
+        const mapElement = document.createElement('div');
+        mapElement.id = 'leafletMap';
+        mapElement.style.cssText = 'width: 100%; height: 100%;';
+        mapContainer.appendChild(mapElement);
+
+        // Load Leaflet dynamically if not already loaded
+        if (typeof L === 'undefined') {
+            await loadLeafletLibrary();
+        }
+
+        // Initialize Leaflet map
+        const map = L.map('leafletMap').setView([avgLat, avgLon], 14);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add markers for each location
+        locations.forEach((location, index) => {
+            const marker = L.marker([location.lat, location.lon]).addTo(map);
+            
+            const productsHtml = location.products.map(p => `<span style="background: #007bff; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8rem; margin-right: 4px;">${p}</span>`).join('');
+            
+            marker.bindPopup(`
+                <div style="min-width: 200px;">
+                    <strong style="font-size: 1.1rem;">${index + 1}. ${location.address}</strong><br>
+                    ${location.name ? `<em>${location.name}</em><br>` : ''}
+                    <div style="margin-top: 8px;">${productsHtml}</div>
+                </div>
+            `);
+            
+            // Add number label
+            const icon = L.divIcon({
+                className: 'number-marker',
+                html: `<div style="
+                    background: #007bff;
+                    color: white;
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                ">${index + 1}</div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            marker.setIcon(icon);
+        });
+
+        // Update info panel
+        infoPanel.innerHTML = `
+            <p style="margin: 0;">Yhteensä: <strong>${locations.length} osoitetta</strong>${excludedInfo}</p>
+            <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon & OpenStreetMap</p>
+        `;
+
+        showNotification(`${locations.length} osoitetta näytetään kartalla`, 'success');
+
     } catch (error) {
-        console.error('Error generating Mapon URL:', error);
+        console.error('Error initializing Mapon map:', error);
         throw error;
     }
 }
 
-// Fetch Mapon units (vehicles/devices)
-async function getMaponUnits() {
-    try {
-        const response = await fetch(`${MAPON_API_BASE}/unit/list.json?key=${MAPON_API_KEY}`);
-        if (!response.ok) {
-            throw new Error(`Mapon API error: ${response.status}`);
-        }
-        const data = await response.json();
-        return data.data?.units || [];
-    } catch (error) {
-        console.error('Error fetching Mapon units:', error);
-        return [];
-    }
-}
+// Load Leaflet library dynamically
+async function loadLeafletLibrary() {
+    return new Promise((resolve, reject) => {
+        // Load CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
 
-// Get Mapon route history for a unit
-async function getMaponRouteHistory(unitId, dateFrom, dateTill) {
-    try {
-        const params = new URLSearchParams({
-            key: MAPON_API_KEY,
-            unit_id: unitId,
-            from: dateFrom,
-            till: dateTill
-        });
-        
-        const response = await fetch(`${MAPON_API_BASE}/route/list.json?${params}`);
-        if (!response.ok) {
-            throw new Error(`Mapon API error: ${response.status}`);
-        }
-        const data = await response.json();
-        return data.data?.routes || [];
-    } catch (error) {
-        console.error('Error fetching Mapon route history:', error);
-        return [];
-    }
+        // Load JS
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
 }
 
 

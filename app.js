@@ -256,6 +256,7 @@ function initializeApp() {
     initializeSwipeGestures();
     initializeCircuitTracker();
     loadFavorites();
+    initializeMidnightReset();
     
     // Initialize geolocation for weather
     getLocationWeather();
@@ -1882,6 +1883,36 @@ function initializeRefreshButtons() {
             renderRouteMessages();
         }
     }, 30000);
+}
+
+// Midnight reset for messages
+function initializeMidnightReset() {
+    const checkMidnight = () => {
+        const now = new Date();
+        const lastCheck = localStorage.getItem('mailiaLastMidnightCheck');
+        const today = now.toDateString();
+        
+        if (lastCheck !== today) {
+            console.log('Midnight passed - clearing messages');
+            
+            // Clear offline messages
+            localStorage.removeItem('mailiaRouteMessages');
+            
+            // Re-render messages (will be empty or fetch new day's messages)
+            if (window.mailiaAPI && window.mailiaAPI.isAuthenticated()) {
+                renderRouteMessages();
+            }
+            
+            // Update last check
+            localStorage.setItem('mailiaLastMidnightCheck', today);
+        }
+    };
+    
+    // Check on initialization
+    checkMidnight();
+    
+    // Check every minute
+    setInterval(checkMidnight, 60000);
 }
 
 // Data Loading and Parsing
@@ -4232,8 +4263,39 @@ async function renderRouteMessages() {
         messageCard.appendChild(messageHeader);
         messageCard.appendChild(messageBody);
 
-        // Add swipe-to-dismiss functionality for all messages
-        addSwipeToMessageCard(messageCard, message.id, message.is_offline);
+        // Add click-to-mark-as-read functionality
+        if (!message.is_read && !message.is_offline) {
+            messageCard.style.cursor = 'pointer';
+            messageCard.addEventListener('click', async (e) => {
+                // Don't interfere with button/link clicks
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+                    return;
+                }
+                
+                try {
+                    await window.mailiaAPI.markMessageAsRead(message.id);
+                    messageCard.classList.add('message-read');
+                    
+                    // Update badge
+                    const existingBadge = messageCard.querySelector('.message-badge');
+                    if (existingBadge) {
+                        existingBadge.className = 'message-badge read';
+                        existingBadge.textContent = 'Luettu';
+                    } else {
+                        const readBadge = document.createElement('span');
+                        readBadge.className = 'message-badge read';
+                        readBadge.textContent = 'Luettu';
+                        metaWrap.appendChild(readBadge);
+                    }
+                    
+                    messageCard.style.cursor = 'default';
+                    showNotificationEnhanced('Viesti merkitty luetuksi', 'success');
+                } catch (error) {
+                    console.error('Error marking message as read:', error);
+                    showNotificationEnhanced('Virhe viestin merkitsemisessä', 'error');
+                }
+            });
+        }
 
         messagesContainer.appendChild(messageCard);
     };

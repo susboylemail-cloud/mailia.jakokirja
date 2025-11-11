@@ -76,29 +76,48 @@ export default pool;
 
 ### 6. Initialize Database Schema
 
-After first deployment, run database migrations:
+You can still run the commands manually, or use the automated scripts (recommended).
 
-```bash
-# Get the DATABASE_URL
-heroku config:get DATABASE_URL
+#### Option A: Automated bootstrap (recommended)
 
-# Run schema migration
-heroku pg:psql < backend/database/schema.sql
+The bootstrap scripts automate config vars, schema, and admin creation. They are idempotent—rerun any time.
+
+**Windows PowerShell**
+
+```powershell
+# From repo root
+./scripts/heroku-init.ps1 -AppName mailia-delivery-tracker
+
+# Optional flags:
+#   -AdminUser, -AdminPassword, -AdminEmail, -AdminFullName
+#   -SkipConfig (skip config var checks)
 ```
 
-### 7. Create Admin User
-
-After database is set up, create an admin user:
+**macOS/Linux (bash)**
 
 ```bash
+chmod +x scripts/heroku-init.sh
+./scripts/heroku-init.sh --app mailia-delivery-tracker
+
+# Optional flags:
+#   --admin-user, --admin-password, --admin-email, --admin-fullname
+#   --skip-config
+```
+
+#### Option B: Manual commands
+
+```bash
+# Run schema migration
+heroku pg:psql < backend/database/schema.sql
+
+# Create admin user
 heroku run bash
 cd backend
 npm run create:admin
-# Follow prompts to create admin user
 exit
 ```
 
-### 8. Deploy to Heroku
+### 7. Deploy to Heroku
 
 ```bash
 # Add and commit all changes

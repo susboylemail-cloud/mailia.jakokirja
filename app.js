@@ -105,6 +105,13 @@ function openDeliveryIssueDialog(subscriber, circuitId) {
         <div id='reportCustomWrap' style='display:none;margin-bottom:1rem;'>
           <label style='display:block;margin-bottom:.5rem;font-weight:500;'>Tarkenna:</label>
           <textarea id='reportCustomText' rows='3' style='width:100%;padding:.75rem;border:2px solid var(--border-color);border-radius:8px;font-size:1rem;resize:vertical;background:var(--card-bg);color:var(--text-color);'></textarea>
+        </div>
+        <div style='margin-bottom:1rem;'>
+          <label style='display:block;margin-bottom:.5rem;font-weight:500;'>Liitä kuva (valinnainen):</label>
+          <input type='file' id='reportPhoto' accept='image/*' capture='environment' style='width:100%;padding:.5rem;border:2px solid var(--border-color);border-radius:8px;background:var(--card-bg);color:var(--text-color);'/>
+          <div id='reportPhotoPreview' style='margin-top:.5rem;display:none;'>
+            <img id='reportPhotoImg' style='max-width:100%;height:auto;border-radius:8px;' alt='Kuvan esikatselu'/>
+          </div>
         </div>`;
     const { box, close } = createModal({
         title: 'Jakeluhäiriön ilmoitus',
@@ -126,15 +133,21 @@ function openDeliveryIssueDialog(subscriber, circuitId) {
                     if (checked.length === 0) { showNotification('Valitse vähintään yksi tuote', 'error'); return; }
                     selectedProducts = checked;
                 }
+                
+                // Get photo if uploaded
+                const photoInput = box.querySelector('#reportPhoto');
+                const photoFile = photoInput && photoInput.files && photoInput.files[0];
+                
                 const report = {
                     timestamp: new Date().toISOString(),
                     circuit: circuitId,
                     address: subscriber.address,
                     name: subscriber.name,
                     products: selectedProducts.join(', '),
-                    reason
+                    reason,
+                    hasPhoto: !!photoFile
                 };
-                saveRouteMessage(report);
+                saveRouteMessage(report, photoFile);
                 showNotification('Raportti tallennettu!', 'success');
                 close();
             } }
@@ -146,7 +159,86 @@ function openDeliveryIssueDialog(subscriber, circuitId) {
     issueSelect.addEventListener('change', () => {
         customWrap.style.display = issueSelect.value === 'Muu' ? 'block' : 'none';
     });
+    
+    // Photo preview handler
+    const photoInput = box.querySelector('#reportPhoto');
+    const photoPreview = box.querySelector('#reportPhotoPreview');
+    const photoImg = box.querySelector('#reportPhotoImg');
+    if (photoInput && photoPreview && photoImg) {
+        photoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    photoImg.src = event.target.result;
+                    photoPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                photoPreview.style.display = 'none';
+            }
+        });
+    }
 }
+
+// Key info dialog for admin
+function openKeyInfoDialog(subscriber, circuitId) {
+    const currentInfo = subscriber.key_info || '';
+    const bodyHTML = `
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;margin-bottom:.5rem;font-weight:500;">Avaintiedot (porttikoodit, huomiot, yms.):</label>
+          <textarea id="keyInfoText" rows="4" style="width:100%;padding:.75rem;border:2px solid var(--border-color);border-radius:8px;font-size:1rem;resize:vertical;background:var(--card-bg);color:var(--text-color);" placeholder="Esim: Porttikoodi 1234, avainta tarvitaan, koira pihalla">${currentInfo}</textarea>
+        </div>
+        <div style="color:var(--text-muted);font-size:0.9rem;">
+          <strong>Osoite:</strong> ${subscriber.address}<br>
+          <strong>Nimi:</strong> ${subscriber.name}
+        </div>
+    `;
+    
+    const { box, close } = createModal({
+        title: 'Muokkaa avaintietoja',
+        bodyHTML,
+        actions: [
+            { id: 'keyCancel', label: 'Peruuta', variant: 'secondary', handler: () => close() },
+            { id: 'keyClear', label: 'Tyhjennä', variant: 'secondary', handler: () => {
+                const textarea = box.querySelector('#keyInfoText');
+                if (textarea) textarea.value = '';
+            }},
+            { id: 'keySave', label: 'Tallenna', variant: 'primary', handler: async () => {
+                const textarea = box.querySelector('#keyInfoText');
+                const newInfo = textarea ? textarea.value.trim() : '';
+                
+                try {
+                    // Save via API
+                    if (window.mailiaAPI && window.mailiaAPI.isAuthenticated() && subscriber.id) {
+                        await window.mailiaAPI.makeRequest(`/subscribers/${subscriber.id}/key-info`, {
+                            method: 'PUT',
+                            body: JSON.stringify({ key_info: newInfo })
+                        });
+                        
+                        // Update local data
+                        subscriber.key_info = newInfo;
+                        
+                        // Reload circuit to refresh UI
+                        if (currentCircuit === circuitId) {
+                            await loadCircuit(circuitId);
+                        }
+                        
+                        showNotification('Avaintiedot tallennettu', 'success');
+                        close();
+                    } else {
+                        showNotification('Tallennus epäonnistui: ei yhteyttä', 'error');
+                    }
+                } catch (error) {
+                    console.error('Failed to save key info:', error);
+                    showNotification('Virhe tallentaessa', 'error');
+                }
+            }}
+        ],
+        initialFocusSelector: '#keyInfoText'
+    });
+}
+
 // Helper: collect checked product values from a container
 function getCheckedProducts(container) {
     if (!container) return [];
@@ -946,7 +1038,7 @@ let deferredPWAPrompt = null;
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js?v=77')
+    navigator.serviceWorker.register('service-worker.js?v=78')
             .then(registration => {
                 console.log('[SW] Registered successfully');
                 
@@ -3549,7 +3641,37 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     });
     info.appendChild(products);
     
+    // Key information display (visible to all users)
+    if (subscriber.key_info) {
+        const keyInfo = document.createElement('div');
+        keyInfo.className = 'key-info';
+        keyInfo.innerHTML = `
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:4px;">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+            </svg>
+            <span>${subscriber.key_info}</span>
+        `;
+        info.appendChild(keyInfo);
+    }
+    
     card.appendChild(info);
+    
+    // Admin-only: Add key info button
+    const currentRole = getEffectiveUserRole();
+    if (currentRole === 'admin' || currentRole === 'manager') {
+        const keyInfoBtn = document.createElement('button');
+        keyInfoBtn.className = 'key-info-button admin-only';
+        keyInfoBtn.innerHTML = `
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+            </svg>
+        `;
+        keyInfoBtn.title = subscriber.key_info ? 'Muokkaa avaintietoja' : 'Lisää avaintiedot';
+        keyInfoBtn.addEventListener('click', () => {
+            openKeyInfoDialog(subscriber, circuitId);
+        });
+        card.appendChild(keyInfoBtn);
+    }
     
     // Report undelivered button
     const reportBtn = document.createElement('button');
@@ -3741,11 +3863,21 @@ function initializeSwipeToMark(card, checkbox, circuitId, address, subscriberId 
 // Report Undelivered Functionality
 // legacy reportUndelivered removed; replaced by openDeliveryIssueDialog
 
-function saveRouteMessage(message) {
+async function saveRouteMessage(message, photoFile = null) {
     // Check if we're online first
     if (!navigator.onLine) {
         console.log('Offline: saving message locally');
         const messages = loadRouteMessages();
+        
+        // Convert photo to base64 if present
+        if (photoFile) {
+            try {
+                message.photoData = await fileToBase64(photoFile);
+            } catch (err) {
+                console.error('Failed to convert photo:', err);
+            }
+        }
+        
         messages.push(message);
         localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
         showNotificationEnhanced('Viesti tallennettu offline-tilassa', 'info');
@@ -3768,12 +3900,8 @@ function saveRouteMessage(message) {
                     localStorage.setItem(`route_id_${message.circuit}`, route.id);
                     localStorage.setItem(`route_start_${message.circuit}`, new Date(route.start_time || Date.now()).toISOString());
                     updateRouteButtons(message.circuit);
-                    // Now send the message
-                    return window.mailiaAPI.sendMessage(
-                        route.id,
-                        'issue',
-                        `${message.reason} - ${message.address}`
-                    );
+                    // Now send the message with photo
+                    return sendMessageWithPhoto(route.id, message, photoFile);
                 })
                 .then(() => {
                     console.log('Message sent successfully');
@@ -3792,15 +3920,26 @@ function saveRouteMessage(message) {
                         showNotificationEnhanced(`Virhe: ${error.message || 'Tuntematon virhe'}`, 'error');
                     }
                     
-                    // Fallback to localStorage
+                    // Fallback to localStorage with photo as base64
                     const messages = loadRouteMessages();
-                    messages.push(message);
-                    localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+                    if (photoFile) {
+                        fileToBase64(photoFile).then(base64 => {
+                            message.photoData = base64;
+                            messages.push(message);
+                            localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+                        });
+                    } else {
+                        messages.push(message);
+                        localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
+                    }
                 });
             return;
         } else {
             // Fallback to localStorage if API not available
             const messages = loadRouteMessages();
+            if (photoFile) {
+                message.photoData = await fileToBase64(photoFile);
+            }
             messages.push(message);
             localStorage.setItem('mailiaRouteMessages', JSON.stringify(messages));
             showNotificationEnhanced('Viesti tallennettu paikallisesti', 'info');
@@ -3808,13 +3947,9 @@ function saveRouteMessage(message) {
         }
     }
     
-    // Send message to backend API
+    // Send message to backend API with photo
     if (window.mailiaAPI && window.mailiaAPI.isAuthenticated()) {
-        window.mailiaAPI.sendMessage(
-            parseInt(routeId),
-            'issue',  // message type
-            `${message.reason} - ${message.address}` // message content
-        ).then(() => {
+        sendMessageWithPhoto(parseInt(routeId), message, photoFile).then(() => {
             console.log('Message sent successfully to route:', routeId);
             announceToScreenReader('Viesti lähetetty');
             // Refresh messages view if active (no notification here)
@@ -3855,6 +3990,46 @@ function loadRouteMessages() {
         }
     }
     return [];
+}
+
+// Photo handling helpers
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function sendMessageWithPhoto(routeId, message, photoFile) {
+    const messageText = `${message.reason} - ${message.address}`;
+    
+    if (!photoFile) {
+        // No photo, send regular message
+        return window.mailiaAPI.sendMessage(routeId, 'issue', messageText);
+    }
+    
+    // Send message with photo using FormData
+    const formData = new FormData();
+    formData.append('message_type', 'issue');
+    formData.append('message_content', messageText);
+    formData.append('photo', photoFile);
+    
+    const token = localStorage.getItem('mailiaToken');
+    const response = await fetch(`/api/messages/${routeId}`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+        body: formData
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to send message with photo');
+    }
+    
+    return response.json();
 }
 
 // Filters and Event Listeners

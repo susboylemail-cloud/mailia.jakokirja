@@ -41,6 +41,7 @@ CREATE TABLE subscribers (
     apartment VARCHAR(50),
     stairwell VARCHAR(50),
     order_index INTEGER,
+    key_info TEXT,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

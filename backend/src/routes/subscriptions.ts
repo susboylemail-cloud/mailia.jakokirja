@@ -220,4 +220,53 @@ router.post('/subscriber',
     }
 );
 
+// Update subscriber key info (admin/manager only)
+router.put('/subscribers/:id/key-info',
+    authenticate,
+    authorize('admin', 'manager'),
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { key_info } = req.body;
+
+            // Validate subscriber ID
+            if (!id || isNaN(parseInt(id))) {
+                return res.status(400).json({ error: 'Invalid subscriber ID' });
+            }
+
+            // Update key_info field
+            const result = await query(
+                `UPDATE subscribers 
+                 SET key_info = $1, updated_at = NOW()
+                 WHERE id = $2
+                 RETURNING *`,
+                [key_info || null, parseInt(id)]
+            );
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'Subscriber not found' });
+            }
+
+            // Broadcast update to all connected clients
+            const socketIO = await getIO();
+            if (socketIO) {
+                socketIO.emit('subscriber_updated', {
+                    action: 'key_info_updated',
+                    subscriber: result.rows[0]
+                });
+                logger.info(`Broadcasted key info update for subscriber ${id}`);
+            }
+
+            res.json({
+                success: true,
+                subscriber: result.rows[0]
+            });
+        } catch (error) {
+            logger.error('Key info update error:', error);
+            res.status(500).json({ error: 'Failed to update key info' });
+        }
+    }
+);
+
 export default router;
+

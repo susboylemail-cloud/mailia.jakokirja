@@ -241,6 +241,12 @@ class MailiaAPI {
         });
     }
 
+    async deleteMessage(messageId) {
+        return await this.makeRequest(`/routes/messages/${messageId}`, {
+            method: 'DELETE'
+        });
+    }
+
     // ============= Deliveries =============
     
     async updateDelivery(routeId, subscriberId, isDelivered) {

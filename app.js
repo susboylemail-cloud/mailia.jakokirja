@@ -1822,7 +1822,7 @@ function initializeRefreshButtons() {
                                     // Delete all backend messages
                                     if (messages.length > 0) {
                                         const deletePromises = messages.map(msg => 
-                                            window.mailiaAPI.makeRequest(`/routes/messages/${msg.id}`, { method: 'DELETE' })
+                                            window.mailiaAPI.deleteMessage(msg.id)
                                         );
                                         await Promise.allSettled(deletePromises);
                                     }
@@ -3555,6 +3555,7 @@ function saveRouteMessage(message) {
                 .then(() => {
                     console.log('Message sent successfully');
                     announceToScreenReader('Viesti lähetetty');
+                    showNotificationEnhanced('Viesti lähetetty onnistuneesti', 'success');
                     // Refresh messages view if active
                     const messagesTab = document.querySelector('.tab-content.active#messagesTab');
                     if (messagesTab) { renderRouteMessages(); }
@@ -3594,6 +3595,7 @@ function saveRouteMessage(message) {
         ).then(() => {
             console.log('Message sent successfully to route:', routeId);
             announceToScreenReader('Viesti lähetetty');
+            showNotificationEnhanced('Viesti lähetetty onnistuneesti', 'success');
             // Refresh messages view if active (no notification here)
             const messagesTab = document.querySelector('.tab-content.active#messagesTab');
             if (messagesTab) { renderRouteMessages(); }

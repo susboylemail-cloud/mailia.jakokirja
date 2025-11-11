@@ -163,6 +163,7 @@ let routeMessages = []; // Store route messages for admin panel
 let showCheckboxes = false; // Control checkbox visibility (default: OFF - swipe is primary method)
 let isLoadingCircuit = false; // Prevent concurrent circuit loads
 let isRenderingTracker = false; // Prevent concurrent tracker renders
+let websocketListenersInitialized = false; // Prevent duplicate WebSocket event bindings
 
 // Small helper: get current role from memory or storage
 function getEffectiveUserRole() {
@@ -180,6 +181,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         // Verify the token is still valid by trying to fetch user data
         try {
             await window.mailiaAPI.makeRequest('/auth/me');
+            window.mailiaAPI.connectWebSocket();
             // Token is valid, show main app
             showMainApp();
             initializeApp();
@@ -244,6 +246,10 @@ async function handleLogin() {
 
 function initializeApp() {
     // Initialize all app functionality after successful login
+    if (window.mailiaAPI) {
+        window.mailiaAPI.connectWebSocket();
+    }
+    initializeWebSocketListeners();
     initializeTabs();
     initializeRefreshButtons();
     initializeLogout();
@@ -253,9 +259,6 @@ function initializeApp() {
     
     // Initialize geolocation for weather
     getLocationWeather();
-    
-    // Initialize WebSocket event listeners for real-time updates
-    initializeWebSocketListeners();
     
     // Initialize dashboard if user is admin or manager
     const role = getEffectiveUserRole();
@@ -406,6 +409,10 @@ async function submitWhitelistChanges(close) {
 
 // WebSocket real-time event listeners
 function initializeWebSocketListeners() {
+    if (websocketListenersInitialized) {
+        return;
+    }
+    websocketListenersInitialized = true;
     // Listen for route updates from other users
     window.addEventListener('routeUpdated', async (event) => {
         const data = event.detail;
@@ -1470,6 +1477,11 @@ async function showMainApp() {
         // Save user role to localStorage for access in other functions
         localStorage.setItem('mailiaUserRole', user.role);
     }
+
+    if (window.mailiaAPI) {
+        window.mailiaAPI.connectWebSocket();
+    }
+    initializeWebSocketListeners();
     
     // Start the phone rise up transition animation
     const loginScreen = document.getElementById('loginScreen');

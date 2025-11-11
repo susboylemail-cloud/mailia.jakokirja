@@ -155,6 +155,25 @@ body.dark-mode {
 
 .app-modal .modal-actions { display:flex; gap:.75rem; justify-content:flex-end; margin-top:1.6rem; }
 
+.route-mgmt-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    margin-top: .5rem;
+}
+
+.route-mgmt-buttons button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+}
+
+.route-mgmt-buttons svg {
+    flex-shrink: 0;
+}
+
 /* Form control spacing inside modal */
 .app-modal select,
 .app-modal textarea,

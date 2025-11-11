@@ -1,5 +1,5 @@
 // Mailia Service Worker - Offline Support & Caching
-const CACHE_VERSION = 'mailia-v78';
+const CACHE_VERSION = 'mailia-v79';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -8,10 +8,10 @@ const API_CACHE = `${CACHE_VERSION}-api`;
 const STATIC_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=78',
-    '/app.js?v=78',
-    '/api.js?v=78',
-    '/manifest.json?v=78',
+    '/style.css?v=79',
+    '/app.js?v=79',
+    '/api.js?v=79',
+    '/manifest.json?v=79',
     '/icons/icon-192.png',
     '/icons/icon-512.png'
 ];

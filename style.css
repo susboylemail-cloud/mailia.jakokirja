@@ -1859,66 +1859,67 @@ main {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.4rem 0.6rem;
-    border-radius: 50%;
-    font-weight: 700;
-    font-size: 0.75rem;
-    line-height: 1;
-    min-width: 36px;
-    min-height: 36px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    min-height: 40px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+    gap: 0.35rem;
     flex-direction: column;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
 }
 
-/* Product-specific colors for badges */
+/* Product-specific colors for badges - iOS style with subtle gradients */
 .product-badge.product-ES {
-    background: #2E86C1;            /* Darker blue for better contrast */
+    background: linear-gradient(135deg, #5DADE2 0%, #2E86C1 100%);
     color: white;
 }
 
 .product-badge.product-UV {
-    background: #F39C12;            /* Darker gold for better contrast */
-    color: #1A1D21;                 /* Dark text for contrast */
+    background: linear-gradient(135deg, #F8C471 0%, #F39C12 100%);
+    color: #1A1D21;
 }
 
 .product-badge.product-HS {
-    background: #27AE60;            /* Darker green for better contrast */
+    background: linear-gradient(135deg, #58D68D 0%, #27AE60 100%);
     color: white;
 }
 
 .product-badge.product-STF {
-    background: #E74C3C;            /* Darker red-orange for better contrast */
+    background: linear-gradient(135deg, #EC7063 0%, #E74C3C 100%);
     color: white;
 }
 
 .product-badge.product-JO {
-    background: #8E44AD;            /* Darker purple for better contrast */
+    background: linear-gradient(135deg, #AF7AC5 0%, #8E44AD 100%);
     color: white;
 }
 
 .product-badge.product-LU {
-    background: #E67E22;            /* Darker orange for better contrast */
+    background: linear-gradient(135deg, #EB984E 0%, #E67E22 100%);
     color: white;
 }
 
 .product-badge.product-ISA {
-    background: #F39C12;            /* Darker gold for Itä-Savo */
-    color: #1A1D21;                 /* Dark text for contrast */
+    background: linear-gradient(135deg, #F8C471 0%, #F39C12 100%);
+    color: #1A1D21;
 }
 
 .product-badge.product-PASA {
-    background: #16A085;            /* Darker turquoise for Parikkalan Sanomat */
+    background: linear-gradient(135deg, #48C9B0 0%, #16A085 100%);
     color: white;
 }
 
 .product-badge.product-YHTS {
-    background: #C0392B;            /* Darker red for Yhteishyvä */
+    background: linear-gradient(135deg, #CD6155 0%, #C0392B 100%);
     color: white;
 }
 
 .product-badge.product-MST {
-    background: #7D3C98;            /* Darker purple for Maaseudun Tulevaisuus */
+    background: linear-gradient(135deg, #9B59B6 0%, #7D3C98 100%);
     color: white;
 }
 
@@ -1926,7 +1927,7 @@ main {
 .product-badge.product-RL,
 .product-badge.product-PL,
 .product-badge.product-LUUM {
-    background: #7F8C8D;            /* Darker gray for miscellaneous */
+    background: linear-gradient(135deg, #95A5A6 0%, #7F8C8D 100%);
     color: white;
 }
 

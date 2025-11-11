@@ -35,20 +35,6 @@ function createModal({ title, bodyHTML, actions = [], ariaLabel = null, initialF
         if (e.key === 'Escape') {
             e.preventDefault();
             close();
-        } else if (e.key === 'Tab') {
-            // Focus trap
-            const focusables = Array.from(box.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
-                .filter(el => !el.disabled && el.offsetParent !== null);
-            if (focusables.length === 0) return;
-            const first = focusables[0];
-            const last = focusables[focusables.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault();
-                last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault();
-                first.focus();
-            }
         } else if (e.key === 'Enter') {
             // Submit on Enter unless typing in a multiline field
             const ae = document.activeElement;
@@ -211,7 +197,7 @@ function openKeyInfoDialog(subscriber, circuitId) {
                 try {
                     // Save via API
                     if (window.mailiaAPI && window.mailiaAPI.isAuthenticated() && subscriber.id) {
-                        await window.mailiaAPI.makeRequest(`/subscribers/${subscriber.id}/key-info`, {
+                        await window.mailiaAPI.makeRequest(`/subscriptions/subscribers/${subscriber.id}/key-info`, {
                             method: 'PUT',
                             body: JSON.stringify({ key_info: newInfo })
                         });
@@ -1038,7 +1024,7 @@ let deferredPWAPrompt = null;
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js?v=78')
+    navigator.serviceWorker.register('service-worker.js?v=79')
             .then(registration => {
                 console.log('[SW] Registered successfully');
                 
@@ -3560,11 +3546,6 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
         if (typeof recalcAndRenderProgress === 'function') {
             recalcAndRenderProgress();
         }
-        
-        // Auto-scroll to next undelivered address if this was just checked
-        if (e.target.checked) {
-            setTimeout(() => scrollToNextUndelivered(card), 300);
-        }
     });
     card.appendChild(checkbox);
     
@@ -3621,14 +3602,16 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
         }
     });
     
-    // Display products as simple colored circles with quantity badge
+    // Display products with text labels and colored backgrounds
     Object.entries(productCounts).forEach(([product, count]) => {
         const tag = document.createElement('span');
         const colorClass = getProductColorClass(product);
         tag.className = `product-tag product-${colorClass}`;
-        // No visible text: use tooltip and ARIA label for accessibility
         tag.title = `${product}${count > 1 ? ` ×${count}` : ''}`;
         tag.setAttribute('aria-label', `${product}${count > 1 ? ` ${count} kpl` : ''}`);
+        
+        // Show product code
+        tag.textContent = product;
 
         if (count > 1) {
             const badge = document.createElement('span');
@@ -5977,7 +5960,13 @@ function calculateDeliveryProgress() {
         const raw = card.dataset.products || '';
         const products = raw.split(',').map(s => s.trim()).filter(Boolean);
         if (!products.length) return;
-        const units = products.length;
+        
+        // Filter out STF products from progress calculation
+        const nonStfProducts = products.filter(p => !p.toUpperCase().startsWith('STF'));
+        const units = nonStfProducts.length;
+        
+        if (units === 0) return; // Skip cards with only STF products
+        
         total += units;
         const checkbox = card.querySelector('.delivery-checkbox');
         if (checkbox && checkbox.checked) delivered += units;

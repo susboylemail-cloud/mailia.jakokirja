@@ -4975,12 +4975,28 @@ async function showCircuitMap(circuitId) {
         return;
     }
     
-    // Get circuit data
+    // Get circuit data and filter out STF addresses
     const circuitData = allData[circuitId];
     if (!circuitData || circuitData.length === 0) {
         showNotification('Ei osoitteita tälle piirille', 'error');
         return;
     }
+
+    // Filter out STF addresses
+    const filteredData = circuitData.filter(subscriber => {
+        const products = Array.isArray(subscriber.products) 
+            ? subscriber.products.join(',').toUpperCase()
+            : String(subscriber.products || '').toUpperCase();
+        return !products.includes('STF');
+    });
+
+    if (filteredData.length === 0) {
+        showNotification('Ei näytettäviä osoitteita (kaikki STF)', 'info');
+        return;
+    }
+
+    const stfCount = circuitData.length - filteredData.length;
+    const stfInfo = stfCount > 0 ? ` (${stfCount} STF-osoitetta piilotettu)` : '';
 
     // Create fullscreen map overlay
     const mapOverlay = document.createElement('div');
@@ -5047,7 +5063,7 @@ async function showCircuitMap(circuitId) {
         border-top: 2px solid #444;
     `;
     infoPanel.innerHTML = `
-        <p style="margin: 0;">Yhteensä: <strong>${circuitData.length} osoitetta</strong></p>
+        <p style="margin: 0;">Yhteensä: <strong>${filteredData.length} osoitetta</strong>${stfInfo}</p>
     `;
 
     mapOverlay.appendChild(mapHeader);
@@ -5060,9 +5076,9 @@ async function showCircuitMap(circuitId) {
         mapOverlay.remove();
     });
 
-    // Initialize Google Map
+    // Initialize Google Map with filtered data
     try {
-        await initializeGoogleMap(circuitId, circuitData, mapContainer, infoPanel);
+        await initializeGoogleMap(circuitId, filteredData, mapContainer, infoPanel);
     } catch (error) {
         console.error('Failed to initialize map:', error);
         showNotification('Kartan lataus epäonnistui', 'error');

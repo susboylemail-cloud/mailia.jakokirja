@@ -1537,6 +1537,20 @@ async function showMainApp() {
     const role = getEffectiveUserRole();
     const circuitSelectorContainer = document.querySelector('.circuit-selector-container');
     
+    // Show/hide admin-only tabs based on role
+    const adminTabs = document.querySelectorAll('.tab-button.admin-only');
+    if (role === 'admin' || role === 'manager') {
+        // Show all admin tabs
+        adminTabs.forEach(tab => {
+            tab.style.display = '';
+        });
+    } else {
+        // Hide admin tabs for regular users
+        adminTabs.forEach(tab => {
+            tab.style.display = 'none';
+        });
+    }
+    
     if (role === 'admin' || role === 'manager') {
         // Admin/Manager: Show tracker tab by default
         const deliveryTab = document.getElementById('deliveryTab');

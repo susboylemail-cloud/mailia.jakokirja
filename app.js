@@ -928,7 +928,7 @@ let deferredPWAPrompt = null;
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
+    navigator.serviceWorker.register('service-worker.js?v=74')
             .then(registration => {
                 console.log('[SW] Registered successfully');
                 

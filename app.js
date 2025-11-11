@@ -5743,46 +5743,19 @@ async function showMaponMap(circuitId) {
         // Create fullscreen map overlay
         const mapOverlay = document.createElement('div');
         mapOverlay.id = 'maponOverlay';
-        mapOverlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #000;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-        `;
 
         // Create header
         const mapHeader = document.createElement('div');
-        mapHeader.style.cssText = `
-            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%);
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        `;
+        mapHeader.className = 'map-overlay-header';
         mapHeader.innerHTML = `
-            <h3 style="margin: 0; color: #fff; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+            <h3 class="map-overlay-title">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
                 ${circuitNames[circuitId] || circuitId} - Karttanäkymä
             </h3>
-            <button id="closeMaponBtn" style="
-                background: #dc3545;
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 1rem;
-                font-weight: 500;
-            ">
+            <button id="closeMaponBtn" class="map-overlay-close-btn">
                 ✕ Sulje
             </button>
         `;
@@ -5790,24 +5763,10 @@ async function showMaponMap(circuitId) {
         // Create map container
         const mapContainer = document.createElement('div');
         mapContainer.id = 'maponMapContainer';
-        mapContainer.style.cssText = `
-            flex: 1;
-            width: 100%;
-            position: relative;
-        `;
 
         // Create info panel
         const infoPanel = document.createElement('div');
         infoPanel.id = 'mapInfoPanel';
-        infoPanel.style.cssText = `
-            background: #2c2c2c;
-            padding: 1rem;
-            color: #fff;
-            border-top: 2px solid #444;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        `;
         infoPanel.innerHTML = `
             <p style="margin: 0;">Haetaan sijaintitietoja...</p>
             <p style="margin: 0; font-size: 0.9rem; color: #aaa;">OpenStreetMap + Leaflet</p>

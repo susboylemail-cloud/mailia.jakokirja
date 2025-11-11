@@ -1,3 +1,10 @@
+.route-progress {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.route-progress.fade-out {
+    opacity: 0;
+    transform: translateY(-4px);
+}
 /* Admin duplicates UI */
 .overlap-table { width:100%; border-collapse: collapse; margin: .75rem 0; font-size:.85rem; }
 .overlap-table th, .overlap-table td { border:1px solid var(--border-color); padding:.4rem .5rem; text-align:left; }
@@ -2325,41 +2332,44 @@ body.dark-mode .subscriber-name {
 }
 
 .product-tag {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: var(--primary-blue);
-    color: white;
-    padding: 0.25rem 0.6rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    color: transparent; /* hide any text */
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
     position: relative;
+    overflow: hidden;
+    text-indent: -9999px; /* fully hide text while keeping accessible name */
 }
 
 /* Quantity badge for products (e.g., UV2, ES2, HS2) */
 .quantity-badge {
     position: absolute;
-    top: -5px;
-    right: -5px;
-    background: rgba(255, 0, 0, 0.9);
+    top: -6px;
+    right: -6px;
+    background: rgba(233, 30, 99, 0.95); /* material red */
     color: white;
     border-radius: 50%;
-    width: 16px;
+    min-width: 16px;
     height: 16px;
-    display: flex;
+    padding: 0 3px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.65rem;
+    font-size: 10px;
+    line-height: 1;
     font-weight: 700;
     border: 2px solid var(--card-bg);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 /* Product-specific colors for tags */
 .product-tag.product-ES {
     background: #2E86C1;            /* Darker blue for better contrast */
     color: white;
-    font-size: 0.75rem;             /* Ensure consistent sizing */
-    padding: 0.25rem 0.6rem;        /* Match base product-tag padding */
 }
 
 .product-tag.product-UV {

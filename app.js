@@ -414,6 +414,62 @@ function initializeWebSocketListeners() {
         return;
     }
     websocketListenersInitialized = true;
+    // --- Batched delivery update handling ---
+    let deliveryUpdateQueue = [];
+    let deliveryFlushTimer = null;
+    const DELIVERY_BATCH_INTERVAL = 200; // ms debounce window
+
+    function enqueueDeliveryUpdate(data) {
+        deliveryUpdateQueue.push(data);
+        if (!deliveryFlushTimer) {
+            deliveryFlushTimer = setTimeout(flushDeliveryUpdates, DELIVERY_BATCH_INTERVAL);
+        }
+    }
+
+    function flushDeliveryUpdates() {
+        const batch = deliveryUpdateQueue.slice();
+        deliveryUpdateQueue = [];
+        deliveryFlushTimer = null;
+        if (!batch.length) return;
+
+        // Apply checkbox state changes without multiple DOM queries per update
+        const bySubscriberId = {};
+        batch.forEach(update => {
+            if (update?.subscriberId != null) {
+                bySubscriberId[update.subscriberId] = update.isDelivered;
+            }
+        });
+
+        Object.entries(bySubscriberId).forEach(([subId, isDelivered]) => {
+            const checkbox = document.querySelector(`input[data-subscriber-id="${subId}"]`);
+            if (!checkbox) return;
+            const changed = checkbox.checked !== isDelivered;
+            checkbox.checked = isDelivered;
+            const card = checkbox.closest('.subscriber-card');
+            if (card) {
+                card.classList.toggle('delivered', isDelivered);
+            }
+            if (changed) {
+                // Avoid firing global change listeners redundantly; manually update styles
+                if (typeof updateDeliveredCardStyles === 'function') updateDeliveredCardStyles();
+            }
+        });
+
+        // Single progress recalculation after batch
+        if (typeof recalcAndRenderProgress === 'function') {
+            recalcAndRenderProgress();
+        }
+
+        // Refresh tracker & dashboard once per batch if visible
+        const trackerTab = document.getElementById('trackerTab');
+        if (trackerTab && trackerTab.classList.contains('active') && typeof renderCircuitTracker === 'function') {
+            renderCircuitTracker();
+        }
+        const dashboardTab = document.querySelector('.tab-content.active#dashboardTab');
+        if (dashboardTab && typeof loadTodayDeliveryCount === 'function') {
+            loadTodayDeliveryCount();
+        }
+    }
     // Listen for route updates from other users
     window.addEventListener('routeUpdated', async (event) => {
         const data = event.detail;
@@ -555,47 +611,10 @@ function initializeWebSocketListeners() {
         }
     });
     
-    // Listen for delivery updates
+    // Listen for delivery updates (batched)
     window.addEventListener('deliveryUpdated', (event) => {
         const data = event.detail;
-        console.log('Delivery updated event received:', data);
-        console.log('Looking for checkbox with subscriber ID:', data.subscriberId);
-        
-        // Update checkbox state if viewing the same route
-        const checkbox = document.querySelector(`input[data-subscriber-id="${data.subscriberId}"]`);
-        console.log('Found checkbox:', checkbox);
-        if (checkbox) {
-            console.log('Updating checkbox to:', data.isDelivered);
-            checkbox.checked = data.isDelivered;
-            
-            // Update visual state
-            const card = checkbox.closest('.subscriber-card');
-            if (card) {
-                if (data.isDelivered) {
-                    card.classList.add('delivered');
-                } else {
-                    card.classList.remove('delivered');
-                }
-            }
-            
-            // Show notification
-            showNotification(`Jakelu päivitetty: ${data.isDelivered ? 'toimitettu' : 'ei toimitettu'}`, 'info');
-        } else {
-            console.log('Checkbox not found, subscriber might not be visible');
-        }
-        
-        // Refresh tracker to update progress bars
-        console.log('Triggering tracker refresh after delivery update');
-        if (typeof renderCircuitTracker === 'function') {
-            renderCircuitTracker();
-        }
-        
-        // Also refresh dashboard if it's active (deliveries affect counts)
-        const dashboardTab = document.querySelector('.tab-content.active#dashboardTab');
-        if (dashboardTab && typeof loadTodayDeliveryCount === 'function') {
-            console.log('Delivery updated - refreshing dashboard delivery count...');
-            loadTodayDeliveryCount();
-        }
+        enqueueDeliveryUpdate(data);
     });
 }
 
@@ -638,8 +657,7 @@ function showNotification(message, type = 'info') {
 function showCircuitManagementMenu(circuitId, routeData, status) {
     const buttons = [];
     
-    // Näytä kartalla: available for all users
-    buttons.push({ id: 'maponView', label: 'Näytä kartalla', variant: 'secondary', icon: 'map', handler: ({ close }) => { showCircuitMap(circuitId); close(); }});
+    // Map button omitted in management menu
     
     if (!routeData || status === 'not-started') {
         buttons.push({ id: 'startRoute', label: 'Aloita reitti', variant: 'primary', icon: 'play', handler: async ({ close }) => {
@@ -928,7 +946,7 @@ let deferredPWAPrompt = null;
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js?v=74')
+    navigator.serviceWorker.register('service-worker.js?v=75')
             .then(registration => {
                 console.log('[SW] Registered successfully');
                 
@@ -1993,6 +2011,8 @@ function initializeRefreshButtons() {
 
                                     // Clear offline messages
                                     localStorage.removeItem('mailiaRouteMessages');
+                                    // Also clear in-memory cache
+                                    routeMessages = [];
 
                                     // Clear the UI immediately before refreshing
                                     const messagesContainer = document.getElementById('routeMessages');
@@ -3444,6 +3464,11 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
         await saveCheckboxState(circuitId, subscriber.address, e.target.checked, subscriber.id);
         applyFilters(); // Re-apply filters to hide/show delivered addresses
         
+        // Update progress after manual toggle
+        if (typeof recalcAndRenderProgress === 'function') {
+            recalcAndRenderProgress();
+        }
+        
         // Auto-scroll to next undelivered address if this was just checked
         if (e.target.checked) {
             setTimeout(() => scrollToNextUndelivered(card), 300);
@@ -3504,21 +3529,22 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
         }
     });
     
-    // Display products with quantity badges
+    // Display products as simple colored circles with quantity badge
     Object.entries(productCounts).forEach(([product, count]) => {
         const tag = document.createElement('span');
         const colorClass = getProductColorClass(product);
         tag.className = `product-tag product-${colorClass}`;
-        tag.textContent = product;
-        
-        // Add quantity badge if count > 1
+        // No visible text: use tooltip and ARIA label for accessibility
+        tag.title = `${product}${count > 1 ? ` ×${count}` : ''}`;
+        tag.setAttribute('aria-label', `${product}${count > 1 ? ` ${count} kpl` : ''}`);
+
         if (count > 1) {
             const badge = document.createElement('span');
             badge.className = 'quantity-badge';
             badge.textContent = count;
             tag.appendChild(badge);
         }
-        
+
         products.appendChild(tag);
     });
     info.appendChild(products);
@@ -3612,6 +3638,9 @@ function initializeSwipeToMark(card, checkbox, circuitId, address, subscriberId 
                 card.style.transition = '';
                 card.style.transform = '';
                 card.style.opacity = '';
+                if (typeof recalcAndRenderProgress === 'function') {
+                    recalcAndRenderProgress();
+                }
             }, 250);
         } else {
             // Reset card position with animation
@@ -3679,6 +3708,9 @@ function initializeSwipeToMark(card, checkbox, circuitId, address, subscriberId 
                 card.style.transition = '';
                 card.style.transform = '';
                 card.style.opacity = '';
+                if (typeof recalcAndRenderProgress === 'function') {
+                    recalcAndRenderProgress();
+                }
             }, 250);
         } else {
             card.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -3746,7 +3778,6 @@ function saveRouteMessage(message) {
                 .then(() => {
                     console.log('Message sent successfully');
                     announceToScreenReader('Viesti lähetetty');
-                    showNotificationEnhanced('Viesti lähetetty onnistuneesti', 'success');
                     // Refresh messages view if active
                     const messagesTab = document.querySelector('.tab-content.active#messagesTab');
                     if (messagesTab) { renderRouteMessages(); }
@@ -3786,7 +3817,6 @@ function saveRouteMessage(message) {
         ).then(() => {
             console.log('Message sent successfully to route:', routeId);
             announceToScreenReader('Viesti lähetetty');
-            showNotificationEnhanced('Viesti lähetetty onnistuneesti', 'success');
             // Refresh messages view if active (no notification here)
             const messagesTab = document.querySelector('.tab-content.active#messagesTab');
             if (messagesTab) { renderRouteMessages(); }
@@ -4253,6 +4283,10 @@ async function completeRoute(circuitId) {
     }, displayDuration);
     
     updateRouteButtons(circuitId);
+    // Hide progress bar when route is finished
+    if (typeof recalcAndRenderProgress === 'function') {
+        recalcAndRenderProgress();
+    }
 }
 
 function hideSubscriberListWithAnimation() {
@@ -5713,15 +5747,36 @@ function improveErrorMessages() {
     };
 }
 
-// Route progress indicator
+// Route progress indicator (per product unit)
 function updateRouteProgress(delivered, total) {
     const existingProgress = document.querySelector('.route-progress');
-    if (existingProgress) {
-        existingProgress.remove();
+
+    // Determine if progress should be hidden (route completed or nothing to show)
+    let shouldHide = false;
+    try {
+        if (currentCircuit) {
+            const endKey = `route_end_${currentCircuit}`;
+            if (localStorage.getItem(endKey)) {
+                shouldHide = true;
+            }
+        }
+    } catch (_) {}
+    if (total === 0) {
+        shouldHide = true;
     }
-    
-    if (total === 0) return;
-    
+
+    if (shouldHide) {
+        if (existingProgress) {
+            // Animate fade-out before removal
+            existingProgress.classList.add('fade-out');
+            setTimeout(() => existingProgress.remove(), 300);
+        }
+        return;
+    }
+
+    // Normal update path: replace with new markup
+    if (existingProgress) existingProgress.remove();
+
     const percentage = Math.round((delivered / total) * 100);
     const progressHTML = `
         <div class="route-progress">
@@ -5729,27 +5784,30 @@ function updateRouteProgress(delivered, total) {
                 <div class="progress-bar" style="width: ${percentage}%"></div>
             </div>
             <div class="progress-text">
-                <span><strong>${delivered}</strong> / ${total} toimitettu</span>
+                <span><strong>${delivered}</strong> / ${total} tuotetta</span>
                 <span>${percentage}%</span>
             </div>
-        </div>
-    `;
-    
+        </div>`;
+
     const coverSheet = document.querySelector('.cover-sheet');
-    if (coverSheet) {
-        coverSheet.insertAdjacentHTML('afterend', progressHTML);
-    }
+    if (coverSheet) coverSheet.insertAdjacentHTML('afterend', progressHTML);
 }
 
-// Calculate delivery progress
+// Calculate delivery progress (per product unit)
 function calculateDeliveryProgress() {
-    const checkboxes = document.querySelectorAll('.delivery-checkbox');
-    const checkedBoxes = document.querySelectorAll('.delivery-checkbox:checked');
-    
-    return {
-        total: checkboxes.length,
-        delivered: checkedBoxes.length
-    };
+    const cards = document.querySelectorAll('.subscriber-card');
+    let total = 0;
+    let delivered = 0;
+    cards.forEach(card => {
+        const raw = card.dataset.products || '';
+        const products = raw.split(',').map(s => s.trim()).filter(Boolean);
+        if (!products.length) return;
+        const units = products.length;
+        total += units;
+        const checkbox = card.querySelector('.delivery-checkbox');
+        if (checkbox && checkbox.checked) delivered += units;
+    });
+    return { total, delivered };
 }
 
 // Mark cards as delivered visually
@@ -6075,8 +6133,11 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
             await loadLeafletLibrary();
         }
 
-        // Initialize Leaflet map
-        const map = L.map('leafletMap').setView([avgLat, avgLon], 14);
+        // Initialize Leaflet map with simplified attribution (no 'Leaflet' link)
+        const map = L.map('leafletMap', { attributionControl: true }).setView([avgLat, avgLon], 14);
+        if (map.attributionControl && typeof map.attributionControl.setPrefix === 'function') {
+            map.attributionControl.setPrefix('');
+        }
 
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

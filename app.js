@@ -2379,6 +2379,20 @@ async function populateCircuitSelector() {
             return circuitName.includes(filterText.toLowerCase());
         });
         
+        // Show empty state if no results
+        if (filtered.length === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'empty-state';
+            emptyDiv.style.padding = '2rem 1rem';
+            emptyDiv.innerHTML = `
+                <p style="color: var(--medium-gray); font-size: 0.9rem; margin: 0;">
+                    Ei tuloksia "${filterText}"
+                </p>
+            `;
+            optionsContainer.appendChild(emptyDiv);
+            return;
+        }
+        
         // Sort: favorites first, then regular circuits
         const sortedFiltered = filtered.sort((a, b) => {
             const aFav = favoriteCircuits.includes(a);
@@ -4192,7 +4206,11 @@ async function renderRouteMessages() {
         });
         
         if (!sortedMessages || sortedMessages.length === 0) {
-            messagesContainer.innerHTML = '<p class="no-messages">Ei viestejä</p>';
+            showEmptyState(messagesContainer, {
+                icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>',
+                title: 'Ei viestejä',
+                message: 'Tänään ei ole vielä raportoitu toimitusongelmi a. Viestit näkyvät täällä kun niitä lähetetään.'
+            });
             return;
         }
         
@@ -4269,6 +4287,15 @@ async function renderCircuitTracker() {
         
         // Use circuitNames instead of allData since we're lazy loading
         const circuits = Object.keys(circuitNames).sort(sortCircuits);
+        
+        if (circuits.length === 0) {
+            showEmptyState(tracker, {
+                icon: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>',
+                title: 'Ei piirejä',
+                message: 'Jakelupiirejä ei ole vielä määritetty. Ota yhteyttä järjestelmänvalvojaan.'
+            });
+            return;
+        }
         
         for (const circuitId of circuits) {
             const item = await createCircuitItem(circuitId, routesData[circuitId]);
@@ -5521,7 +5548,323 @@ document.addEventListener('DOMContentLoaded', () => {
     if (role === 'admin' || role === 'manager') {
         initializeAddSubscriberModal();
     }
+    
+    // Initialize UI/UX enhancements
+    initializeEnhancements();
 });
+
+/* ========================================
+   UI/UX ENHANCEMENTS
+   ======================================== */
+
+// Global state for undo functionality
+let lastDeliveryAction = null;
+
+function initializeEnhancements() {
+    setupOfflineDetection();
+    setupKeyboardShortcuts();
+    improveErrorMessages();
+    announceToScreenReader('Sovellus ladattu');
+}
+
+// Offline Detection
+function setupOfflineDetection() {
+    const banner = document.getElementById('offlineBanner');
+    
+    function updateOnlineStatus() {
+        if (navigator.onLine) {
+            banner.classList.remove('show');
+            announceToScreenReader('Yhteys palautettu');
+        } else {
+            banner.classList.add('show');
+            announceToScreenReader('Ei yhteyttä internetiin');
+        }
+    }
+    
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    // Initial check
+    updateOnlineStatus();
+}
+
+// Keyboard Shortcuts
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + K: Focus circuit search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            const searchInput = document.getElementById('circuitSearch');
+            if (searchInput) {
+                document.getElementById('customCircuitSelect')?.click();
+                setTimeout(() => searchInput.focus(), 100);
+                announceToScreenReader('Piirihaku avattu');
+            }
+        }
+        
+        // /: Focus search (if circuit selector is open)
+        if (e.key === '/' && !e.target.matches('input, textarea')) {
+            e.preventDefault();
+            const searchInput = document.getElementById('circuitSearch');
+            const dropdown = document.getElementById('circuitSelectDropdown');
+            if (dropdown?.style.display !== 'none') {
+                searchInput?.focus();
+            }
+        }
+        
+        // Esc: Close modals and dropdowns
+        if (e.key === 'Escape') {
+            const dropdown = document.getElementById('circuitSelectDropdown');
+            if (dropdown?.style.display !== 'none') {
+                dropdown.style.display = 'none';
+            }
+        }
+    });
+}
+
+// Enhanced showNotification with undo support
+const originalShowNotification = showNotification;
+function showNotificationEnhanced(message, type = 'info', options = {}) {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        container.setAttribute('aria-live', 'polite');
+        container.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type} enter`;
+    toast.setAttribute('role', 'status');
+
+    const icons = {
+        success: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
+        error: '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>',
+        info: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>'
+    };
+
+    const content = `
+        <div class="toast-content">
+            <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                ${icons[type] || icons.info}
+            </svg>
+            <span class="toast-message">${message}</span>
+        </div>
+        ${options.action ? `
+            <div class="toast-actions">
+                <button class="toast-action-btn" data-action="true">${options.action.label}</button>
+            </div>
+        ` : ''}
+        <button class="toast-dismiss" aria-label="Sulje ilmoitus">×</button>
+    `;
+
+    toast.innerHTML = content;
+
+    const dismissBtn = toast.querySelector('.toast-dismiss');
+    const actionBtn = toast.querySelector('[data-action="true"]');
+    
+    function remove() {
+        toast.classList.remove('enter');
+        toast.classList.add('exit');
+        setTimeout(() => toast.remove(), 250);
+    }
+
+    dismissBtn.addEventListener('click', remove);
+    
+    if (actionBtn && options.action) {
+        actionBtn.addEventListener('click', () => {
+            options.action.handler();
+            remove();
+        });
+    }
+
+    container.appendChild(toast);
+    
+    setTimeout(remove, options.duration || 4000);
+    
+    announceToScreenReader(message);
+}
+
+// Helper function to announce to screen readers
+function announceToScreenReader(message) {
+    const liveRegion = document.getElementById('statusUpdates');
+    if (liveRegion) {
+        liveRegion.textContent = message;
+        setTimeout(() => { liveRegion.textContent = ''; }, 1000);
+    }
+}
+
+// Loading state management
+function setLoading(element, isLoading) {
+    if (!element) return;
+    
+    if (isLoading) {
+        element.classList.add('loading');
+        element.disabled = true;
+        element.setAttribute('aria-busy', 'true');
+    } else {
+        element.classList.remove('loading');
+        element.disabled = false;
+        element.removeAttribute('aria-busy');
+    }
+}
+
+// Show skeleton loader
+function showSkeletonLoader(container, count = 3) {
+    if (!container) return;
+    
+    container.innerHTML = Array.from({ length: count }, () => `
+        <div class="skeleton skeleton-card"></div>
+    `).join('');
+}
+
+// Empty state component
+function showEmptyState(container, config = {}) {
+    const {
+        icon = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>',
+        title = 'Ei tuloksia',
+        message = 'Ei näytettävää sisältöä'
+    } = config;
+    
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                ${icon}
+            </svg>
+            <h3>${title}</h3>
+            <p>${message}</p>
+        </div>
+    `;
+}
+
+// Enhanced error messages
+function improveErrorMessages() {
+    const originalFetch = window.fetch;
+    window.fetch = async function(...args) {
+        try {
+            const response = await originalFetch.apply(this, args);
+            if (!response.ok && !navigator.onLine) {
+                throw new Error('OFFLINE');
+            }
+            return response;
+        } catch (error) {
+            if (error.message === 'OFFLINE' || error.message === 'Failed to fetch') {
+                showNotificationEnhanced('Verkkovirhe: Tarkista internetyhteys ja yritä uudelleen', 'error');
+            }
+            throw error;
+        }
+    };
+}
+
+// Route progress indicator
+function updateRouteProgress(delivered, total) {
+    const existingProgress = document.querySelector('.route-progress');
+    if (existingProgress) {
+        existingProgress.remove();
+    }
+    
+    if (total === 0) return;
+    
+    const percentage = Math.round((delivered / total) * 100);
+    const progressHTML = `
+        <div class="route-progress">
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: ${percentage}%"></div>
+            </div>
+            <div class="progress-text">
+                <span><strong>${delivered}</strong> / ${total} toimitettu</span>
+                <span>${percentage}%</span>
+            </div>
+        </div>
+    `;
+    
+    const coverSheet = document.querySelector('.cover-sheet');
+    if (coverSheet) {
+        coverSheet.insertAdjacentHTML('afterend', progressHTML);
+    }
+}
+
+// Calculate delivery progress
+function calculateDeliveryProgress() {
+    const checkboxes = document.querySelectorAll('.subscriber-checkbox');
+    const checkedBoxes = document.querySelectorAll('.subscriber-checkbox:checked');
+    
+    return {
+        total: checkboxes.length,
+        delivered: checkedBoxes.length
+    };
+}
+
+// Mark cards as delivered visually
+function updateDeliveredCardStyles() {
+    document.querySelectorAll('.subscriber-card').forEach(card => {
+        const checkbox = card.querySelector('.subscriber-checkbox');
+        if (checkbox?.checked) {
+            card.classList.add('delivered');
+        } else {
+            card.classList.remove('delivered');
+        }
+    });
+}
+
+// Enhanced delivery checkbox handler with undo
+function enhanceDeliveryCheckboxes() {
+    document.addEventListener('change', (e) => {
+        if (e.target.classList.contains('subscriber-checkbox')) {
+            const card = e.target.closest('.subscriber-card');
+            const isChecked = e.target.checked;
+            
+            // Store for undo
+            lastDeliveryAction = {
+                checkbox: e.target,
+                wasChecked: !isChecked,
+                timestamp: Date.now()
+            };
+            
+            // Update visual state
+            updateDeliveredCardStyles();
+            
+            // Update progress
+            const progress = calculateDeliveryProgress();
+            updateRouteProgress(progress.delivered, progress.total);
+            
+            // Show notification with undo option
+            if (window.mailiaAPI?.isAuthenticated()) {
+                showNotificationEnhanced(
+                    isChecked ? 'Merkitty toimitetuksi' : 'Merkintä poistettu',
+                    'success',
+                    {
+                        duration: 5000,
+                        action: {
+                            label: 'Peru',
+                            handler: () => undoDeliveryAction()
+                        }
+                    }
+                );
+            }
+        }
+    });
+}
+
+// Undo last delivery action
+function undoDeliveryAction() {
+    if (!lastDeliveryAction) return;
+    
+    const { checkbox, wasChecked } = lastDeliveryAction;
+    if (checkbox && document.body.contains(checkbox)) {
+        checkbox.checked = wasChecked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        lastDeliveryAction = null;
+        announceToScreenReader('Toimitus peruttu');
+    }
+}
+
+// Initialize enhanced checkboxes
+enhanceDeliveryCheckboxes();
 
 
 

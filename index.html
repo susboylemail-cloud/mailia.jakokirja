@@ -12,6 +12,17 @@
     <meta name="theme-color" content="#1A1D21">
 </head>
 <body class="dark-mode">
+    <!-- Skip Link for Accessibility -->
+    <a href="#mainContent" class="skip-link">Siirry sisältöön</a>
+    
+    <!-- Offline Indicator -->
+    <div id="offlineBanner" class="offline-banner">
+        ⚠️ Ei yhteyttä - Muutokset tallennetaan paikallisesti
+    </div>
+    
+    <!-- Screen Reader Live Region -->
+    <div aria-live="polite" aria-atomic="true" class="sr-only" id="statusUpdates"></div>
+    
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
         <!-- Pulsing Glow Behind Phone -->
@@ -214,7 +225,7 @@
         </div>
     </div>
 
-    <main>
+    <main id="mainContent">
         <!-- Delivery Tab -->
         <div id="deliveryTab" class="tab-content active">
             <div id="deliveryContent" class="delivery-content" style="display: none;">

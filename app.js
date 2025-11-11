@@ -853,7 +853,8 @@ function scrollToNextUndelivered() {
     const target = cards.find(c => c.getBoundingClientRect().top + window.scrollY > viewportTop + 80) || cards[0];
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     target.classList.add('flash-highlight');
-    setTimeout(() => target.classList.remove('flash-highlight'), 1200);
+    // Ensure animation class reset for repeat usage
+    setTimeout(() => target.classList.remove('flash-highlight'), 1400);
 }
 
 // Hook delivery updates to refresh jump button if global function exists
@@ -2657,18 +2658,23 @@ async function populateCircuitSelector() {
         
         isLoadingCircuit = true;
         const displayText = display.querySelector('.circuit-display-text');
-        displayText.textContent = circuitNames[circuit] || circuit;
+        
+        // Add loading spinner
+        const originalText = circuitNames[circuit] || circuit;
+        displayText.innerHTML = `<span class="spinner"></span> <span style="margin-left: 8px;">${originalText}</span>`;
         dropdown.style.display = 'none';
         customSelect.classList.remove('open');
         
         try {
             await loadCircuit(circuit);
+            displayText.textContent = originalText;
             search.value = '';
             circuitSearchMemory = '';
         } catch (error) {
             console.error('Error loading circuit:', error);
             // Reset display on error
             displayText.textContent = 'Valitse piiri';
+            showNotification('Piirin lataus epäonnistui', 'error');
         } finally {
             isLoadingCircuit = false;
         }
@@ -3393,6 +3399,7 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = getCheckboxState(circuitId, subscriber.address);
+    checkbox.className = 'delivery-checkbox'; // Add class for styling
     
     // Add subscriber ID to checkbox for real-time sync
     if (subscriber.id) {
@@ -3400,8 +3407,25 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     }
     
     checkbox.addEventListener('change', async (e) => {
+        // Haptic feedback on mobile devices
+        if ('vibrate' in navigator && e.target.checked) {
+            navigator.vibrate(50); // Short vibration on check
+        }
+        // Subtle scale animation for card on toggle
+        const parentCard = e.target.closest('.subscriber-card');
+        if (parentCard) {
+            parentCard.style.transition = 'transform .35s cubic-bezier(0.4,0,0.2,1)';
+            parentCard.style.transform = 'scale(0.97)';
+            setTimeout(() => { parentCard.style.transform = 'scale(1)'; }, 220);
+        }
+        
         await saveCheckboxState(circuitId, subscriber.address, e.target.checked, subscriber.id);
         applyFilters(); // Re-apply filters to hide/show delivered addresses
+        
+        // Auto-scroll to next undelivered address if this was just checked
+        if (e.target.checked) {
+            setTimeout(() => scrollToNextUndelivered(card), 300);
+        }
     });
     card.appendChild(checkbox);
     
@@ -5732,8 +5756,8 @@ function updateRouteProgress(delivered, total) {
 
 // Calculate delivery progress
 function calculateDeliveryProgress() {
-    const checkboxes = document.querySelectorAll('.subscriber-checkbox');
-    const checkedBoxes = document.querySelectorAll('.subscriber-checkbox:checked');
+    const checkboxes = document.querySelectorAll('.delivery-checkbox');
+    const checkedBoxes = document.querySelectorAll('.delivery-checkbox:checked');
     
     return {
         total: checkboxes.length,
@@ -5744,7 +5768,7 @@ function calculateDeliveryProgress() {
 // Mark cards as delivered visually
 function updateDeliveredCardStyles() {
     document.querySelectorAll('.subscriber-card').forEach(card => {
-        const checkbox = card.querySelector('.subscriber-checkbox');
+        const checkbox = card.querySelector('.delivery-checkbox');
         if (checkbox?.checked) {
             card.classList.add('delivered');
         } else {
@@ -5756,7 +5780,7 @@ function updateDeliveredCardStyles() {
 // Enhanced delivery checkbox handler with undo
 function enhanceDeliveryCheckboxes() {
     document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('subscriber-checkbox')) {
+        if (e.target.classList.contains('delivery-checkbox')) {
             const card = e.target.closest('.subscriber-card');
             const isChecked = e.target.checked;
             
@@ -5807,6 +5831,22 @@ function undoDeliveryAction() {
 
 // Initialize enhanced checkboxes
 enhanceDeliveryCheckboxes();
+
+// Recalculate progress after circuit load (wrapper already exists)
+function recalcAndRenderProgress() {
+    updateDeliveredCardStyles();
+    const progress = calculateDeliveryProgress();
+    updateRouteProgress(progress.delivered, progress.total);
+}
+
+if (typeof window.loadCircuit === 'function') {
+    const _origLCProgressWrap = window.loadCircuit;
+    window.loadCircuit = async function(...args) {
+        const result = await _origLCProgressWrap.apply(this, args);
+        recalcAndRenderProgress();
+        return result;
+    };
+}
 
 // ========================================
 // MAPON.COM INTEGRATION

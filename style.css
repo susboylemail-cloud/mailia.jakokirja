@@ -964,14 +964,140 @@ body {
 }
 .jump-next-btn:focus { outline: 2px solid #fff; outline-offset: 2px; }
 
+/* replaced by animated flashPulse further down */
 .flash-highlight { box-shadow: 0 0 0 3px var(--primary-blue) inset; transition: box-shadow .3s ease; }
 
 /* Skeleton loaders */
 .skeleton-card { position: relative; overflow: hidden; }
-.skeleton-line { height: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.18), rgba(255,255,255,0.08)); border-radius: 6px; margin: .35rem 0; }
+.skeleton-line { height: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.18), rgba(255,255,255,0.08)); border-radius: 6px; margin: .35rem 0; animation: skeleton-shimmer 1.5s ease-in-out infinite; }
 .skeleton-line.w40 { width: 40%; }
 .skeleton-line.w60 { width: 60%; }
 .skeleton-line.w30 { width: 30%; }
+
+@keyframes skeleton-shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+/* Loading spinner */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+}
+
+.spinner-lg {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Loading state for buttons */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Smooth checkbox animations */
+input[type="checkbox"].delivery-checkbox {
+    position: relative;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+input[type="checkbox"].delivery-checkbox:checked {
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+    animation: checkbox-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+input[type="checkbox"].delivery-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 3px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    animation: checkmark-draw 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.1s both;
+}
+
+@keyframes checkbox-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+@keyframes checkmark-draw {
+    0% { height: 0; width: 0; }
+    50% { height: 12px; width: 0; }
+    100% { height: 12px; width: 6px; }
+}
+
+/* Progress ring */
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Completion badge with animation */
+.completion-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(88, 214, 141, 0.1);
+    border: 1px solid var(--primary-green);
+    border-radius: 8px;
+    color: var(--primary-green);
+    font-weight: 600;
+    animation: fade-in-up 0.3s ease;
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 /* Highlight in circuit search */
 mark { background: rgba(255, 235, 59, 0.5); color: inherit; padding: 0 .1rem; border-radius: 2px; }
@@ -3816,7 +3942,46 @@ button.loading::after {
 .subscriber-card.delivered {
     opacity: 0.65;
     border-left: 4px solid var(--primary-green);
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, transform .4s ease;
+    position: relative;
+}
+
+/* Animated delivery check effect */
+.subscriber-card.delivered::after {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--primary-green);
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .95rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    animation: popIn .4s ease;
+    pointer-events: none;
+}
+
+@keyframes popIn {
+    0% { transform: scale(.4); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+/* Flash highlight when auto-scrolling to next */
+.flash-highlight {
+    animation: flashPulse 1.2s ease-out;
+}
+
+@keyframes flashPulse {
+    0% { box-shadow: 0 0 0 0 rgba(93,173,226,0.7); }
+    50% { box-shadow: 0 0 0 10px rgba(93,173,226,0); }
+    100% { box-shadow: 0 0 0 0 rgba(93,173,226,0); }
 }
 
 .subscriber-card:hover {

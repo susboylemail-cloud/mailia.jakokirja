@@ -2,3 +2,8 @@
 .git
 .github
 *.log
+
+# Exclude CSV data files from the slug (already imported to DB)
+*.csv
+# Uncomment to exclude all CSVs recursively
+# **/*.csv

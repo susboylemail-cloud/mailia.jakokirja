@@ -5810,7 +5810,7 @@ async function showMaponMap(circuitId) {
         `;
         infoPanel.innerHTML = `
             <p style="margin: 0;">Haetaan sijaintitietoja...</p>
-            <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon</p>
+            <p style="margin: 0; font-size: 0.9rem; color: #aaa;">OpenStreetMap + Leaflet</p>
         `;
 
         mapOverlay.appendChild(mapHeader);
@@ -5916,7 +5916,7 @@ async function initializeMaponMapWithGeocoding(circuitId, circuitData, mapContai
             infoPanel.innerHTML = `
                 <p style="margin: 0;">Ladataan... <strong>${geocodedCount}/${circuitData.length} osoitetta</strong></p>
                 <p style="margin: 0; font-size: 0.85rem; color: #aaa;">${cachedCount > 0 ? `(${cachedCount} välimuistista)` : ''}</p>
-                <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon</p>
+                <p style="margin: 0; font-size: 0.9rem; color: #aaa;">OpenStreetMap + Leaflet</p>
             `;
             
             // Respectful delay between batches (only for non-cached items)
@@ -5929,7 +5929,7 @@ async function initializeMaponMapWithGeocoding(circuitId, circuitData, mapContai
             showNotification('Osoitteiden sijainteja ei löytynyt', 'error');
             infoPanel.innerHTML = `
                 <p style="margin: 0;">Virhe: Ei sijaintitietoja</p>
-                <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon</p>
+                <p style="margin: 0; font-size: 0.9rem; color: #aaa;">OpenStreetMap + Leaflet</p>
             `;
             return;
         }
@@ -5975,19 +5975,7 @@ async function initializeMaponMapWithGeocoding(circuitId, circuitData, mapContai
             // Add number label
             const icon = L.divIcon({
                 className: 'number-marker',
-                html: `<div style="
-                    background: #007bff;
-                    color: white;
-                    width: 30px;
-                    height: 30px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: bold;
-                    border: 2px solid white;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-                ">${index + 1}</div>`,
+                html: `<div>${index + 1}</div>`,
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             });
@@ -5997,7 +5985,7 @@ async function initializeMaponMapWithGeocoding(circuitId, circuitData, mapContai
         // Update info panel
         infoPanel.innerHTML = `
             <p style="margin: 0;">Yhteensä: <strong>${locations.length} osoitetta</strong>${excludedInfo}</p>
-            <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Powered by Mapon & OpenStreetMap</p>
+            <p style="margin: 0; font-size: 0.9rem; color: #aaa;">OpenStreetMap + Leaflet</p>
         `;
 
         showNotification(`${locations.length} osoitetta näytetään kartalla`, 'success');

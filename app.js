@@ -673,8 +673,13 @@ function handleOfflineStatus() {
 // Small helper: get current role from memory or storage
 function getEffectiveUserRole() {
     try {
-        return userRole || sessionStorage.getItem('mailiaUserRole') || null;
-    } catch (_) {
+        const globalRole = userRole;
+        const sessionRole = sessionStorage.getItem('mailiaUserRole');
+        const effectiveRole = globalRole || sessionRole || null;
+        console.log('[getEffectiveUserRole] globalRole:', globalRole, '| sessionRole:', sessionRole, '| effective:', effectiveRole);
+        return effectiveRole;
+    } catch (e) {
+        console.error('[getEffectiveUserRole] Error:', e);
         return userRole || null;
     }
 }
@@ -8618,6 +8623,9 @@ let gpsMarkers = {};
  * Initialize GPS tracking for admin users
  */
 function initializeGPSTracking() {
+    console.log('=== GPS TRACKING INITIALIZATION START ===');
+    console.log('Document ready state:', document.readyState);
+    
     const toggleBtn = document.getElementById('toggleGpsTracking');
     const trackerViewSwitch = document.getElementById('trackerViewSwitch');
     const trackerViewBtn = document.getElementById('trackerViewBtn');
@@ -8625,7 +8633,7 @@ function initializeGPSTracking() {
     const circuitStatusView = document.getElementById('circuitStatusView');
     const liveTrackingView = document.getElementById('liveTrackingView');
     
-    console.log('Initializing GPS tracking...', {
+    console.log('Elements found:', {
         toggleBtn: !!toggleBtn,
         trackerViewSwitch: !!trackerViewSwitch,
         trackerViewBtn: !!trackerViewBtn,
@@ -8634,6 +8642,15 @@ function initializeGPSTracking() {
         liveTrackingView: !!liveTrackingView
     });
     
+    if (trackerViewSwitch) {
+        console.log('trackerViewSwitch classes:', trackerViewSwitch.className);
+        console.log('trackerViewSwitch inline style:', trackerViewSwitch.getAttribute('style'));
+        console.log('trackerViewSwitch computed display:', window.getComputedStyle(trackerViewSwitch).display);
+    } else {
+        console.error('❌ CRITICAL: trackerViewSwitch element not found in DOM!');
+        console.log('Checking if trackerTab exists:', !!document.getElementById('trackerTab'));
+    }
+    
     if (!toggleBtn) {
         console.warn('Toggle button not found, GPS tracking not initialized');
         return;
@@ -8641,12 +8658,22 @@ function initializeGPSTracking() {
     
     // Show view selector for admin/manager
     const role = getEffectiveUserRole();
-    console.log('User role:', role);
+    console.log('User role:', role, '| Type:', typeof role);
+    console.log('Is admin?', role === 'admin');
+    console.log('Is manager?', role === 'manager');
+    console.log('trackerViewSwitch element:', trackerViewSwitch);
+    console.log('trackerViewSwitch current display:', trackerViewSwitch?.style.display);
+    
     if (role === 'admin' || role === 'manager') {
         if (trackerViewSwitch) {
             trackerViewSwitch.style.display = 'block';
-            console.log('View switch displayed for admin/manager');
+            console.log('✓ View switch displayed for admin/manager');
+            console.log('trackerViewSwitch after setting display:', trackerViewSwitch.style.display);
+        } else {
+            console.error('✗ trackerViewSwitch element not found!');
         }
+    } else {
+        console.log('✗ User is not admin/manager, dropdown stays hidden');
     }
     
     // View switch dropdown (menu)

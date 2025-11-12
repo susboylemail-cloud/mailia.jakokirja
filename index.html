@@ -334,6 +334,36 @@
                     <span class="refresh-icon">↻</span> Päivitä
                 </button>
             </div>
+            
+            <!-- GPS Live Tracking Section (Admin Only) -->
+            <div class="gps-tracking-section admin-only" id="gpsTrackingSection" style="display: none;">
+                <div class="gps-header">
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        Live GPS Tracking
+                    </h3>
+                    <div class="gps-controls">
+                        <button id="toggleGpsTracking" class="gps-toggle-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <span id="gpsToggleText">Aloita seuranta</span>
+                        </button>
+                        <span id="gpsStatus" class="gps-status">Pysäytetty</span>
+                    </div>
+                </div>
+                <div id="gpsMap" class="gps-map" style="display: none;">
+                    <div class="map-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Ladataan karttaa...</p>
+                    </div>
+                </div>
+                <div id="gpsDriverList" class="gps-driver-list"></div>
+            </div>
+            
             <div id="circuitTracker" class="circuit-tracker"></div>
         </div>
         

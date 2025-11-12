@@ -2274,6 +2274,7 @@ async function showMainApp() {
     }
     
     initializeCircuitTracker();
+    initializeGPSTracking();
     initializeEventListeners();
     loadFavorites();
     checkMidnightReset();
@@ -8558,6 +8559,327 @@ async function saveGeocodingCache(db, address, coords) {
         request.onsuccess = () => resolve();
         request.onerror = () => resolve(); // Fail gracefully
     });
+}
+
+// ========================================
+// GPS TRACKING (MAPON API INTEGRATION)
+// ========================================
+
+let gpsTrackingInterval = null;
+let gpsMap = null;
+let gpsMarkers = {};
+
+/**
+ * Initialize GPS tracking for admin users
+ */
+function initializeGPSTracking() {
+    const gpsSection = document.getElementById('gpsTrackingSection');
+    const toggleBtn = document.getElementById('toggleGpsTracking');
+    const gpsMapContainer = document.getElementById('gpsMap');
+    
+    if (!gpsSection || !toggleBtn) return;
+    
+    // Show GPS section for admin/manager
+    const role = getEffectiveUserRole();
+    if (role === 'admin' || role === 'manager') {
+        gpsSection.style.display = 'block';
+    }
+    
+    // Toggle GPS tracking
+    toggleBtn.addEventListener('click', () => {
+        if (gpsTrackingInterval) {
+            stopGPSTracking();
+        } else {
+            startGPSTracking();
+        }
+    });
+}
+
+/**
+ * Start GPS tracking
+ */
+async function startGPSTracking() {
+    const toggleBtn = document.getElementById('toggleGpsTracking');
+    const toggleText = document.getElementById('gpsToggleText');
+    const statusText = document.getElementById('gpsStatus');
+    const mapContainer = document.getElementById('gpsMap');
+    
+    if (!toggleBtn || !toggleText || !statusText) return;
+    
+    try {
+        // Update UI
+        toggleBtn.classList.add('active');
+        toggleText.textContent = 'Pysäytä seuranta';
+        statusText.textContent = 'Aktiivinen';
+        statusText.classList.add('active');
+        mapContainer.style.display = 'block';
+        
+        // Initialize map if not already done
+        if (!gpsMap) {
+            await initializeGPSMap();
+        }
+        
+        // Fetch initial data
+        await fetchDriverLocations();
+        
+        // Start polling every 30 seconds
+        gpsTrackingInterval = setInterval(fetchDriverLocations, 30000);
+        
+        showNotificationEnhanced('GPS seuranta aloitettu', 'success');
+        triggerHaptic('light');
+    } catch (error) {
+        console.error('Failed to start GPS tracking:', error);
+        showNotificationEnhanced('GPS seurannan aloitus epäonnistui', 'error');
+        stopGPSTracking();
+    }
+}
+
+/**
+ * Stop GPS tracking
+ */
+function stopGPSTracking() {
+    const toggleBtn = document.getElementById('toggleGpsTracking');
+    const toggleText = document.getElementById('gpsToggleText');
+    const statusText = document.getElementById('gpsStatus');
+    
+    if (!toggleBtn || !toggleText || !statusText) return;
+    
+    // Clear interval
+    if (gpsTrackingInterval) {
+        clearInterval(gpsTrackingInterval);
+        gpsTrackingInterval = null;
+    }
+    
+    // Update UI
+    toggleBtn.classList.remove('active');
+    toggleText.textContent = 'Aloita seuranta';
+    statusText.textContent = 'Pysäytetty';
+    statusText.classList.remove('active');
+    
+    showNotificationEnhanced('GPS seuranta pysäytetty', 'info');
+}
+
+/**
+ * Initialize GPS map using Leaflet
+ */
+async function initializeGPSMap() {
+    const mapContainer = document.getElementById('gpsMap');
+    if (!mapContainer) return;
+    
+    // Check if Leaflet is loaded
+    if (typeof L === 'undefined') {
+        // Load Leaflet dynamically
+        await loadLeaflet();
+    }
+    
+    // Remove loading indicator
+    mapContainer.innerHTML = '';
+    
+    // Initialize map centered on Imatra, Finland
+    gpsMap = L.map('gpsMap').setView([61.1720, 28.7580], 13);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(gpsMap);
+}
+
+/**
+ * Load Leaflet library dynamically
+ */
+function loadLeaflet() {
+    return new Promise((resolve, reject) => {
+        // Load CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+        
+        // Load JS
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+/**
+ * Fetch driver locations from backend/Mapon API
+ */
+async function fetchDriverLocations() {
+    try {
+        // Mock data for now - replace with actual Mapon API call
+        const driverData = await getMockDriverLocations();
+        
+        // Update map markers
+        updateGPSMarkers(driverData);
+        
+        // Update driver list
+        renderDriverList(driverData);
+        
+    } catch (error) {
+        console.error('Failed to fetch driver locations:', error);
+        showGPSError('Ei voitu hakea sijainteja');
+    }
+}
+
+/**
+ * Mock driver locations (replace with actual Mapon API integration)
+ */
+async function getMockDriverLocations() {
+    // This should be replaced with actual Mapon API call
+    // For now, return mock data
+    return [
+        {
+            id: 1,
+            name: 'Jakelija 1',
+            circuit: 'KP3',
+            lat: 61.1750,
+            lon: 28.7600,
+            speed: 25,
+            heading: 180,
+            status: 'moving',
+            lastUpdate: new Date()
+        },
+        {
+            id: 2,
+            name: 'Jakelija 2',
+            circuit: 'KP10',
+            lat: 61.1690,
+            lon: 28.7550,
+            speed: 0,
+            heading: 0,
+            status: 'stopped',
+            lastUpdate: new Date(Date.now() - 120000) // 2 minutes ago
+        }
+    ];
+}
+
+/**
+ * Update GPS markers on map
+ */
+function updateGPSMarkers(drivers) {
+    if (!gpsMap) return;
+    
+    // Clear old markers
+    Object.values(gpsMarkers).forEach(marker => marker.remove());
+    gpsMarkers = {};
+    
+    // Add new markers
+    drivers.forEach(driver => {
+        const icon = L.divIcon({
+            className: 'gps-marker',
+            html: `
+                <div class="gps-marker-icon ${driver.status}">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    </svg>
+                    <span class="gps-marker-label">${driver.name}</span>
+                </div>
+            `,
+            iconSize: [40, 40],
+            iconAnchor: [20, 40]
+        });
+        
+        const marker = L.marker([driver.lat, driver.lon], { icon })
+            .bindPopup(`
+                <div class="gps-popup">
+                    <strong>${driver.name}</strong><br>
+                    <em>${driver.circuit}</em><br>
+                    Nopeus: ${driver.speed} km/h<br>
+                    Päivitetty: ${formatTimeAgo(driver.lastUpdate)}
+                </div>
+            `)
+            .addTo(gpsMap);
+        
+        gpsMarkers[driver.id] = marker;
+    });
+    
+    // Fit map to show all markers
+    if (drivers.length > 0) {
+        const bounds = L.latLngBounds(drivers.map(d => [d.lat, d.lon]));
+        gpsMap.fitBounds(bounds, { padding: [50, 50] });
+    }
+}
+
+/**
+ * Render driver list
+ */
+function renderDriverList(drivers) {
+    const listContainer = document.getElementById('gpsDriverList');
+    if (!listContainer) return;
+    
+    if (drivers.length === 0) {
+        listContainer.innerHTML = '<p style="text-align: center; color: var(--medium-gray);">Ei aktiivisia jakelijoita</p>';
+        return;
+    }
+    
+    listContainer.innerHTML = drivers.map(driver => `
+        <div class="gps-driver-card ${driver.status === 'moving' ? 'active' : ''}">
+            <div class="gps-driver-header">
+                <div class="gps-driver-name">${driver.name}</div>
+                <div class="gps-driver-status ${driver.status}">
+                    ${driver.status === 'moving' ? 'Liikkeessä' : driver.status === 'stopped' ? 'Pysähtynyt' : 'Offline'}
+                </div>
+            </div>
+            <div class="gps-driver-info">
+                <div class="gps-info-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="10" r="3"/>
+                        <path d="M12 2a8 8 0 0 0-8 8c0 4.5 8 12 8 12s8-7.5 8-12a8 8 0 0 0-8-8z"/>
+                    </svg>
+                    <span>Piiri:</span>
+                    <span class="gps-info-value">${driver.circuit}</span>
+                </div>
+                <div class="gps-info-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/>
+                        <circle cx="17" cy="17" r="2"/>
+                    </svg>
+                    <span>Nopeus:</span>
+                    <span class="gps-info-value">${driver.speed} km/h</span>
+                </div>
+                <div class="gps-info-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Päivitetty:</span>
+                    <span class="gps-info-value">${formatTimeAgo(driver.lastUpdate)}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Show GPS error message
+ */
+function showGPSError(message) {
+    const listContainer = document.getElementById('gpsDriverList');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = `
+        <div class="gps-error">
+            <strong>Virhe:</strong> ${message}
+        </div>
+    `;
+}
+
+/**
+ * Format time ago helper
+ */
+function formatTimeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    
+    if (seconds < 60) return 'juuri nyt';
+    if (seconds < 120) return '1 minuutti sitten';
+    if (seconds < 3600) return Math.floor(seconds / 60) + ' minuuttia sitten';
+    if (seconds < 7200) return '1 tunti sitten';
+    return Math.floor(seconds / 3600) + ' tuntia sitten';
 }
 
 

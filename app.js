@@ -93,6 +93,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup login form
     initializeLogin();
     
+    // Initialize swipe-up gesture for login form
+    initializeSwipeUpLogin();
+    
     // Initialize dark mode (works on login screen too)
     initializeDarkMode();
 });
@@ -129,9 +132,36 @@ function initializeLogin() {
     const loginForm = document.getElementById('loginForm');
     const passwordInput = document.getElementById('password');
     const loginButton = document.querySelector('.login-button');
+    const passwordToggle = document.getElementById('passwordToggle');
     
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Password visibility toggle
+    if (passwordToggle && passwordInput) {
+        passwordToggle.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type');
+            const svg = passwordToggle.querySelector('svg');
+            if (type === 'password') {
+                passwordInput.setAttribute('type', 'text');
+                // Add strikethrough line to eye icon
+                svg.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
+                passwordToggle.setAttribute('aria-label', 'Hide password');
+            } else {
+                passwordInput.setAttribute('type', 'password');
+                // Eye icon without strikethrough
+                svg.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+                passwordToggle.setAttribute('aria-label', 'Show password');
+            }
+        });
     }
     
     // Add listener to password field to check if correct password is entered
@@ -150,6 +180,11 @@ function initializeLogin() {
             }
         });
     }
+}
+
+// No swipe/tap login needed - phone UI is always visible
+function initializeSwipeUpLogin() {
+    // Phone-based login is always visible, no initialization needed
 }
 
 function handleLogin(event) {
@@ -264,9 +299,20 @@ async function showMainApp() {
 
 // Dark Mode
 function initializeDarkMode() {
-    const darkMode = localStorage.getItem('darkMode') === 'true';
-    if (darkMode) {
+    // Default to dark mode if no preference is set
+    const darkMode = localStorage.getItem('darkMode');
+    const isDark = darkMode === null ? true : darkMode === 'true';
+    
+    // Set or remove dark mode class based on preference
+    if (isDark) {
         document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+    
+    // Save the default if not set
+    if (darkMode === null) {
+        localStorage.setItem('darkMode', 'true');
     }
 
     // Only setup toggle if user is authenticated
@@ -524,8 +570,24 @@ function parseOldFormatCSVLine(line) {
         // Skip if no address
         if (!address) return null;
         
-        // Parse products - handle multiline and comma-separated
-        const products = productsStr.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
+        // Parse products - handle multiline, comma-separated, and space-separated
+        // First split by newline and comma
+        const rawProducts = productsStr.split(/[\n,]+/).map(p => p.trim()).filter(p => p);
+        
+        // Then expand space-separated products (like "ES HSPS") based on today's day
+        const today = new Date().getDay();
+        const products = [];
+        rawProducts.forEach(productGroup => {
+            // If product contains space, it's a combined product like "ES HSPS"
+            if (productGroup.includes(' ')) {
+                // Expand based on current day
+                const expanded = expandCombinedProducts(productGroup, today);
+                products.push(...expanded);
+            } else {
+                // Single product, add as-is
+                products.push(productGroup);
+            }
+        });
         
         return {
             address,
@@ -559,12 +621,26 @@ function parseNewFormatCSVLine(line) {
         if (apartment) address += ` ${apartment}`;
         
         // Parse products - extract product codes from brackets
+        // Also handle space-separated products like "ES HSPS"
         const productMatches = productsStr.matchAll(/([A-Z]+\d*)/g);
-        const products = Array.from(productMatches, m => m[1]);
+        const rawProducts = Array.from(productMatches, m => m[1]);
+        
+        // Check if original string had spaces indicating combined products
+        const today = new Date().getDay();
+        let products = [];
+        
+        if (productsStr.includes(' ') && rawProducts.length > 1) {
+            // This is a combined product string, expand based on day
+            const expanded = expandCombinedProducts(productsStr, today);
+            products = expanded;
+        } else {
+            // Regular products, use as-is
+            products = rawProducts.length > 0 ? rawProducts : [productsStr.trim()];
+        }
         
         return {
             address,
-            products: products.length > 0 ? products : [productsStr.trim()],
+            products,
             name,
             buildingAddress: extractBuildingAddress(address)
         };
@@ -602,24 +678,126 @@ function extractBuildingAddress(address) {
 }
 
 // Circuit Selector
+let circuitSearchMemory = '';
+let favoriteCircuits = [];
+
 function populateCircuitSelector() {
-    const select = document.getElementById('circuitSelect');
+    // Load favorites from localStorage
+    const savedFavorites = localStorage.getItem('favoriteCircuits');
+    if (savedFavorites) {
+        favoriteCircuits = JSON.parse(savedFavorites);
+    }
+    
+    const customSelect = document.getElementById('customCircuitSelect');
+    const display = document.getElementById('circuitSelectDisplay');
+    const dropdown = document.getElementById('circuitSelectDropdown');
+    const search = document.getElementById('circuitSearch');
+    const optionsContainer = document.getElementById('circuitOptions');
+    
     const circuits = Object.keys(allData).sort(sortCircuits);
-
-    circuits.forEach(circuit => {
-        const option = document.createElement('option');
-        option.value = circuit;
-        option.textContent = circuitNames[circuit] || circuit;
-        select.appendChild(option);
-    });
-
-    select.addEventListener('change', (e) => {
-        if (e.target.value) {
-            loadCircuit(e.target.value);
+    
+    // Render circuit options
+    function renderCircuitOptions(filterText = '') {
+        optionsContainer.innerHTML = '';
+        
+        // Filter circuits based on search
+        const filtered = circuits.filter(circuit => {
+            const circuitName = (circuitNames[circuit] || circuit).toLowerCase();
+            return circuitName.includes(filterText.toLowerCase());
+        });
+        
+        // Sort: favorites first, then regular circuits
+        const sortedFiltered = filtered.sort((a, b) => {
+            const aFav = favoriteCircuits.includes(a);
+            const bFav = favoriteCircuits.includes(b);
+            
+            if (aFav && !bFav) return -1;
+            if (!aFav && bFav) return 1;
+            
+            return sortCircuits(a, b);
+        });
+        
+        sortedFiltered.forEach(circuit => {
+            const option = document.createElement('div');
+            option.className = 'circuit-option';
+            if (favoriteCircuits.includes(circuit)) {
+                option.classList.add('favorited');
+            }
+            option.dataset.value = circuit;
+            
+            const circuitLabel = document.createElement('span');
+            circuitLabel.textContent = circuitNames[circuit] || circuit;
+            option.appendChild(circuitLabel);
+            
+            const star = document.createElement('span');
+            star.className = 'favorite-star';
+            star.classList.add(favoriteCircuits.includes(circuit) ? 'active' : 'inactive');
+            star.textContent = '★';
+            star.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleFavorite(circuit);
+            });
+            option.appendChild(star);
+            
+            option.addEventListener('click', () => {
+                selectCircuit(circuit);
+            });
+            
+            optionsContainer.appendChild(option);
+        });
+    }
+    
+    function toggleFavorite(circuit) {
+        const index = favoriteCircuits.indexOf(circuit);
+        if (index > -1) {
+            favoriteCircuits.splice(index, 1);
         } else {
-            document.getElementById('deliveryContent').style.display = 'none';
+            favoriteCircuits.push(circuit);
+        }
+        localStorage.setItem('favoriteCircuits', JSON.stringify(favoriteCircuits));
+        renderCircuitOptions(search.value);
+    }
+    
+    function selectCircuit(circuit) {
+        display.querySelector('span').textContent = circuitNames[circuit] || circuit;
+        dropdown.style.display = 'none';
+        customSelect.classList.remove('open');
+        loadCircuit(circuit);
+        search.value = '';
+        circuitSearchMemory = '';
+    }
+    
+    // Toggle dropdown
+    display.addEventListener('click', () => {
+        const isOpen = dropdown.style.display === 'block';
+        if (isOpen) {
+            dropdown.style.display = 'none';
+            customSelect.classList.remove('open');
+        } else {
+            dropdown.style.display = 'block';
+            customSelect.classList.add('open');
+            renderCircuitOptions(circuitSearchMemory);
+            search.value = circuitSearchMemory;
+            search.focus();
         }
     });
+    
+    // Search with memory
+    search.addEventListener('input', (e) => {
+        circuitSearchMemory = e.target.value;
+        renderCircuitOptions(circuitSearchMemory);
+    });
+    
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!customSelect.contains(e.target)) {
+            dropdown.style.display = 'none';
+            customSelect.classList.remove('open');
+        }
+    });
+    
+    // Initial render
+    renderCircuitOptions();
 }
 
 function sortCircuits(a, b) {
@@ -739,6 +917,7 @@ const SUNDAY = 0, MONDAY = 1, TUESDAY = 2, WEDNESDAY = 3, THURSDAY = 4, FRIDAY =
  */
 function isProductValidForDay(product, dayOfWeek) {
     const productSchedule = {
+        // Helsingin Sanomat variants
         'SH': [SUNDAY],                              // Sunnuntai Hesari - Sunday only
         'HSPS': [FRIDAY, SATURDAY, SUNDAY],          // Hesari perjantai-sunnuntai
         'HSPE': [FRIDAY],                            // Hesari perjantai - Friday only
@@ -746,6 +925,8 @@ function isProductValidForDay(product, dayOfWeek) {
         'HSP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],  // Hesari maanantai-perjantai - Monday to Friday
         'HSTS': [THURSDAY, FRIDAY, SATURDAY, SUNDAY],           // Hesari torstai-sunnuntai
         'MALA': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],  // Hesari maanantai-lauantai
+        // Etelä-Saimaa variants
+        // Note: plain ES is a daily product (delivered every day), so it's not listed here
         'ESPS': [FRIDAY, SATURDAY, SUNDAY],          // Etelä-Saimaa perjantai-sunnuntai
         'ESLS': [SATURDAY, SUNDAY],                  // Etelä-Saimaa lauantai-sunnuntai
         'ESP': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY]   // Etelä-Saimaa maanantai-perjantai
@@ -756,8 +937,33 @@ function isProductValidForDay(product, dayOfWeek) {
         return productSchedule[product].includes(dayOfWeek);
     }
     
-    // All other products (UV, HS, ES, JO, STF, LU, etc.) are always valid
+    // All other products (UV, HS, ES, JO, STF, LU, etc.) are always valid (every day)
     return true;
+}
+
+/**
+ * Expands combined products (like "ES HSPS") into separate product codes based on the day
+ * This handles cases where a customer orders multiple products with different schedules
+ * E.g., "ES HSPS" means ES (Mon-Sat) + HS (Fri-Sun), so on Friday both ES and HS are delivered
+ * 
+ * @param {string} productString - Space-separated product codes (e.g., "ES HSPS", "UV ES HS")
+ * @param {number} dayOfWeek - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+ * @returns {Array<string>} Array of individual products valid for the given day
+ */
+function expandCombinedProducts(productString, dayOfWeek) {
+    const products = productString.trim().split(/\s+/);
+    const expandedProducts = [];
+    
+    products.forEach(product => {
+        const normalized = normalizeProduct(product);
+        
+        // Check if this product is valid for today
+        if (isProductValidForDay(normalized, dayOfWeek)) {
+            expandedProducts.push(product);
+        }
+    });
+    
+    return expandedProducts;
 }
 
 /**
@@ -914,12 +1120,40 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
     const products = document.createElement('div');
     products.className = 'subscriber-products';
     const today = new Date().getDay();
+    
+    // Group products by base name and count quantities
+    const productCounts = {};
     subscriber.products.forEach(product => {
+        const trimmed = product.trim();
+        const simplifiedProduct = simplifyProductName(trimmed, today);
+        
+        // Extract quantity if present (e.g., UV2 -> UV with quantity 2)
+        const match = trimmed.match(/^([A-Z]+)(\d+)$/);
+        if (match) {
+            const baseName = match[1];
+            const quantity = parseInt(match[2]);
+            const simpleBase = simplifyProductName(baseName, today);
+            productCounts[simpleBase] = (productCounts[simpleBase] || 0) + quantity;
+        } else {
+            productCounts[simplifiedProduct] = (productCounts[simplifiedProduct] || 0) + 1;
+        }
+    });
+    
+    // Display products with quantity badges
+    Object.entries(productCounts).forEach(([product, count]) => {
         const tag = document.createElement('span');
-        const simplifiedProduct = simplifyProductName(product.trim(), today);
-        const colorClass = getProductColorClass(simplifiedProduct);
+        const colorClass = getProductColorClass(product);
         tag.className = `product-tag product-${colorClass}`;
-        tag.textContent = simplifiedProduct;
+        tag.textContent = product;
+        
+        // Add quantity badge if count > 1
+        if (count > 1) {
+            const badge = document.createElement('span');
+            badge.className = 'quantity-badge';
+            badge.textContent = count;
+            tag.appendChild(badge);
+        }
+        
         products.appendChild(tag);
     });
     info.appendChild(products);
@@ -942,9 +1176,11 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
         if (nextAddress) {
             const link = document.createElement('a');
             link.className = 'nav-link';
-            link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextAddress + ', Imatra, Finland')}`;
+            // Use the subscriber's actual address from the current card
+            const subscriberAddress = subscriber.address;
+            link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(subscriberAddress + ', Imatra, Finland')}`;
             link.target = '_blank';
-            link.title = `Navigate to ${nextAddress}`;
+            link.title = `Navigate to ${subscriberAddress}`;
             const navImg = document.createElement('img');
             navImg.src = 'navigation icon.png';
             navImg.alt = 'Navigate';
@@ -1533,50 +1769,86 @@ function createCircuitItem(circuitId) {
     
     const status = getCircuitStatus(circuitId);
     
+    // Add status class for gradient background
+    item.classList.add(`${status}-item`);
+    
+    // Status bar on the left
+    const statusBar = document.createElement('div');
+    statusBar.className = `circuit-status-bar ${status}`;
+    item.appendChild(statusBar);
+    
+    // Content container
+    const content = document.createElement('div');
+    content.className = 'circuit-content';
+    
     const header = document.createElement('div');
     header.className = 'circuit-header';
-    
-    const indicator = document.createElement('div');
-    indicator.className = 'status-indicator';
-    indicator.textContent = status === 'not-started' ? '🔴' : status === 'in-progress' ? '🟠' : '🟢';
-    header.appendChild(indicator);
     
     const name = document.createElement('div');
     name.className = 'circuit-name';
     name.textContent = circuitNames[circuitId] || circuitId;
     header.appendChild(name);
     
-    item.appendChild(header);
+    content.appendChild(header);
     
     const statusText = document.createElement('div');
     statusText.className = 'circuit-status';
     statusText.textContent = getCircuitStatusText(circuitId, status);
-    item.appendChild(statusText);
+    content.appendChild(statusText);
     
-    const controls = document.createElement('div');
-    controls.className = 'circuit-controls';
+    // Add progress bar for in-progress circuits
+    if (status === 'in-progress') {
+        const progressBar = createCircuitProgressBar(circuitId);
+        if (progressBar) {
+            content.appendChild(progressBar);
+        }
+    }
     
-    const startBtn = document.createElement('button');
-    startBtn.className = 'circuit-btn start';
-    startBtn.textContent = 'Aloita';
-    startBtn.disabled = status !== 'not-started';
-    startBtn.addEventListener('click', () => {
-        startCircuitFromTracker(circuitId);
-    });
-    controls.appendChild(startBtn);
-    
-    const completeBtn = document.createElement('button');
-    completeBtn.className = 'circuit-btn complete';
-    completeBtn.textContent = 'Valmis';
-    completeBtn.disabled = status !== 'in-progress';
-    completeBtn.addEventListener('click', () => {
-        completeCircuitFromTracker(circuitId);
-    });
-    controls.appendChild(completeBtn);
-    
-    item.appendChild(controls);
+    item.appendChild(content);
     
     return item;
+}
+
+function createCircuitProgressBar(circuitId) {
+    const data = allData[circuitId];
+    if (!data || data.length === 0) return null;
+    
+    // Filter out subscribers with only STF products
+    const today = new Date().getDay();
+    const subscribersWithoutOnlySTF = data.filter(sub => {
+        // Check if subscriber has any non-STF products
+        const hasNonSTF = sub.products.some(product => {
+            const simplifiedProduct = simplifyProductName(product.trim(), today);
+            return simplifiedProduct !== 'STF';
+        });
+        return hasNonSTF;
+    });
+    
+    const totalSubscribers = subscribersWithoutOnlySTF.length;
+    if (totalSubscribers === 0) return null;
+    
+    // Count delivered by checking localStorage checkbox state (excluding STF-only)
+    const deliveredCount = subscribersWithoutOnlySTF.filter(sub => getCheckboxState(circuitId, sub.address)).length;
+    const percentage = Math.round((deliveredCount / totalSubscribers) * 100);
+    
+    const container = document.createElement('div');
+    container.className = 'circuit-progress-bar';
+    
+    const progressWrapper = document.createElement('div');
+    progressWrapper.style.cssText = 'background: rgba(0,0,0,0.1); border-radius: 10px; height: 8px; overflow: hidden; margin-bottom: 0.25rem;';
+    
+    const progressFill = document.createElement('div');
+    progressFill.style.cssText = `background: #FFA726; height: 100%; width: ${percentage}%; transition: width 0.3s;`;
+    progressWrapper.appendChild(progressFill);
+    
+    const progressText = document.createElement('div');
+    progressText.style.cssText = 'font-size: 0.85rem; color: var(--medium-gray); text-align: right;';
+    progressText.textContent = `${deliveredCount}/${totalSubscribers} (${percentage}%)`;
+    
+    container.appendChild(progressWrapper);
+    container.appendChild(progressText);
+    
+    return container;
 }
 
 function getCircuitStatus(circuitId) {
@@ -1598,11 +1870,10 @@ function getCircuitStatusText(circuitId, status) {
         const startTime = localStorage.getItem(startKey);
         return `Aloitettu: ${formatTime(new Date(startTime))}`;
     } else {
-        const startKey = `route_start_${circuitId}`;
+        // Completed - show completion time
         const endKey = `route_end_${circuitId}`;
-        const startTime = localStorage.getItem(startKey);
         const endTime = localStorage.getItem(endKey);
-        return `${formatTime(new Date(startTime))} - ${formatTime(new Date(endTime))}`;
+        return `Valmis: ${formatTime(new Date(endTime))}`;
     }
 }
 

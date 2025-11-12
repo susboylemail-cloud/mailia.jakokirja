@@ -9,29 +9,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dark-mode">
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
-        <video autoplay loop muted playsinline class="login-bg-video">
-            <source src="Simplify_Login_Page_Background.mp4" type="video/mp4">
-        </video>
-        <div class="login-container">
-            <div class="login-header">
-                <h1 class="login-logo">Mailia</h1>
-                <p class="login-subtitle">Imatran varhaisjakelu</p>
+        <!-- Floating Smartphone Animation -->
+        <div class="phone-container">
+            <div class="phone-device">
+                <!-- Phone Frame -->
+                <div class="phone-frame">
+                    <!-- Phone Screen -->
+                    <div class="phone-screen">
+                        <!-- Login Form on Phone Screen -->
+                        <div class="phone-login-form">
+                            <div class="phone-logo">Mailia</div>
+                            <form id="loginForm" class="login-form">
+                                <input type="text" id="username" name="username" required autocomplete="username" placeholder="Käyttäjätunnus" class="phone-input">
+                                <div class="password-container">
+                                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Salasana" class="phone-input">
+                                    <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">
+                                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div id="loginError" class="login-error" style="display: none;"></div>
+                                <button type="submit" class="phone-login-button">Kirjaudu sisään</button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- Phone Notch -->
+                    <div class="phone-notch"></div>
+                </div>
             </div>
-            <form id="loginForm" class="login-form">
-                <div class="input-group">
-                    <input type="text" id="username" name="username" required autocomplete="username" placeholder=" ">
-                    <label for="username">Käyttäjätunnus</label>
-                </div>
-                <div class="input-group">
-                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder=" ">
-                    <label for="password">Salasana</label>
-                </div>
-                <div id="loginError" class="login-error" style="display: none;"></div>
-                <button type="submit" class="login-button">Kirjaudu sisään</button>
-            </form>
         </div>
     </div>
 
@@ -39,14 +49,24 @@
     <div id="mainApp" style="display: none;">
     <header>
         <div class="header-content">
-            <h1 class="logo">Sähköinen jakokirja</h1>
+            <h1 class="logo">Jakokirja</h1>
             <div class="header-right">
                 <a href="tel:0503728330" class="quick-dial icon-button" aria-label="Soita 0503728330">
-                    <img src="quick dial 1.png" alt="Quick dial" class="icon-img">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
                 </a>
-                <button id="darkModeToggle" class="dark-mode-toggle icon-button" aria-label="Toggle dark mode">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                <button id="darkModeToggle" class="dark-mode-toggle icon-button" aria-label="Toggle light mode">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                 </button>
                 <div class="settings-container">
@@ -89,9 +109,16 @@
 
     <!-- Circuit selector - always visible -->
     <div class="circuit-selector-container">
-        <select id="circuitSelect">
-            <option value="">Valitse piiri</option>
-        </select>
+        <div class="custom-circuit-select" id="customCircuitSelect">
+            <div class="circuit-select-display" id="circuitSelectDisplay">
+                <span>Valitse piiri</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="circuit-select-dropdown" id="circuitSelectDropdown" style="display: none;">
+                <input type="text" class="circuit-search" id="circuitSearch" placeholder="Etsi piiri...">
+                <div class="circuit-options" id="circuitOptions"></div>
+            </div>
+        </div>
     </div>
 
     <main>

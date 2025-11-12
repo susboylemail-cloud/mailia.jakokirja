@@ -424,20 +424,26 @@ function getEffectiveUserRole() {
 // ============= Backend Integration =============
 // Check if user is already logged in
 window.addEventListener('DOMContentLoaded', async () => {
-    if (window.mailiaAPI && window.mailiaAPI.isAuthenticated()) {
-        // Verify the token is still valid by trying to fetch user data
-        try {
-            await window.mailiaAPI.makeRequest('/auth/me');
-            // Token is valid, show main app (this handles all initialization)
-            await showMainApp();
-        } catch (error) {
-            // Token is invalid, clear it and show login
-            console.log('Session expired, please login again');
-            await window.mailiaAPI.logout();
+    try {
+        if (window.mailiaAPI && window.mailiaAPI.isAuthenticated()) {
+            // Verify the token is still valid by trying to fetch user data
+            try {
+                await window.mailiaAPI.makeRequest('/auth/me');
+                // Token is valid, show main app (this handles all initialization)
+                await showMainApp();
+            } catch (error) {
+                // Token is invalid, clear it and show login
+                console.log('Session expired, please login again');
+                await window.mailiaAPI.logout();
+                showLoginScreen();
+            }
+        } else {
+            // Show login screen
             showLoginScreen();
         }
-    } else {
-        // Show login screen
+    } catch (error) {
+        // If anything fails during initialization, show login screen
+        console.error('Initialization error:', error);
         showLoginScreen();
     }
 });
@@ -1377,9 +1383,16 @@ function showLoginScreen() {
     console.log('showLoginScreen called');
     const loginScreen = document.getElementById('loginScreen');
     const mainApp = document.getElementById('mainApp');
+    const loginError = document.getElementById('loginError');
     
     console.log('loginScreen element:', loginScreen);
     console.log('mainApp element:', mainApp);
+    
+    // Clear login error text immediately
+    if (loginError) {
+        loginError.textContent = '';
+        loginError.style.display = 'none';
+    }
     
     if (loginScreen && mainApp) {
         loginScreen.style.display = 'flex';
@@ -1944,12 +1957,13 @@ function updateCheckboxVisibility() {
 
 
 async function showMainApp() {
-    // Update UI with user info
-    const user = window.mailiaAPI.getCurrentUser();
-    if (user) {
-        console.log('Logged in as:', user.username, 'Role:', user.role);
-        userRole = user.role;
-        isAuthenticated = true;
+    try {
+        // Update UI with user info
+        const user = window.mailiaAPI.getCurrentUser();
+        if (user) {
+            console.log('Logged in as:', user.username, 'Role:', user.role);
+            userRole = user.role;
+            isAuthenticated = true;
         // Save user role to sessionStorage for access in other functions
         sessionStorage.setItem('mailiaUserRole', user.role);
     }
@@ -2074,6 +2088,12 @@ async function showMainApp() {
     } else {
         // Regular driver: Show delivery tab (already active by default)
         if (circuitSelectorContainer) circuitSelectorContainer.style.display = 'block';
+    }
+    } catch (error) {
+        console.error('Error in showMainApp:', error);
+        // If showMainApp fails, show login screen
+        showLoginScreen();
+        throw error; // Re-throw to let caller know it failed
     }
 }
 
@@ -4879,9 +4899,13 @@ async function completeRoute(circuitId) {
     }, displayDuration);
     
     updateRouteButtons(circuitId);
-    // Hide progress bar when route is finished
+    // Hide progress bar when route is finished and refresh circuit cards
     if (typeof recalcAndRenderProgress === 'function') {
         recalcAndRenderProgress();
+    }
+    // Refresh circuit selector to update progress bars on all circuit cards
+    if (typeof populateCircuitSelector === 'function') {
+        await populateCircuitSelector();
     }
 }
 

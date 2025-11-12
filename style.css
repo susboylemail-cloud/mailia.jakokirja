@@ -5583,6 +5583,66 @@ body.dark-mode .skeleton {
     align-items: center;
 }
 
+/* Tracker header actions */
+.tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.tracker-actions {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.tracker-view-switch {
+    position: relative;
+}
+
+.menu-button {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.menu-button:focus-visible {
+    outline: 2px solid var(--primary-blue);
+    outline-offset: 2px;
+}
+
+.menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 220px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px var(--shadow);
+    z-index: 1000;
+    padding: 6px;
+}
+
+.menu-item {
+    width: 100%;
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background: var(--hover-bg);
+}
+
 .gps-controls {
     display: flex;
     align-items: center;

@@ -330,9 +330,20 @@
         <div id="trackerTab" class="tab-content">
             <div class="tracker-header">
                 <h2>Jakelustatus</h2>
-                <button id="refreshTrackerBtn" class="refresh-btn" title="Päivitä seuranta">
-                    <span class="refresh-icon">↻</span> Päivitä
-                </button>
+                <div class="tracker-actions">
+                    <div class="tracker-view-switch admin-only" id="trackerViewSwitch" style="display: none;">
+                        <button id="trackerViewBtn" class="menu-button" aria-haspopup="true" aria-expanded="false">
+                            Seuranta: Jakelustatus ▾
+                        </button>
+                        <div id="trackerViewMenu" class="menu" role="menu" style="display: none;">
+                            <button class="menu-item" data-view="status" role="menuitem">Jakelustatus</button>
+                            <button class="menu-item" data-view="live" role="menuitem">Live GPS Tracking</button>
+                        </div>
+                    </div>
+                    <button id="refreshTrackerBtn" class="refresh-btn" title="Päivitä seuranta">
+                        <span class="refresh-icon">↻</span> Päivitä
+                    </button>
+                </div>
             </div>
             
             <!-- Circuit Status Overview (Default View) -->

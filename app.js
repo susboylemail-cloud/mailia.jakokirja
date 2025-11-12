@@ -8623,6 +8623,9 @@ function initializeGPSTracking() {
     const dropdownToggle = document.getElementById('gpsToggleDropdown');
     const dropdownContent = document.getElementById('gpsDropdownContent');
     const gpsMapContainer = document.getElementById('gpsMap');
+    const trackerViewSwitch = document.getElementById('trackerViewSwitch');
+    const trackerViewBtn = document.getElementById('trackerViewBtn');
+    const trackerViewMenu = document.getElementById('trackerViewMenu');
     
     if (!gpsSection || !toggleBtn) return;
     
@@ -8630,6 +8633,7 @@ function initializeGPSTracking() {
     const role = getEffectiveUserRole();
     if (role === 'admin' || role === 'manager') {
         gpsSection.style.display = 'block';
+        if (trackerViewSwitch) trackerViewSwitch.style.display = 'block';
     }
     
     // Toggle dropdown expansion
@@ -8643,6 +8647,59 @@ function initializeGPSTracking() {
             } else {
                 dropdownContent.style.display = 'block';
                 dropdownToggle.classList.add('active');
+            }
+        });
+    }
+
+    // View switch dropdown (menu)
+    if (trackerViewBtn && trackerViewMenu) {
+        const setViewLabel = (view) => {
+            if (view === 'live') trackerViewBtn.textContent = 'Seuranta: Live GPS Tracking ▾';
+            else trackerViewBtn.textContent = 'Seuranta: Jakelustatus ▾';
+        };
+
+        // Open/close menu
+        trackerViewBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = trackerViewMenu.style.display === 'block';
+            trackerViewMenu.style.display = open ? 'none' : 'block';
+            trackerViewBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
+        });
+
+        // Close on outside click
+        document.addEventListener('click', () => {
+            if (trackerViewMenu.style.display === 'block') {
+                trackerViewMenu.style.display = 'none';
+                trackerViewBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Handle selection
+        trackerViewMenu.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.menu-item');
+            if (!btn) return;
+            e.stopPropagation();
+
+            const view = btn.getAttribute('data-view');
+            trackerViewMenu.style.display = 'none';
+            trackerViewBtn.setAttribute('aria-expanded', 'false');
+            setViewLabel(view);
+
+            if (view === 'status') {
+                // Collapse GPS section and stop tracking
+                if (dropdownContent) dropdownContent.style.display = 'none';
+                if (dropdownToggle) dropdownToggle.classList.remove('active');
+                stopGPSTracking();
+                // Ensure circuit tracker is visible and scroll to it
+                const tracker = document.getElementById('circuitTracker');
+                if (tracker) tracker.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (view === 'live') {
+                // Expand GPS section and start tracking
+                if (dropdownContent) dropdownContent.style.display = 'block';
+                if (dropdownToggle) dropdownToggle.classList.add('active');
+                await startGPSTracking();
+                const section = document.getElementById('gpsTrackingSection');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
     }

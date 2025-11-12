@@ -7518,6 +7518,16 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
         mapElement.style.cssText = 'width: 100%; height: 100%;';
         mapContainer.appendChild(mapElement);
 
+        // Wait for DOM to update before initializing map
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Verify the element exists in DOM
+        if (!document.getElementById('leafletMap')) {
+            console.error('Map element not found in DOM after creation');
+            showNotification('Kartan alustus epäonnistui', 'error');
+            return;
+        }
+
         // Initialize Leaflet map with simplified attribution (no 'Leaflet' link)
         const map = L.map('leafletMap', {
             attributionControl: true,

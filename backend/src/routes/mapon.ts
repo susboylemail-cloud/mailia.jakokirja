@@ -58,24 +58,42 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
 
         const units = response.data.data.units || [];
         
+        // Log first unit to see structure (debug)
+        if (units.length > 0) {
+            console.log('Sample Mapon unit data:', JSON.stringify(units[0], null, 2));
+        }
+        
         // Transform Mapon data to our format
-        const locations = units.map((unit: any) => ({
-            id: unit.unit_id,
-            name: unit.label || unit.number || `Unit ${unit.unit_id}`,
-            circuit: extractCircuitFromName(unit.label || unit.number || ''),
-            lat: parseFloat(unit.latitude) || 0,
-            lon: parseFloat(unit.longitude) || 0,
-            speed: parseFloat(unit.speed) || 0,
-            heading: parseFloat(unit.angle) || 0,
-            status: determineStatus(unit),
-            lastUpdate: unit.dt_tracker ? new Date(unit.dt_tracker * 1000) : new Date(),
-            // Additional data
-            ignition: unit.ignition === 1,
-            satellites: unit.satellites || 0,
-            address: unit.location_name || ''
-        }));
+        const locations = units.map((unit: any) => {
+            const lat = parseFloat(unit.latitude) || 0;
+            const lon = parseFloat(unit.longitude) || 0;
+            const speed = parseFloat(unit.speed) || 0;
+            const dt_tracker = unit.dt_tracker || unit.dt_server || 0;
+            
+            return {
+                id: unit.unit_id,
+                name: unit.label || unit.number || `Unit ${unit.unit_id}`,
+                circuit: extractCircuitFromName(unit.label || unit.number || ''),
+                lat,
+                lon,
+                speed,
+                heading: parseFloat(unit.angle) || 0,
+                status: determineStatus(unit),
+                lastUpdate: dt_tracker ? new Date(dt_tracker * 1000) : new Date(),
+                // Additional data
+                ignition: unit.ignition === 1,
+                satellites: unit.satellites || 0,
+                address: unit.location_name || '',
+                // Debug info
+                rawData: {
+                    dt_tracker: unit.dt_tracker,
+                    dt_server: unit.dt_server,
+                    hasCoords: !!(lat && lon)
+                }
+            };
+        });
 
-        res.json({ success: true, locations });
+        res.json({ success: true, locations, count: locations.length });
     } catch (error: any) {
         console.error('Mapon locations API error:', error.response?.data || error.message);
         res.status(500).json({ 
@@ -141,22 +159,38 @@ function extractCircuitFromName(name: string): string {
  */
 function determineStatus(unit: any): 'moving' | 'stopped' | 'offline' {
     const now = Date.now() / 1000; // Current time in seconds
-    const lastUpdate = unit.dt_tracker || 0;
+    const lastUpdate = unit.dt_tracker || unit.dt_server || 0;
+    
+    // If no timestamp at all, check if we have coordinates
+    if (!lastUpdate) {
+        // If we have lat/lon, assume stopped
+        if (unit.latitude && unit.longitude) {
+            return 'stopped';
+        }
+        return 'offline';
+    }
+    
     const timeDiff = now - lastUpdate;
 
-    // If no update in 5 minutes, consider offline
-    if (timeDiff > 300) {
+    // If no update in 1 hour, consider offline (more lenient than 5 minutes)
+    if (timeDiff > 3600) {
         return 'offline';
     }
 
     const speed = parseFloat(unit.speed) || 0;
     const ignition = unit.ignition === 1;
 
-    // Moving if speed > 5 km/h and ignition on
-    if (speed > 5 && ignition) {
+    // Moving if speed > 5 km/h
+    if (speed > 5) {
         return 'moving';
     }
+    
+    // Stopped if ignition is on but not moving
+    if (ignition) {
+        return 'stopped';
+    }
 
+    // Default to stopped if we have recent data
     return 'stopped';
 }
 

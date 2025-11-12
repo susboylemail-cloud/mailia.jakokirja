@@ -8720,6 +8720,9 @@ async function initializeGPSMap() {
     // Remove loading indicator
     mapContainer.innerHTML = '';
     
+    // Wait a moment for container to be visible
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Initialize map centered on Imatra, Finland
     gpsMap = L.map('gpsMap').setView([61.1720, 28.7580], 13);
     
@@ -8728,6 +8731,13 @@ async function initializeGPSMap() {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
     }).addTo(gpsMap);
+    
+    // Force map to recalculate size after render
+    setTimeout(() => {
+        if (gpsMap) {
+            gpsMap.invalidateSize();
+        }
+    }, 200);
 }
 
 /**

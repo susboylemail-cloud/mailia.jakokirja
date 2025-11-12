@@ -6834,7 +6834,7 @@ function extractStreetName(address) {
 // Determine which side of the street an address is on using perpendicular distance
 function determineStreetSide(point, streetLine) {
     // streetLine = { start: {lat, lon}, end: {lat, lon} }
-    // Returns: 'driver' or 'passenger' (driver = vasemmalla Suomessa, passenger = oikealla)
+    // Returns: 'window' or 'opposite' (window = kuljettajan ikkunan puoli)
     
     const crossProduct = (
         (streetLine.end.lon - streetLine.start.lon) * (point.lat - streetLine.start.lat) -
@@ -6842,14 +6842,16 @@ function determineStreetSide(point, streetLine) {
     );
     
     // In geographic coordinates (looking along street direction):
-    // positive crossProduct = left side
-    // negative crossProduct = right side
+    // positive crossProduct = left side of street
+    // negative crossProduct = right side of street
     
-    // SUOMI: Auto ajetaan vasemmalta, kuljettaja vasemmalla puolella
-    // Laatikot ovat OIKEALLA puolella tietä (jalankulkijat/postilaatikot)
-    // Joten: left side = driver's side (skip), right side = mailbox side (deliver first)
+    // SUOMI-LOGIIKKA:
+    // - Auto ajetaan OIKEALLA kaistalla (right lane)
+    // - Kuljettaja istuu VASEMMALLA puolella autoa
+    // - Postilaatikot ovat VASEMMALLA puolella tietä
+    // - Joten: LEFT side of street = kuljettajan ikkuna = JAETAAN ENSIN
     
-    return crossProduct > 0 ? 'driver' : 'passenger';
+    return crossProduct > 0 ? 'window' : 'opposite';
 }
 
 // Group addresses by street and determine sides
@@ -7023,8 +7025,8 @@ function optimizeCarDeliveryRoute(locations) {
     streetGroups.forEach(group => {
         const centerline = calculateStreetCenterline(group);
         group.centerline = centerline;
-        group.mailboxSide = []; // Oikea puoli - postilaatikot (jaetaan ensin)
-        group.driverSide = [];  // Vasen puoli - kuljettajan puoli (jaetaan palatessa)
+        group.windowSide = [];   // VASEN puoli - kuljettajan ikkuna - JAETAAN ENSIN
+        group.oppositeSide = []; // OIKEA puoli - matkustajan puoli - jaetaan palatessa
         
         // Determine which side each address is on
         group.addresses.forEach(addr => {
@@ -7033,12 +7035,12 @@ function optimizeCarDeliveryRoute(locations) {
                 { start: centerline.start, end: centerline.end }
             );
             
-            // SUOMI: passenger side = oikea puoli = postilaatikot (jaetaan ensin)
-            // driver side = vasen puoli = kuljettajan puoli (jaetaan palatessa)
-            if (side === 'passenger') {
-                group.mailboxSide.push(addr);
+            // SUOMI: window side = VASEN = kuljettajan ikkuna = JAETAAN ENSIN
+            // opposite side = OIKEA = matkustajan puoli = jaetaan palatessa
+            if (side === 'window') {
+                group.windowSide.push(addr);
             } else {
-                group.driverSide.push(addr);
+                group.oppositeSide.push(addr);
             }
         });
         
@@ -7049,8 +7051,8 @@ function optimizeCarDeliveryRoute(locations) {
             return distA - distB;
         };
         
-        group.mailboxSide.sort(sortBySide);
-        group.driverSide.sort(sortBySide);
+        group.windowSide.sort(sortBySide);
+        group.oppositeSide.sort(sortBySide);
     });
     
     // Step 3: Optimize street order using TSP on street centers with 2-opt improvement
@@ -7061,19 +7063,19 @@ function optimizeCarDeliveryRoute(locations) {
     streetOrder = twoOptImprove(streetOrder, streetCenters);
     console.log('Applied 2-opt optimization for improved route');
     
-    // Step 4: Build final route - SUOMI: postilaatikot ensin (oikea puoli), sitten kuljettajan puoli (vasen)
+    // Step 4: Build final route - SUOMI: VASEN puoli (kuljettajan ikkuna) ENSIN, sitten OIKEA puoli
     const optimizedRoute = [];
     
     streetOrder.forEach(streetIndex => {
         const group = streetGroups[streetIndex];
         
-        // Jaetaan ENSIN postilaatikot (oikea puoli tietä)
-        group.mailboxSide.forEach(addr => {
+        // Jaetaan ENSIN kuljettajan ikkunan puoli (VASEN = window side)
+        group.windowSide.forEach(addr => {
             optimizedRoute.push(addr);
         });
         
-        // Sitten palataan ja jaetaan kuljettajan puoli (vasen puoli) käänteisessä järjestyksessä
-        group.driverSide.reverse().forEach(addr => {
+        // Sitten palataan ja jaetaan matkustajan puoli (OIKEA) käänteisessä järjestyksessä
+        group.oppositeSide.reverse().forEach(addr => {
             optimizedRoute.push(addr);
         });
     });
@@ -7522,9 +7524,9 @@ function printOptimizedRoute(circuitId, locations) {
     </div>
     
     <div class="legend">
-        <strong>Ohjeet (Suomi - ajo vasemmalta):</strong> 
-        <span style="color: #28a745;">●</span> Oikea puoli (postilaatikot) jaetaan ensin • 
-        <span style="color: #fd7e14;">●</span> Vasen puoli (kuljettajan puoli) jaetaan palatessa
+        <strong>Ohjeet (Suomi - kuljettaja vasemmalla, ajo oikealla):</strong> 
+        <span style="color: #28a745;">●</span> Vasen puoli (kuljettajan ikkuna) jaetaan ensin • 
+        <span style="color: #fd7e14;">●</span> Oikea puoli (matkustajan puoli) jaetaan palatessa
     </div>
     
     <div class="delivery-list">
@@ -7532,16 +7534,16 @@ function printOptimizedRoute(circuitId, locations) {
             const streetName = extractStreetName(location.address);
             const group = streetGroups.find(g => g.name === streetName);
             
-            let side = 'R'; // R = oikea (postilaatikot)
+            let side = 'V'; // V = vasen (kuljettajan ikkuna)
             let sideClass = 'side-right';
             if (group && group.centerline) {
                 const sideResult = determineStreetSide(
                     { lat: location.lat, lon: location.lon },
                     { start: group.centerline.start, end: group.centerline.end }
                 );
-                // SUOMI: passenger side = oikea = postilaatikot (R), driver side = vasen (L)
-                if (sideResult === 'driver') {
-                    side = 'V'; // V = vasen (kuljettajan puoli)
+                // SUOMI: window = vasen = kuljettajan ikkuna (V), opposite = oikea = matkustajan puoli (O)
+                if (sideResult === 'opposite') {
+                    side = 'O'; // O = oikea (matkustajan puoli)
                     sideClass = 'side-left';
                 }
             }
@@ -7626,7 +7628,7 @@ function visualizeOptimizedRoute(map, originalLocations, infoPanel, excludedInfo
             </div>
         `);
         
-        // Color code: Green for passenger side (oikea = postilaatikot), Orange for driver side (vasen = kuljettaja)
+        // Color code: Green for window side (vasen = kuljettajan ikkuna), Orange for opposite side (oikea = matkustajan puoli)
         const streetName = extractStreetName(location.address);
         const group = groupAddressesByStreet(optimizedRoute).find(g => g.name === streetName);
         
@@ -7636,8 +7638,8 @@ function visualizeOptimizedRoute(map, originalLocations, infoPanel, excludedInfo
                 { lat: location.lat, lon: location.lon },
                 { start: group.centerline.start, end: group.centerline.end }
             );
-            // SUOMI: passenger = oikea = postilaatikot (vihreä), driver = vasen = kuljettaja (oranssi)
-            color = side === 'passenger' ? '#28a745' : '#fd7e14';
+            // SUOMI: window = vasen = kuljettajan ikkuna (vihreä), opposite = oikea = matkustajan puoli (oranssi)
+            color = side === 'window' ? '#28a745' : '#fd7e14';
         }
         
         const icon = L.divIcon({
@@ -7665,17 +7667,17 @@ function visualizeOptimizedRoute(map, originalLocations, infoPanel, excludedInfo
             <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;">
                 <circle cx="12" cy="12" r="10" fill="#28a745"/>
             </svg>
-            <span style="color: #28a745;">Oikea puoli (postilaatikot)</span>
+            <span style="color: #28a745;">Vasen puoli (kuljettajan ikkuna)</span>
             <span style="color: #666; margin: 0 4px;">•</span>
             <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;">
                 <circle cx="12" cy="12" r="10" fill="#fd7e14"/>
             </svg>
-            <span style="color: #fd7e14;">Vasen puoli (kuljettaja)</span>
+            <span style="color: #fd7e14;">Oikea puoli (matkustajan puoli)</span>
         </p>
         <p style="margin: 0; font-size: 0.85rem; color: #666;">
             Matka: ~${(totalDistance / 1000).toFixed(1)} km
         </p>
-        <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Suomi: Ajo vasemmalta</p>
+        <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Suomi: Kuljettaja vasemmalla</p>
     `;
     
     showNotification(`Reitti optimoitu! Matka: ${(totalDistance / 1000).toFixed(1)} km`, 'success');

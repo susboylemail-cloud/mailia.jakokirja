@@ -1,3 +1,17 @@
+// Service Worker Cache Update Handler
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'CACHE_UPDATED') {
+            console.log('[App] Cache updated to version:', event.data.version);
+            // Show a subtle notification that new version is available
+            const statusEl = document.getElementById('statusUpdates');
+            if (statusEl) {
+                statusEl.textContent = 'Uusi versio ladattu - päivitä sivu nähdäksesi muutokset';
+            }
+        }
+    });
+}
+
 // Generic modal factory (lightweight, non-invasive)
 function createModal({ title, bodyHTML, actions = [], ariaLabel = null, initialFocusSelector = null }) {
     const overlay = document.createElement('div');
@@ -668,6 +682,37 @@ function getEffectiveUserRole() {
 // ============= Backend Integration =============
 // Check if user is already logged in
 window.addEventListener('DOMContentLoaded', async () => {
+    // Force clear old cache versions on initial load
+    const expectedVersion = 'v83';
+    const currentVersion = localStorage.getItem('appCacheVersion');
+    
+    if (currentVersion !== expectedVersion) {
+        console.log(`[App] Version mismatch (${currentVersion} → ${expectedVersion}), clearing caches...`);
+        
+        // Clear service worker caches
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames.map(name => {
+                    if (name.startsWith('mailia-')) {
+                        console.log('[App] Deleting cache:', name);
+                        return caches.delete(name);
+                    }
+                })
+            );
+        }
+        
+        // Update version marker
+        localStorage.setItem('appCacheVersion', expectedVersion);
+        
+        // Force reload to get fresh assets
+        if (currentVersion !== null) {
+            console.log('[App] Reloading with fresh cache...');
+            window.location.reload(true);
+            return;
+        }
+    }
+    
     try {
         if (window.mailiaAPI && window.mailiaAPI.isAuthenticated()) {
             // Verify the token is still valid by trying to fetch user data

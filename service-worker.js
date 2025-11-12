@@ -1,5 +1,5 @@
 // Mailia Service Worker - Offline Support & Caching
-const CACHE_VERSION = 'mailia-v82';
+const CACHE_VERSION = 'mailia-v83';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -10,9 +10,10 @@ const MAX_OSM_TILE_ENTRIES = 256; // Respectful limit for client-side caching
 const STATIC_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=82',
-    '/api.js?v=82',
-    '/app.js?v=82',
+    '/style.css?v=83',
+    '/api.js?v=83',
+    '/app.js?v=83',
+    '/translations.js?v=83',
     '/manifest.json?v=79',
     '/icons/icon-192.png',
     '/icons/icon-512.png'
@@ -39,14 +40,35 @@ self.addEventListener('activate', (event) => {
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames
-                        .filter((name) => name.startsWith('mailia-') && name !== STATIC_CACHE && name !== DYNAMIC_CACHE && name !== API_CACHE)
+                        .filter((name) => {
+                            // Delete all old mailia caches except current ones
+                            return name.startsWith('mailia-') && 
+                                   name !== STATIC_CACHE && 
+                                   name !== DYNAMIC_CACHE && 
+                                   name !== API_CACHE &&
+                                   name !== TILE_CACHE;
+                        })
                         .map((name) => {
                             console.log('[SW] Deleting old cache:', name);
                             return caches.delete(name);
                         })
                 );
             })
-            .then(() => self.clients.claim())
+            .then(() => {
+                console.log('[SW] Claiming clients...');
+                return self.clients.claim();
+            })
+            .then(() => {
+                // Notify all clients to reload
+                return self.clients.matchAll().then(clients => {
+                    clients.forEach(client => {
+                        client.postMessage({ 
+                            type: 'CACHE_UPDATED',
+                            version: CACHE_VERSION 
+                        });
+                    });
+                });
+            })
     );
 });
 

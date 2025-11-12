@@ -254,12 +254,21 @@ body.dark-mode {
     padding: 2rem 2rem 2.4rem 2rem; /* extra bottom padding to avoid actions overlap */
     width: 90%;
     max-width: 440px;
+    max-height: 90vh; /* Prevent modal from exceeding viewport height */
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 8px 32px rgba(0,0,0,0.45);
 }
 
-.app-modal h3 { margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600; }
+.app-modal h3 { margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600; flex-shrink: 0; }
 
-.app-modal .modal-actions { display:flex; gap:.75rem; justify-content:flex-end; margin-top:1.6rem; }
+.app-modal .modal-body {
+    overflow-y: auto; /* Allow scrolling if content is too tall */
+    flex: 1 1 auto;
+    margin-bottom: 1rem;
+}
+
+.app-modal .modal-actions { display:flex; gap:.75rem; justify-content:flex-end; margin-top:0.6rem; flex-shrink: 0; }
 
 .route-mgmt-buttons {
     display: flex;
@@ -1005,17 +1014,6 @@ body {
     transition: color 0.2s ease;
     user-select: none;
 }
-
-/* Jump to next undelivered */
-.jump-next-btn { 
-    position: fixed; right: 16px; bottom: 16px; z-index: 2000; 
-    width: 48px; height: 48px; border-radius: 24px; 
-    background: var(--primary-blue); color: #fff; border: none; 
-    display: none; align-items: center; justify-content: center; 
-    box-shadow: 0 10px 20px rgba(0,0,0,0.35);
-    cursor: pointer;
-}
-.jump-next-btn:focus { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* replaced by animated flashPulse further down */
 .flash-highlight { box-shadow: 0 0 0 3px var(--primary-blue) inset; transition: box-shadow .3s ease; }

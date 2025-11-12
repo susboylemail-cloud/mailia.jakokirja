@@ -7068,6 +7068,15 @@ function twoOptImprove(route, points) {
 function optimizeCarDeliveryRoute(locations) {
     console.log('Starting car delivery route optimization...');
     
+    // Define depot location (Anssinkatu 12, 55100, Imatra)
+    const DEPOT = {
+        lat: 61.1898,
+        lon: 28.7631,
+        address: 'Anssinkatu 12, 55100 Imatra',
+        name: 'DEPOT - START/END',
+        isDepot: true
+    };
+    
     // Step 1: Group by street
     const streetGroups = groupAddressesByStreet(locations);
     console.log(`Found ${streetGroups.size} streets`);
@@ -7106,9 +7115,23 @@ function optimizeCarDeliveryRoute(locations) {
         group.oppositeSide.sort(sortBySide);
     });
     
-    // Step 3: Optimize street order using TSP on street centers with 2-opt improvement
+    // Step 3: Find nearest street to depot to start route
     const streetCenters = streetGroups.map(g => g.centerline.center);
-    let streetOrder = nearestNeighborTSP(streetCenters, 0);
+    let nearestStreetIndex = 0;
+    let minDistToDepot = Infinity;
+    
+    streetCenters.forEach((center, idx) => {
+        const dist = calculateDistance(DEPOT.lat, DEPOT.lon, center.lat, center.lon);
+        if (dist < minDistToDepot) {
+            minDistToDepot = dist;
+            nearestStreetIndex = idx;
+        }
+    });
+    
+    console.log(`Nearest street to depot: index ${nearestStreetIndex}, distance ${minDistToDepot.toFixed(2)}km`);
+    
+    // Optimize street order using TSP starting from nearest street to depot, with 2-opt improvement
+    let streetOrder = nearestNeighborTSP(streetCenters, nearestStreetIndex);
     
     // Apply 2-opt optimization to improve street order (eliminates crossings)
     streetOrder = twoOptImprove(streetOrder, streetCenters);
@@ -7131,7 +7154,7 @@ function optimizeCarDeliveryRoute(locations) {
         });
     });
     
-    console.log(`Optimized route: ${optimizedRoute.length} addresses`);
+    console.log(`Optimized route: ${optimizedRoute.length} addresses (starting and ending at depot: ${DEPOT.address})`);
     return optimizedRoute;
 }
 

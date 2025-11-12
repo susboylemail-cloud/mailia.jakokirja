@@ -3214,7 +3214,11 @@ async function loadCircuit(circuitId) {
     
     try {
         // Load circuit data on demand
-        const subscribers = await loadCircuitData(circuitId);
+        let subscribers = await loadCircuitData(circuitId);
+        
+        // Apply saved route order if available
+        subscribers = applySavedRouteOrder(circuitId, subscribers);
+        allData[circuitId] = subscribers; // Update cache with ordered data
         
         const deliveryContent = document.getElementById('deliveryContent');
         if (!deliveryContent) {
@@ -3229,6 +3233,7 @@ async function loadCircuit(circuitId) {
     // After rendering, check for local duplicates for admin alert icon
     try { maybeFlagAdminOverlapIcon(subscribers); } catch(e){ console.warn('duplicate check failed', e); }
         updateRouteButtons(circuitId);
+        updateQuickOptimizeButton(circuitId);
         
         // OPTIMIZATION: Pre-load Leaflet library in background for faster map loading
         if (typeof L === 'undefined') {
@@ -4312,8 +4317,101 @@ function initializeEventListeners() {
         completeRoute(currentCircuit);
     });
     
+    // Quick optimize button (non-map version)
+    const quickOptimizeBtn = document.getElementById('quickOptimizeBtn');
+    if (quickOptimizeBtn) {
+        quickOptimizeBtn.addEventListener('click', () => {
+            quickOptimizeRoute();
+        });
+    }
+    
     // Initialize message swipe functionality
     initializeMessageSwipe();
+}
+
+// Quick route optimization without map
+async function quickOptimizeRoute() {
+    if (!currentCircuit || !allData[currentCircuit]) {
+        showNotification('Valitse ensin piiri', 'error');
+        return;
+    }
+    
+    showNotification('Optimoidaan reittiä...', 'info');
+    
+    try {
+        const circuitData = allData[currentCircuit];
+        
+        // Get geocoded locations for optimization
+        const cache = await initGeocodingCache();
+        const locations = [];
+        
+        for (const sub of circuitData) {
+            const fullAddress = `${sub.address}, Imatra, Finland`;
+            const cached = await getGeocodingCache(cache, fullAddress);
+            
+            if (cached) {
+                locations.push({
+                    lat: cached.lat,
+                    lon: cached.lon,
+                    address: sub.address,
+                    name: sub.name,
+                    products: sub.products,
+                    originalIndex: sub.orderIndex
+                });
+            }
+        }
+        
+        if (locations.length < circuitData.length * 0.8) {
+            // Less than 80% cached - suggest using map first
+            showNotification('Avaa kartta optimoidaksesi reitin ensimmäisen kerran', 'warning');
+            return;
+        }
+        
+        // Optimize route
+        const optimizedRoute = optimizeCarDeliveryRoute(locations);
+        
+        // Reorder cards
+        reorderSubscriberCards(optimizedRoute);
+        
+        showNotification('Reitti optimoitu! Kortit järjestetty.', 'success');
+        
+    } catch (error) {
+        console.error('Quick optimize failed:', error);
+        showNotification('Optimointi epäonnistui', 'error');
+    }
+}
+
+// Update quick optimize button visibility
+function updateQuickOptimizeButton(circuitId) {
+    const quickOptimizeBtn = document.getElementById('quickOptimizeBtn');
+    if (!quickOptimizeBtn) return;
+    
+    // Show button if there's a saved route OR if geocoding cache exists
+    const hasSavedRoute = loadOptimizedRoute(circuitId) !== null;
+    
+    if (hasSavedRoute) {
+        quickOptimizeBtn.style.display = 'block';
+        quickOptimizeBtn.title = 'Käytä tallennettua optimoitua reittiä';
+    } else {
+        // Check if enough addresses are geocoded
+        initGeocodingCache().then(async cache => {
+            if (!allData[circuitId]) return;
+            
+            let cachedCount = 0;
+            for (const sub of allData[circuitId]) {
+                const fullAddress = `${sub.address}, Imatra, Finland`;
+                const cached = await getGeocodingCache(cache, fullAddress);
+                if (cached) cachedCount++;
+            }
+            
+            if (cachedCount >= allData[circuitId].length * 0.8) {
+                quickOptimizeBtn.style.display = 'block';
+                quickOptimizeBtn.title = 'Optimoi reitti automaattisesti';
+            } else {
+                quickOptimizeBtn.style.display = 'none';
+            }
+        });
+    }
 }
 
 // Message Swipe and Read Functionality
@@ -6857,6 +6955,56 @@ function nearestNeighborTSP(points, startIndex = 0) {
     return route;
 }
 
+// 2-opt optimization to improve route by eliminating crossings
+function twoOptImprove(route, points) {
+    let improved = true;
+    let bestRoute = [...route];
+    
+    while (improved) {
+        improved = false;
+        
+        for (let i = 1; i < bestRoute.length - 2; i++) {
+            for (let j = i + 1; j < bestRoute.length - 1; j++) {
+                // Calculate current distance
+                const currentDist = 
+                    calculateDistance(
+                        points[bestRoute[i]].lat, points[bestRoute[i]].lon,
+                        points[bestRoute[i + 1]].lat, points[bestRoute[i + 1]].lon
+                    ) +
+                    calculateDistance(
+                        points[bestRoute[j]].lat, points[bestRoute[j]].lon,
+                        points[bestRoute[j + 1]].lat, points[bestRoute[j + 1]].lon
+                    );
+                
+                // Calculate new distance if we swap
+                const newDist = 
+                    calculateDistance(
+                        points[bestRoute[i]].lat, points[bestRoute[i]].lon,
+                        points[bestRoute[j]].lat, points[bestRoute[j]].lon
+                    ) +
+                    calculateDistance(
+                        points[bestRoute[i + 1]].lat, points[bestRoute[i + 1]].lon,
+                        points[bestRoute[j + 1]].lat, points[bestRoute[j + 1]].lon
+                    );
+                
+                // If swapping improves the route, do it
+                if (newDist < currentDist) {
+                    // Reverse the segment between i+1 and j
+                    const newRoute = [
+                        ...bestRoute.slice(0, i + 1),
+                        ...bestRoute.slice(i + 1, j + 1).reverse(),
+                        ...bestRoute.slice(j + 1)
+                    ];
+                    bestRoute = newRoute;
+                    improved = true;
+                }
+            }
+        }
+    }
+    
+    return bestRoute;
+}
+
 // Main car delivery route optimizer
 function optimizeCarDeliveryRoute(locations) {
     console.log('Starting car delivery route optimization...');
@@ -6897,9 +7045,13 @@ function optimizeCarDeliveryRoute(locations) {
         group.leftSide.sort(sortBySide);
     });
     
-    // Step 3: Optimize street order using TSP on street centers
+    // Step 3: Optimize street order using TSP on street centers with 2-opt improvement
     const streetCenters = streetGroups.map(g => g.centerline.center);
-    const streetOrder = nearestNeighborTSP(streetCenters, 0);
+    let streetOrder = nearestNeighborTSP(streetCenters, 0);
+    
+    // Apply 2-opt optimization to improve street order (eliminates crossings)
+    streetOrder = twoOptImprove(streetOrder, streetCenters);
+    console.log('Applied 2-opt optimization for improved route');
     
     // Step 4: Build final route - right side going, left side returning
     const optimizedRoute = [];
@@ -6961,7 +7113,36 @@ function addRouteOptimizationButton(map, locations, mapContainer, infoPanel, exc
         visualizeOptimizedRoute(map, locations, infoPanel, excludedInfo);
     });
     
+    // Add print button
+    const printBtn = document.createElement('button');
+    printBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+        </svg>
+        Tulosta
+    `;
+    printBtn.className = 'btn btn-secondary';
+    printBtn.style.cssText = `
+        padding: 8px 16px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+    `;
+    
+    printBtn.addEventListener('click', () => {
+        printOptimizedRoute(currentCircuit, locations);
+    });
+    
     buttonContainer.appendChild(optimizeBtn);
+    buttonContainer.appendChild(printBtn);
     mapContainer.appendChild(buttonContainer);
 }
 
@@ -7007,10 +7188,385 @@ function reorderSubscriberCards(optimizedRoute) {
     // Update global data
     allData[currentCircuit] = reorderedData;
     
+    // Save optimized route to localStorage
+    saveOptimizedRoute(currentCircuit, reorderedData);
+    
     // Re-render the subscriber list with new order
     renderSubscriberList(currentCircuit, reorderedData);
     
     showNotification('Kortit järjestetty optimoidun reitin mukaan', 'success');
+}
+
+// Save optimized route to localStorage
+function saveOptimizedRoute(circuitId, orderedData) {
+    try {
+        const routeData = {
+            circuitId: circuitId,
+            timestamp: new Date().toISOString(),
+            version: 1,
+            addresses: orderedData.map(sub => ({
+                address: sub.address,
+                orderIndex: sub.orderIndex
+            }))
+        };
+        
+        localStorage.setItem(`optimized_route_${circuitId}`, JSON.stringify(routeData));
+        console.log(`Saved optimized route for ${circuitId}`);
+    } catch (error) {
+        console.error('Failed to save optimized route:', error);
+    }
+}
+
+// Load optimized route from localStorage
+function loadOptimizedRoute(circuitId) {
+    try {
+        const saved = localStorage.getItem(`optimized_route_${circuitId}`);
+        if (!saved) return null;
+        
+        const routeData = JSON.parse(saved);
+        
+        // Check if saved route is still valid (within 30 days)
+        const savedDate = new Date(routeData.timestamp);
+        const daysSince = (Date.now() - savedDate.getTime()) / (1000 * 60 * 60 * 24);
+        
+        if (daysSince > 30) {
+            console.log(`Optimized route for ${circuitId} expired (${Math.floor(daysSince)} days old)`);
+            localStorage.removeItem(`optimized_route_${circuitId}`);
+            return null;
+        }
+        
+        console.log(`Loaded optimized route for ${circuitId} (saved ${Math.floor(daysSince)} days ago)`);
+        return routeData;
+    } catch (error) {
+        console.error('Failed to load optimized route:', error);
+        return null;
+    }
+}
+
+// Apply saved route order to circuit data
+function applySavedRouteOrder(circuitId, circuitData) {
+    const savedRoute = loadOptimizedRoute(circuitId);
+    if (!savedRoute) return circuitData;
+    
+    // Create address -> orderIndex map
+    const orderMap = new Map();
+    savedRoute.addresses.forEach(addr => {
+        orderMap.set(addr.address, addr.orderIndex);
+    });
+    
+    // Apply saved order to circuit data
+    const reordered = circuitData.map(sub => {
+        const savedOrder = orderMap.get(sub.address);
+        if (savedOrder !== undefined) {
+            return { ...sub, orderIndex: savedOrder };
+        }
+        return sub;
+    });
+    
+    // Sort by orderIndex
+    reordered.sort((a, b) => a.orderIndex - b.orderIndex);
+    
+    console.log(`Applied saved route order to ${circuitId}`);
+    return reordered;
+}
+
+// Clear saved route for circuit
+function clearSavedRoute(circuitId) {
+    localStorage.removeItem(`optimized_route_${circuitId}`);
+    console.log(`Cleared saved route for ${circuitId}`);
+}
+
+// Print optimized route for offline use
+function printOptimizedRoute(circuitId, locations) {
+    // Create print window
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showNotification('Salli ponnahdusikkunat tulostaaksesi', 'error');
+        return;
+    }
+    
+    // Optimize route if not already optimized
+    const optimizedRoute = optimizeCarDeliveryRoute(locations);
+    const streetGroups = groupAddressesByStreet(optimizedRoute);
+    
+    // Calculate total distance
+    let totalDistance = 0;
+    for (let i = 0; i < optimizedRoute.length - 1; i++) {
+        totalDistance += calculateDistance(
+            optimizedRoute[i].lat, optimizedRoute[i].lon,
+            optimizedRoute[i + 1].lat, optimizedRoute[i + 1].lon
+        );
+    }
+    
+    // Generate HTML for print
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Jakolistat - ${circuitId}</title>
+    <style>
+        @media print {
+            @page { margin: 1cm; }
+            body { margin: 0; }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+            font-size: 24px;
+        }
+        
+        .header .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .route-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .route-info .stat {
+            text-align: center;
+        }
+        
+        .route-info .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .route-info .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .legend {
+            background: #fff3cd;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        
+        .legend strong {
+            color: #856404;
+        }
+        
+        .delivery-item {
+            display: flex;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            align-items: flex-start;
+            page-break-inside: avoid;
+        }
+        
+        .delivery-item:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .item-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            min-width: 40px;
+            flex-shrink: 0;
+        }
+        
+        .item-side {
+            min-width: 50px;
+            text-align: center;
+            flex-shrink: 0;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .side-right {
+            color: #28a745;
+        }
+        
+        .side-left {
+            color: #fd7e14;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-address {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 3px;
+        }
+        
+        .item-name {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+        
+        .item-products {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+        
+        .product-badge {
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .item-checkbox {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        @media print {
+            .no-print { display: none; }
+        }
+        
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .print-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">🖨️ Tulosta</button>
+    
+    <div class="header">
+        <h1>Jakolistat - ${circuitId}</h1>
+        <div class="meta">
+            <span>Tulostettu: ${new Date().toLocaleDateString('fi-FI')} ${new Date().toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' })}</span>
+            <span>Automaattisesti optimoitu reitti</span>
+        </div>
+    </div>
+    
+    <div class="route-info">
+        <div class="stat">
+            <div class="stat-value">${optimizedRoute.length}</div>
+            <div class="stat-label">Jakokohdetta</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">${(totalDistance / 1000).toFixed(1)} km</div>
+            <div class="stat-label">Arvioitu matka</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">${streetGroups.length}</div>
+            <div class="stat-label">Katua</div>
+        </div>
+    </div>
+    
+    <div class="legend">
+        <strong>Ohjeet:</strong> 
+        <span style="color: #28a745;">●</span> Oikea puoli (ikkunasta) jaetaan edetessä • 
+        <span style="color: #fd7e14;">●</span> Vasen puoli jaetaan palatessa
+    </div>
+    
+    <div class="delivery-list">
+        ${optimizedRoute.map((location, index) => {
+            const streetName = extractStreetName(location.address);
+            const group = streetGroups.find(g => g.name === streetName);
+            
+            let side = 'R';
+            let sideClass = 'side-right';
+            if (group && group.centerline) {
+                const sideResult = determineStreetSide(
+                    { lat: location.lat, lon: location.lon },
+                    { start: group.centerline.start, end: group.centerline.end }
+                );
+                if (sideResult === 'left') {
+                    side = 'L';
+                    sideClass = 'side-left';
+                }
+            }
+            
+            const productsHtml = location.products
+                .map(p => `<span class="product-badge">${p}</span>`)
+                .join('');
+            
+            return `
+                <div class="delivery-item">
+                    <div class="item-number">${index + 1}.</div>
+                    <div class="item-side ${sideClass}">${side}</div>
+                    <div class="item-details">
+                        <div class="item-address">${location.address}</div>
+                        ${location.name ? `<div class="item-name">${location.name}</div>` : ''}
+                        <div class="item-products">${productsHtml}</div>
+                    </div>
+                    <div class="item-checkbox"></div>
+                </div>
+            `;
+        }).join('')}
+    </div>
+    
+    <div class="footer">
+        Mailia Jakokirja • Optimoitu autoreitti • ${circuitId}
+    </div>
+</body>
+</html>
+    `;
+    
+    printWindow.document.write(html);
+    printWindow.document.close();
+    
+    showNotification('Tulostusikkuna avattu', 'success');
 }
 
 // Visualize optimized route on map

@@ -108,8 +108,10 @@ function openDeliveryIssueDialog(subscriber, circuitId) {
         bodyHTML,
         actions: [
             { id: 'reportCancel', label: 'Peruuta', variant: 'secondary', handler: () => close() },
-            { id: 'reportSubmit', label: 'Lähetä', variant: 'primary', handler: () => {
+            { id: 'reportSubmit', label: 'Lähetä', variant: 'primary', handler: async ({ close: modalClose }) => {
                 const issueSelect = box.querySelector('#reportIssue');
+                const submitBtn = box.querySelector('#reportSubmit');
+                
                 let reason = issueSelect.value;
                 if (!reason) { showNotification('Valitse syy', 'error'); return; }
                 if (reason === 'Muu') {
@@ -137,9 +139,26 @@ function openDeliveryIssueDialog(subscriber, circuitId) {
                     reason,
                     hasPhoto: !!photoFile
                 };
-                saveRouteMessage(report, photoFile);
-                showNotification('Raportti tallennettu!', 'success');
-                close();
+                
+                // Disable button and show loading state
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Lähetetään...';
+                }
+                
+                try {
+                    await saveRouteMessage(report, photoFile);
+                    showNotification('Raportti tallennettu!', 'success');
+                    modalClose();
+                } catch (error) {
+                    console.error('Error saving report:', error);
+                    showNotification('Raportin tallennus epäonnistui', 'error');
+                    // Re-enable button on error
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Lähetä';
+                    }
+                }
             } }
         ]
     });

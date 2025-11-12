@@ -6935,7 +6935,14 @@ function addRouteOptimizationButton(map, locations, mapContainer, infoPanel, exc
     `;
     
     const optimizeBtn = document.createElement('button');
-    optimizeBtn.innerHTML = '🚗 Optimoi autoreitti';
+    optimizeBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2"/>
+            <circle cx="17" cy="17" r="2"/>
+        </svg>
+        Optimoi autoreitti
+    `;
     optimizeBtn.className = 'btn btn-primary';
     optimizeBtn.style.cssText = `
         padding: 8px 16px;
@@ -6946,6 +6953,8 @@ function addRouteOptimizationButton(map, locations, mapContainer, infoPanel, exc
         cursor: pointer;
         font-size: 14px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
     `;
     
     optimizeBtn.addEventListener('click', () => {
@@ -7086,8 +7095,16 @@ function visualizeOptimizedRoute(map, originalLocations, infoPanel, excludedInfo
     // Update info panel
     infoPanel.innerHTML = `
         <p style="margin: 0;">Optimoitu reitti: <strong>${optimizedRoute.length} osoitetta</strong>${excludedInfo}</p>
-        <p style="margin: 0; font-size: 0.85rem; color: #28a745;">
-            🟢 Oikea puoli (ikkunasta) • 🟠 Vasen puoli (paluu)
+        <p style="margin: 0; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;">
+                <circle cx="12" cy="12" r="10" fill="#28a745"/>
+            </svg>
+            <span style="color: #28a745;">Oikea puoli (ikkunasta)</span>
+            <span style="color: #666; margin: 0 4px;">•</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;">
+                <circle cx="12" cy="12" r="10" fill="#fd7e14"/>
+            </svg>
+            <span style="color: #fd7e14;">Vasen puoli (paluu)</span>
         </p>
         <p style="margin: 0; font-size: 0.85rem; color: #666;">
             Matka: ~${(totalDistance / 1000).toFixed(1)} km

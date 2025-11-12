@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import axios from 'axios';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ const MAPON_API_BASE = 'https://mapon.com/api/v1';
  * Get all units (vehicles/drivers) from Mapon
  * GET /api/mapon/units
  */
-router.get('/units', authenticateToken, async (req: Request, res: Response) => {
+router.get('/units', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         const response = await axios.get(`${MAPON_API_BASE}/unit/list.json`, {
             params: {
@@ -42,7 +42,7 @@ router.get('/units', authenticateToken, async (req: Request, res: Response) => {
  * Get current location data for all units
  * GET /api/mapon/locations
  */
-router.get('/locations', authenticateToken, async (req: Request, res: Response) => {
+router.get('/locations', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         const response = await axios.get(`${MAPON_API_BASE}/unit/list.json`, {
             params: {
@@ -90,7 +90,7 @@ router.get('/locations', authenticateToken, async (req: Request, res: Response) 
  * Get route history for a specific unit
  * GET /api/mapon/route/:unitId
  */
-router.get('/route/:unitId', authenticateToken, async (req: Request, res: Response) => {
+router.get('/route/:unitId', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         const { unitId } = req.params;
         const { from, till } = req.query;

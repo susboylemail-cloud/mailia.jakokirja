@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Force Cache Clear</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Clearing Cache & Updating Service Worker...</h1>
+    <p id="status">Working...</p>
+    <script>
+        (async () => {
+            const status = document.getElementById('status');
+            
+            // Step 1: Unregister all service workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    status.textContent = 'Unregistering service worker...';
+                    await registration.unregister();
+                    console.log('SW unregistered:', registration);
+                }
+            }
+            
+            // Step 2: Clear all caches
+            if ('caches' in window) {
+                status.textContent = 'Clearing all caches...';
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                console.log('All caches cleared:', cacheNames);
+            }
+            
+            // Step 3: Clear localStorage version marker
+            localStorage.removeItem('appCacheVersion');
+            
+            status.textContent = 'Done! Redirecting to main app...';
+            
+            // Step 4: Redirect to main app
+            setTimeout(() => {
+                window.location.href = '/index.html';
+            }, 1000);
+        })();
+    </script>
+</body>
+</html>

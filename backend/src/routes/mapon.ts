@@ -17,9 +17,9 @@ router.get('/units', authenticate, async (req: AuthRequest, res: Response) => {
         const response = await axios.get(`${MAPON_API_BASE}/unit/list.json`, {
             params: {
                 key: MAPON_API_KEY,
-                include_deleted: 0 // Only active units
+                include_deleted: 0
             },
-            timeout: 10000 // 10 second timeout
+            timeout: 10000
         });
 
         if (response.data && response.data.data) {
@@ -29,11 +29,11 @@ router.get('/units', authenticate, async (req: AuthRequest, res: Response) => {
             res.status(500).json({ success: false, error: 'Invalid response from Mapon API' });
         }
     } catch (error: any) {
-        console.error('Mapon API error:', error.message);
+        console.error('Mapon API error:', error.response?.data || error.message);
         res.status(500).json({ 
             success: false, 
             error: 'Failed to fetch units from Mapon',
-            details: error.message 
+            details: error.response?.data || error.message 
         });
     }
 });
@@ -61,8 +61,8 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
         // Transform Mapon data to our format
         const locations = units.map((unit: any) => ({
             id: unit.unit_id,
-            name: unit.name || unit.number || `Unit ${unit.unit_id}`,
-            circuit: extractCircuitFromName(unit.name || ''),
+            name: unit.label || unit.number || `Unit ${unit.unit_id}`,
+            circuit: extractCircuitFromName(unit.label || unit.number || ''),
             lat: parseFloat(unit.latitude) || 0,
             lon: parseFloat(unit.longitude) || 0,
             speed: parseFloat(unit.speed) || 0,
@@ -77,11 +77,11 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
 
         res.json({ success: true, locations });
     } catch (error: any) {
-        console.error('Mapon locations API error:', error.message);
+        console.error('Mapon locations API error:', error.response?.data || error.message);
         res.status(500).json({ 
             success: false, 
             error: 'Failed to fetch locations from Mapon',
-            details: error.message 
+            details: error.response?.data || error.message 
         });
     }
 });

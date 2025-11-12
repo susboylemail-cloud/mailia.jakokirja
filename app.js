@@ -266,6 +266,21 @@ let isLoadingCircuit = false; // Prevent concurrent circuit loads
 let isRenderingTracker = false; // Prevent concurrent tracker renders
 let websocketListenersInitialized = false; // Prevent duplicate WebSocket event bindings
 
+// ============= Haptic Feedback =============
+function triggerHaptic(intensity = 'light') {
+    if ('vibrate' in navigator) {
+        const patterns = {
+            light: 10,
+            medium: 20,
+            heavy: 30,
+            success: [10, 50, 10],
+            error: [30, 100, 30],
+            warning: [20, 80, 20]
+        };
+        navigator.vibrate(patterns[intensity] || patterns.light);
+    }
+}
+
 // ============= Offline Mode Integration =============
 let offlineDB = null;
 let syncManager = null;
@@ -3864,6 +3879,9 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
             setTimeout(() => { parentCard.style.transform = 'scale(1)'; }, 220);
         }
         
+        // Haptic feedback on checkbox toggle
+        triggerHaptic(e.target.checked ? 'success' : 'light');
+        
         await saveCheckboxState(circuitId, subscriber.address, e.target.checked, subscriber.id);
         applyFilters(); // Re-apply filters to hide/show delivered addresses
         
@@ -4385,6 +4403,219 @@ function initializeEventListeners() {
     
     // Initialize message swipe functionality
     initializeMessageSwipe();
+    
+    // Initialize Floating Action Button
+    initializeFAB();
+    
+    // Initialize Pull-to-Refresh
+    initializePullToRefresh();
+}
+
+// ========================================
+// PULL-TO-REFRESH
+// ========================================
+function initializePullToRefresh() {
+    let startY = 0;
+    let currentY = 0;
+    let pulling = false;
+    const threshold = 80;
+    
+    const subscriberList = document.getElementById('subscriberList');
+    const deliveryTab = document.getElementById('deliveryTab');
+    
+    if (!subscriberList || !deliveryTab) return;
+    
+    // Create pull-to-refresh indicator
+    const pullIndicator = document.createElement('div');
+    pullIndicator.className = 'pull-to-refresh';
+    pullIndicator.innerHTML = `
+        <svg class="pull-to-refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+        <span class="pull-to-refresh-text">Vedä päivittääksesi</span>
+    `;
+    deliveryTab.insertBefore(pullIndicator, subscriberList);
+    
+    function handleTouchStart(e) {
+        // Only activate if scrolled to top
+        if (subscriberList.scrollTop === 0 && currentCircuit) {
+            startY = e.touches[0].clientY;
+            pulling = false;
+        }
+    }
+    
+    function handleTouchMove(e) {
+        if (!startY || subscriberList.scrollTop > 0) return;
+        
+        currentY = e.touches[0].clientY;
+        const diff = currentY - startY;
+        
+        if (diff > 0 && diff < threshold * 2) {
+            e.preventDefault();
+            pulling = true;
+            const scale = Math.min(diff / threshold, 1);
+            pullIndicator.style.transform = `translateY(${diff}px)`;
+            pullIndicator.style.opacity = scale;
+            
+            if (diff >= threshold) {
+                pullIndicator.classList.add('pulling');
+                pullIndicator.querySelector('.pull-to-refresh-text').textContent = 'Vapauta päivittääksesi';
+            } else {
+                pullIndicator.classList.remove('pulling');
+                pullIndicator.querySelector('.pull-to-refresh-text').textContent = 'Vedä päivittääksesi';
+            }
+        }
+    }
+    
+    async function handleTouchEnd() {
+        if (!pulling) {
+            startY = 0;
+            return;
+        }
+        
+        const diff = currentY - startY;
+        
+        if (diff >= threshold) {
+            // Trigger refresh
+            pullIndicator.classList.remove('pulling');
+            pullIndicator.classList.add('refreshing');
+            pullIndicator.querySelector('.pull-to-refresh-text').textContent = 'Päivitetään...';
+            triggerHaptic('light');
+            
+            try {
+                await loadCircuit(currentCircuit);
+                showNotificationEnhanced('Piiri päivitetty', 'success');
+                triggerHaptic('success');
+            } catch (error) {
+                showNotificationEnhanced('Päivitys epäonnistui', 'error');
+                triggerHaptic('error');
+            }
+            
+            setTimeout(() => {
+                pullIndicator.classList.remove('refreshing');
+                pullIndicator.style.transform = '';
+                pullIndicator.style.opacity = '';
+            }, 500);
+        } else {
+            pullIndicator.style.transform = '';
+            pullIndicator.style.opacity = '';
+            pullIndicator.classList.remove('pulling');
+        }
+        
+        startY = 0;
+        currentY = 0;
+        pulling = false;
+    }
+    
+    subscriberList.addEventListener('touchstart', handleTouchStart, { passive: false });
+    subscriberList.addEventListener('touchmove', handleTouchMove, { passive: false });
+    subscriberList.addEventListener('touchend', handleTouchEnd);
+}
+
+// ========================================
+// FLOATING ACTION BUTTON (FAB)
+// ========================================
+function initializeFAB() {
+    const fab = document.getElementById('fab');
+    const fabButton = document.getElementById('fabButton');
+    const fabActions = document.getElementById('fabActions');
+    const fabStartRoute = document.getElementById('fabStartRoute');
+    const fabCompleteRoute = document.getElementById('fabCompleteRoute');
+    const fabReport = document.getElementById('fabReport');
+    
+    if (!fab || !fabButton) return;
+    
+    let isOpen = false;
+    
+    // Toggle FAB menu
+    fabButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isOpen = !isOpen;
+        
+        if (isOpen) {
+            fabButton.classList.add('active');
+            fabActions.classList.remove('hidden');
+            setTimeout(() => fabActions.classList.add('show'), 10);
+            triggerHaptic('light');
+        } else {
+            closeFAB();
+        }
+    });
+    
+    // Close FAB when clicking outside
+    document.addEventListener('click', (e) => {
+        if (isOpen && !fab.contains(e.target)) {
+            closeFAB();
+        }
+    });
+    
+    function closeFAB() {
+        isOpen = false;
+        fabButton.classList.remove('active');
+        fabActions.classList.remove('show');
+        setTimeout(() => fabActions.classList.add('hidden'), 300);
+    }
+    
+    // FAB Actions
+    if (fabStartRoute) {
+        fabStartRoute.addEventListener('click', () => {
+            triggerHaptic('medium');
+            if (currentCircuit) {
+                startRoute(currentCircuit);
+                closeFAB();
+            } else {
+                showNotificationEnhanced('Valitse ensin piiri', 'error');
+            }
+        });
+    }
+    
+    if (fabCompleteRoute) {
+        fabCompleteRoute.addEventListener('click', () => {
+            triggerHaptic('medium');
+            if (currentCircuit) {
+                completeRoute(currentCircuit);
+                closeFAB();
+            } else {
+                showNotificationEnhanced('Valitse ensin piiri', 'error');
+            }
+        });
+    }
+    
+    if (fabReport) {
+        fabReport.addEventListener('click', () => {
+            triggerHaptic('light');
+            const reportBtn = document.getElementById('reportBtn');
+            if (reportBtn) {
+                reportBtn.click();
+                closeFAB();
+            }
+        });
+    }
+    
+    // Show/hide FAB based on current tab and mobile view
+    updateFABVisibility();
+}
+
+function updateFABVisibility() {
+    const fab = document.getElementById('fab');
+    if (!fab) return;
+    
+    const deliveryTab = document.getElementById('deliveryTab');
+    const isDeliveryTabActive = deliveryTab && deliveryTab.classList.contains('active');
+    const isMobile = window.innerWidth <= 768;
+    const hasCircuit = !!currentCircuit;
+    
+    if (isMobile && isDeliveryTabActive && hasCircuit) {
+        fab.classList.remove('hidden');
+    } else {
+        fab.classList.add('hidden');
+    }
+}
+
+// Call updateFABVisibility when needed
+if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateFABVisibility);
 }
 
 // Quick route optimization without map
@@ -4834,6 +5065,9 @@ function showSubscriberListWithAnimation() {
 async function completeRoute(circuitId) {
     const now = new Date();
     const key = `route_end_${circuitId}`;
+    
+    // Haptic feedback for route completion
+    triggerHaptic('success');
     
     // Complete route in backend
     const routeId = localStorage.getItem(`route_id_${circuitId}`);

@@ -479,6 +479,39 @@
     
     <script src="api.js?v=82" defer></script>
     <script src="app.js?v=82" defer></script>
+    
+    <!-- Floating Action Button -->
+    <div id="fab" class="fab hidden">
+        <button id="fabButton" class="fab-button" aria-label="Quick Actions">
+            <svg class="fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+        <div id="fabActions" class="fab-actions hidden">
+            <button class="fab-action" id="fabStartRoute" data-action="start">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>Aloita reitti</span>
+            </button>
+            <button class="fab-action" id="fabCompleteRoute" data-action="complete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Merkitse valmiiksi</span>
+            </button>
+            <button class="fab-action" id="fabReport" data-action="report">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>Raportoi ongelma</span>
+            </button>
+        </div>
+    </div>
+    
     <!-- Toast container for notifications (accessible) -->
     <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 </body>

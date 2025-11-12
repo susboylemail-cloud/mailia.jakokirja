@@ -4778,6 +4778,219 @@ input[type="checkbox"]:checked {
     }
 }
 
+/* ========================================
+   FLOATING ACTION BUTTON (FAB)
+   ======================================== */
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.fab.hidden {
+    display: none;
+}
+
+.fab-button {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #3a7bc8 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.fab-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.fab-button:active {
+    transform: scale(0.95);
+}
+
+.fab-button.active .fab-icon {
+    transform: rotate(45deg);
+}
+
+.fab-icon {
+    width: 24px;
+    height: 24px;
+    color: white;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-actions.hidden {
+    display: none;
+}
+
+.fab-actions.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.fab-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 28px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    animation: fabActionSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-action:nth-child(1) { animation-delay: 0.05s; }
+.fab-action:nth-child(2) { animation-delay: 0.1s; }
+.fab-action:nth-child(3) { animation-delay: 0.15s; }
+
+@keyframes fabActionSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.fab-action:hover {
+    background: var(--primary-blue);
+    color: white;
+    transform: translateX(-4px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.fab-action svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.fab-action span {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.fab-action:hover span {
+    color: white;
+}
+
+/* Mobile FAB adjustments */
+@media (max-width: 768px) {
+    .fab {
+        bottom: 16px;
+        right: 16px;
+    }
+    
+    .fab-button {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .fab-actions {
+        gap: 8px;
+    }
+    
+    .fab-action {
+        padding: 14px 18px;
+        font-size: 1rem;
+    }
+}
+
+/* Hide FAB on desktop when not on delivery tab */
+@media (min-width: 769px) {
+    .fab {
+        display: none;
+    }
+}
+
+/* ========================================
+   PULL-TO-REFRESH
+   ======================================== */
+.pull-to-refresh {
+    position: absolute;
+    top: -80px;
+    left: 0;
+    right: 0;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+}
+
+.pull-to-refresh.pulling {
+    transform: translateY(80px);
+}
+
+.pull-to-refresh.refreshing {
+    transform: translateY(80px);
+}
+
+.pull-to-refresh-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--primary-blue);
+    transition: transform 0.3s ease;
+}
+
+.pull-to-refresh.pulling .pull-to-refresh-icon {
+    transform: rotate(180deg);
+}
+
+.pull-to-refresh.refreshing .pull-to-refresh-icon {
+    animation: refreshSpin 1s linear infinite;
+}
+
+@keyframes refreshSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.pull-to-refresh-text {
+    margin-left: 12px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+/* Pull-to-refresh container needs relative positioning */
+#deliveryTab,
+#circuitCardList {
+    position: relative;
+}
+
 
 
 

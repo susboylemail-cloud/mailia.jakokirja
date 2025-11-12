@@ -75,6 +75,21 @@ details.current-whitelist pre { background: var(--code-bg,#111); color:#eee; pad
   box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
+/* Optimized route markers with color coding */
+.number-marker-optimized div { 
+  color: #fff; 
+  width: 30px; 
+  height: 30px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-weight: 700; 
+  border: 2px solid #fff; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  font-size: 12px;
+}
+
 /* Map overlay components */
 #circuitMapOverlay {
   position: fixed;

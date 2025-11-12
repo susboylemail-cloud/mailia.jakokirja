@@ -6683,10 +6683,368 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
 
         showNotification(`${locations.length} osoitetta näytetään kartalla`, 'success');
 
+        // Add route optimization button
+        addRouteOptimizationButton(map, locations, mapContainer, infoPanel, excludedInfo);
+
     } catch (error) {
         console.error('Error initializing map:', error);
         throw error;
     }
+}
+
+// ==================== CAR DELIVERY ROUTE OPTIMIZATION ====================
+
+// Calculate bearing between two points (0-360 degrees, 0=North)
+function calculateBearing(lat1, lon1, lat2, lon2) {
+    const toRad = (deg) => deg * Math.PI / 180;
+    const toDeg = (rad) => rad * 180 / Math.PI;
+    
+    const dLon = toRad(lon2 - lon1);
+    const y = Math.sin(dLon) * Math.cos(toRad(lat2));
+    const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+              Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLon);
+    
+    let bearing = toDeg(Math.atan2(y, x));
+    return (bearing + 360) % 360;
+}
+
+// Calculate distance between two points in meters
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Earth's radius in meters
+    const toRad = (deg) => deg * Math.PI / 180;
+    
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// Extract street name from full address
+function extractStreetName(address) {
+    // Remove building codes, stairs, apartment numbers
+    let street = address.replace(/[A-Z]-?\d+.*$/i, ''); // Remove A1, B-2, etc
+    street = street.replace(/\s*,.*$/, ''); // Remove everything after comma
+    street = street.replace(/\d+[a-z]?\s*$/i, ''); // Remove trailing number
+    return street.trim();
+}
+
+// Determine which side of the street an address is on using perpendicular distance
+function determineStreetSide(point, streetLine) {
+    // streetLine = { start: {lat, lon}, end: {lat, lon} }
+    // Returns: 'right' or 'left' (from driver's perspective traveling from start to end)
+    
+    const crossProduct = (
+        (streetLine.end.lon - streetLine.start.lon) * (point.lat - streetLine.start.lat) -
+        (streetLine.end.lat - streetLine.start.lat) * (point.lon - streetLine.start.lon)
+    );
+    
+    // In geographic coordinates, positive = left, negative = right
+    // For Finnish driving (right side), we want right side first
+    return crossProduct > 0 ? 'left' : 'right';
+}
+
+// Group addresses by street and determine sides
+function groupAddressesByStreet(locations) {
+    const streetGroups = new Map();
+    
+    locations.forEach((loc, index) => {
+        const streetName = extractStreetName(loc.address);
+        
+        if (!streetGroups.has(streetName)) {
+            streetGroups.set(streetName, {
+                name: streetName,
+                addresses: [],
+                bounds: { minLat: 90, maxLat: -90, minLon: 180, maxLon: -180 }
+            });
+        }
+        
+        const group = streetGroups.get(streetName);
+        group.addresses.push({ ...loc, originalIndex: index });
+        
+        // Update bounds
+        group.bounds.minLat = Math.min(group.bounds.minLat, loc.lat);
+        group.bounds.maxLat = Math.max(group.bounds.maxLat, loc.lat);
+        group.bounds.minLon = Math.min(group.bounds.minLon, loc.lon);
+        group.bounds.maxLon = Math.max(group.bounds.maxLon, loc.lon);
+    });
+    
+    return Array.from(streetGroups.values());
+}
+
+// Calculate street centerline from addresses
+function calculateStreetCenterline(streetGroup) {
+    const addresses = streetGroup.addresses;
+    
+    if (addresses.length === 1) {
+        // Single address - use bounds to estimate direction
+        return {
+            start: { lat: streetGroup.bounds.minLat, lon: streetGroup.bounds.minLon },
+            end: { lat: streetGroup.bounds.maxLat, lon: streetGroup.bounds.maxLon },
+            center: { lat: addresses[0].lat, lon: addresses[0].lon }
+        };
+    }
+    
+    // Find two addresses furthest apart (street endpoints)
+    let maxDist = 0;
+    let start = addresses[0];
+    let end = addresses[0];
+    
+    for (let i = 0; i < addresses.length; i++) {
+        for (let j = i + 1; j < addresses.length; j++) {
+            const dist = calculateDistance(
+                addresses[i].lat, addresses[i].lon,
+                addresses[j].lat, addresses[j].lon
+            );
+            if (dist > maxDist) {
+                maxDist = dist;
+                start = addresses[i];
+                end = addresses[j];
+            }
+        }
+    }
+    
+    // Calculate center point
+    const centerLat = (start.lat + end.lat) / 2;
+    const centerLon = (start.lon + end.lon) / 2;
+    
+    return {
+        start: { lat: start.lat, lon: start.lon },
+        end: { lat: end.lat, lon: end.lon },
+        center: { lat: centerLat, lon: centerLon }
+    };
+}
+
+// Optimize route using nearest neighbor TSP approximation
+function nearestNeighborTSP(points, startIndex = 0) {
+    const visited = new Set();
+    const route = [];
+    let current = startIndex;
+    
+    route.push(current);
+    visited.add(current);
+    
+    while (visited.size < points.length) {
+        let nearest = -1;
+        let minDist = Infinity;
+        
+        for (let i = 0; i < points.length; i++) {
+            if (!visited.has(i)) {
+                const dist = calculateDistance(
+                    points[current].lat, points[current].lon,
+                    points[i].lat, points[i].lon
+                );
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = i;
+                }
+            }
+        }
+        
+        if (nearest !== -1) {
+            route.push(nearest);
+            visited.add(nearest);
+            current = nearest;
+        } else {
+            break;
+        }
+    }
+    
+    return route;
+}
+
+// Main car delivery route optimizer
+function optimizeCarDeliveryRoute(locations) {
+    console.log('Starting car delivery route optimization...');
+    
+    // Step 1: Group by street
+    const streetGroups = groupAddressesByStreet(locations);
+    console.log(`Found ${streetGroups.size} streets`);
+    
+    // Step 2: Calculate centerlines and separate sides
+    streetGroups.forEach(group => {
+        const centerline = calculateStreetCenterline(group);
+        group.centerline = centerline;
+        group.rightSide = [];
+        group.leftSide = [];
+        
+        // Determine which side each address is on
+        group.addresses.forEach(addr => {
+            const side = determineStreetSide(
+                { lat: addr.lat, lon: addr.lon },
+                { start: centerline.start, end: centerline.end }
+            );
+            
+            if (side === 'right') {
+                group.rightSide.push(addr);
+            } else {
+                group.leftSide.push(addr);
+            }
+        });
+        
+        // Sort each side by distance along street
+        const sortBySide = (a, b) => {
+            const distA = calculateDistance(centerline.start.lat, centerline.start.lon, a.lat, a.lon);
+            const distB = calculateDistance(centerline.start.lat, centerline.start.lon, b.lat, b.lon);
+            return distA - distB;
+        };
+        
+        group.rightSide.sort(sortBySide);
+        group.leftSide.sort(sortBySide);
+    });
+    
+    // Step 3: Optimize street order using TSP on street centers
+    const streetCenters = streetGroups.map(g => g.centerline.center);
+    const streetOrder = nearestNeighborTSP(streetCenters, 0);
+    
+    // Step 4: Build final route - right side going, left side returning
+    const optimizedRoute = [];
+    
+    streetOrder.forEach(streetIndex => {
+        const group = streetGroups[streetIndex];
+        
+        // Add right side addresses (driver's window side)
+        group.rightSide.forEach(addr => {
+            optimizedRoute.push(addr);
+        });
+        
+        // Add left side addresses in reverse (coming back)
+        group.leftSide.reverse().forEach(addr => {
+            optimizedRoute.push(addr);
+        });
+    });
+    
+    console.log(`Optimized route: ${optimizedRoute.length} addresses`);
+    return optimizedRoute;
+}
+
+// Add route optimization button to map
+function addRouteOptimizationButton(map, locations, mapContainer, infoPanel, excludedInfo) {
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        display: flex;
+        gap: 10px;
+    `;
+    
+    const optimizeBtn = document.createElement('button');
+    optimizeBtn.innerHTML = '🚗 Optimoi autoreitti';
+    optimizeBtn.className = 'btn btn-primary';
+    optimizeBtn.style.cssText = `
+        padding: 8px 16px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+    
+    optimizeBtn.addEventListener('click', () => {
+        visualizeOptimizedRoute(map, locations, infoPanel, excludedInfo);
+    });
+    
+    buttonContainer.appendChild(optimizeBtn);
+    mapContainer.appendChild(buttonContainer);
+}
+
+// Visualize optimized route on map
+function visualizeOptimizedRoute(map, originalLocations, infoPanel, excludedInfo) {
+    showNotification('Optimoidaan reittiä...', 'info');
+    
+    // Run optimization
+    const optimizedRoute = optimizeCarDeliveryRoute(originalLocations);
+    
+    // Clear existing markers
+    map.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+        }
+    });
+    
+    // Remove existing polylines
+    map.eachLayer(layer => {
+        if (layer instanceof L.Polyline) {
+            map.removeLayer(layer);
+        }
+    });
+    
+    // Draw route line
+    const routeLine = optimizedRoute.map(loc => [loc.lat, loc.lon]);
+    L.polyline(routeLine, {
+        color: '#007bff',
+        weight: 3,
+        opacity: 0.7,
+        smoothFactor: 1
+    }).addTo(map);
+    
+    // Add numbered markers in optimized order
+    optimizedRoute.forEach((location, index) => {
+        const marker = L.marker([location.lat, location.lon]).addTo(map);
+        
+        const productsHtml = location.products.map(p => `<span class="map-product-badge">${p}</span>`).join('');
+        
+        marker.bindPopup(`
+            <div class="map-popup">
+                <strong class="map-popup-title">${index + 1}. ${location.address}</strong><br>
+                ${location.name ? `<em>${location.name}</em><br>` : ''}
+                <div class="map-product-badges">${productsHtml}</div>
+                <small style="color: #666;">Alkuperäinen: #${location.originalIndex + 1}</small>
+            </div>
+        `);
+        
+        // Color code: Blue for right side, Orange for left side
+        const streetName = extractStreetName(location.address);
+        const group = groupAddressesByStreet(optimizedRoute).find(g => g.name === streetName);
+        
+        let color = '#007bff'; // Default blue
+        if (group && group.centerline) {
+            const side = determineStreetSide(
+                { lat: location.lat, lon: location.lon },
+                { start: group.centerline.start, end: group.centerline.end }
+            );
+            color = side === 'right' ? '#28a745' : '#fd7e14'; // Green = right, Orange = left
+        }
+        
+        const icon = L.divIcon({
+            className: 'number-marker-optimized',
+            html: `<div style="background-color: ${color};">${index + 1}</div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+        marker.setIcon(icon);
+    });
+    
+    // Calculate route statistics
+    let totalDistance = 0;
+    for (let i = 0; i < optimizedRoute.length - 1; i++) {
+        totalDistance += calculateDistance(
+            optimizedRoute[i].lat, optimizedRoute[i].lon,
+            optimizedRoute[i + 1].lat, optimizedRoute[i + 1].lon
+        );
+    }
+    
+    // Update info panel
+    infoPanel.innerHTML = `
+        <p style="margin: 0;">Optimoitu reitti: <strong>${optimizedRoute.length} osoitetta</strong>${excludedInfo}</p>
+        <p style="margin: 0; font-size: 0.85rem; color: #28a745;">
+            🟢 Oikea puoli (ikkunasta) • 🟠 Vasen puoli (paluu)
+        </p>
+        <p style="margin: 0; font-size: 0.85rem; color: #666;">
+            Matka: ~${(totalDistance / 1000).toFixed(1)} km
+        </p>
+        <p style="margin: 0; font-size: 0.9rem; color: #aaa;">Automaattinen reititys</p>
+    `;
+    
+    showNotification(`Reitti optimoitu! Matka: ${(totalDistance / 1000).toFixed(1)} km`, 'success');
 }
 
 // Load Leaflet library dynamically (with caching)

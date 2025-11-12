@@ -7,11 +7,11 @@
     <!-- Removed Google Fonts; using system font stack for performance -->
     
     <!-- Preload critical resources for faster page load -->
-    <link rel="preload" href="style.css?v=81" as="style">
-    <link rel="preload" href="api.js?v=81" as="script">
-    <link rel="preload" href="app.js?v=81" as="script">
+    <link rel="preload" href="style.css?v=82" as="style">
+    <link rel="preload" href="api.js?v=82" as="script">
+    <link rel="preload" href="app.js?v=82" as="script">
     
-    <link rel="stylesheet" href="style.css?v=81">
+    <link rel="stylesheet" href="style.css?v=82">
     <link rel="manifest" href="manifest.json?v=80">
     <meta name="theme-color" content="#1A1D21">
 </head>
@@ -136,6 +136,15 @@
 
     <!-- Main Application (hidden until logged in) -->
     <div id="mainApp" style="display: none;">
+    
+    <!-- Offline Status Indicator -->
+    <div id="offlineStatus" class="offline-status hidden">
+        <span class="offline-status-dot online"></span>
+        <span class="offline-status-text">Online</span>
+        <span class="offline-status-badge pending" id="pendingSyncBadge" style="display: none;">0</span>
+        <span class="offline-status-badge conflicts" id="conflictsBadge" style="display: none;">0</span>
+    </div>
+    
     <header>
         <div class="header-content">
             <h1 class="logo">Jakokirja</h1>
@@ -448,8 +457,13 @@
         </div>
     </div>
 
-    <script src="api.js?v=81" defer></script>
-    <script src="app.js?v=81" defer></script>
+    <!-- Offline Mode Modules -->
+    <script src="offline-db.js?v=82" defer></script>
+    <script src="sync-manager.js?v=82" defer></script>
+    <script src="conflict-ui.js?v=82" defer></script>
+    
+    <script src="api.js?v=82" defer></script>
+    <script src="app.js?v=82" defer></script>
     <!-- Toast container for notifications (accessible) -->
     <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 </body>

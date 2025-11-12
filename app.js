@@ -266,6 +266,152 @@ let isLoadingCircuit = false; // Prevent concurrent circuit loads
 let isRenderingTracker = false; // Prevent concurrent tracker renders
 let websocketListenersInitialized = false; // Prevent duplicate WebSocket event bindings
 
+// ============= Offline Mode Integration =============
+let offlineDB = null;
+let syncManager = null;
+let conflictUI = null;
+let offlineStatusInitialized = false;
+
+// Initialize offline modules
+async function initializeOfflineMode() {
+    if (offlineStatusInitialized) {
+        console.log('Offline mode already initialized');
+        return;
+    }
+    
+    try {
+        // Initialize IndexedDB wrapper
+        if (typeof OfflineDB !== 'undefined') {
+            offlineDB = new OfflineDB();
+            await offlineDB.init();
+            console.log('✅ OfflineDB initialized');
+        }
+        
+        // Initialize sync manager
+        if (typeof SyncManager !== 'undefined' && offlineDB) {
+            syncManager = new SyncManager(offlineDB, window.mailiaAPI);
+            syncManager.startPeriodicSync();
+            console.log('✅ SyncManager initialized');
+        }
+        
+        // Initialize conflict UI
+        if (typeof ConflictResolutionUI !== 'undefined' && offlineDB) {
+            conflictUI = new ConflictResolutionUI(offlineDB, syncManager);
+            console.log('✅ ConflictUI initialized');
+        }
+        
+        // Setup offline status indicator
+        setupOfflineStatusIndicator();
+        
+        // Listen for online/offline events
+        window.addEventListener('online', handleOnlineStatus);
+        window.addEventListener('offline', handleOfflineStatus);
+        
+        offlineStatusInitialized = true;
+        console.log('✅ Offline mode fully initialized');
+    } catch (error) {
+        console.error('❌ Failed to initialize offline mode:', error);
+    }
+}
+
+// Setup offline status indicator UI
+function setupOfflineStatusIndicator() {
+    const statusEl = document.getElementById('offlineStatus');
+    if (!statusEl) return;
+    
+    const dotEl = statusEl.querySelector('.offline-status-dot');
+    const textEl = statusEl.querySelector('.offline-status-text');
+    const pendingBadge = document.getElementById('pendingSyncBadge');
+    const conflictsBadge = document.getElementById('conflictsBadge');
+    
+    // Update status based on network
+    const updateNetworkStatus = () => {
+        const isOnline = navigator.onLine;
+        
+        if (dotEl) {
+            dotEl.classList.remove('online', 'offline', 'syncing');
+            dotEl.classList.add(isOnline ? 'online' : 'offline');
+        }
+        
+        if (textEl) {
+            textEl.textContent = isOnline ? 'Online' : 'Offline';
+        }
+        
+        // Show/hide status indicator
+        if (isOnline && pendingBadge && conflictsBadge) {
+            const hasPending = pendingBadge.textContent !== '0';
+            const hasConflicts = conflictsBadge.textContent !== '0';
+            statusEl.classList.toggle('hidden', !hasPending && !hasConflicts);
+        } else {
+            statusEl.classList.remove('hidden');
+        }
+    };
+    
+    // Initial status update
+    updateNetworkStatus();
+    
+    // Periodic status update (check for pending items)
+    setInterval(async () => {
+        if (!offlineDB) return;
+        
+        try {
+            const pending = await offlineDB.getPendingSyncItems();
+            const conflicts = await offlineDB.getAllConflicts();
+            
+            if (pendingBadge) {
+                pendingBadge.textContent = pending.length;
+                pendingBadge.style.display = pending.length > 0 ? 'inline-flex' : 'none';
+            }
+            
+            if (conflictsBadge) {
+                conflictsBadge.textContent = conflicts.length;
+                conflictsBadge.style.display = conflicts.length > 0 ? 'inline-flex' : 'none';
+            }
+            
+            // Show sync indicator when syncing
+            const dotEl = statusEl.querySelector('.offline-status-dot');
+            if (syncManager && syncManager.isSyncing && dotEl) {
+                dotEl.classList.remove('online', 'offline');
+                dotEl.classList.add('syncing');
+            } else {
+                updateNetworkStatus();
+            }
+            
+            // Check for conflicts to show UI
+            if (conflictUI && conflicts.length > 0) {
+                await conflictUI.checkAndShowConflicts();
+            }
+        } catch (error) {
+            console.error('Error updating offline status:', error);
+        }
+    }, 5000); // Update every 5 seconds
+}
+
+// Handle online status
+function handleOnlineStatus() {
+    console.log('📶 Network online - starting sync');
+    const statusEl = document.getElementById('offlineStatus');
+    if (statusEl) {
+        const textEl = statusEl.querySelector('.offline-status-text');
+        if (textEl) textEl.textContent = 'Syncing...';
+    }
+    
+    // Trigger sync when coming back online
+    if (syncManager) {
+        syncManager.syncAll().then(() => {
+            console.log('✅ Sync completed after coming online');
+        }).catch(error => {
+            console.error('❌ Sync failed after coming online:', error);
+        });
+    }
+}
+
+// Handle offline status
+function handleOfflineStatus() {
+    console.log('📵 Network offline - changes will be queued');
+    showToast('Offline-tilassa. Muutokset synkronoidaan kun yhteys palaa.', 'info');
+}
+
 // Small helper: get current role from memory or storage
 function getEffectiveUserRole() {
     try {
@@ -1853,6 +1999,9 @@ async function showMainApp() {
     
     // Initialize geolocation for weather
     getLocationWeather();
+    
+    // Initialize offline mode for background sync and conflict resolution
+    await initializeOfflineMode();
     
     // Set initial view based on user role
     const role = getEffectiveUserRole();
@@ -4410,7 +4559,26 @@ async function saveCheckboxState(circuitId, address, checked, subscriberId = nul
             }
         } catch (error) {
             console.error('Failed to sync delivery to backend:', error);
-            // Continue using localStorage as fallback
+            
+            // Add to offline queue if offline and offlineDB is available
+            if (!navigator.onLine && offlineDB && subscriberId) {
+                try {
+                    await offlineDB.addToSyncQueue({
+                        entity_type: 'delivery',
+                        action: 'update',
+                        data: {
+                            routeId: routeId,
+                            subscriberId: subscriberId,
+                            isDelivered: checked,
+                            circuitId: circuitId,
+                            address: address
+                        }
+                    });
+                    console.log('📥 Added delivery to offline sync queue');
+                } catch (offlineError) {
+                    console.error('Failed to add to offline queue:', offlineError);
+                }
+            }
         }
     }
 }

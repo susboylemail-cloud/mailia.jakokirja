@@ -8710,14 +8710,19 @@ function loadLeaflet() {
  */
 async function fetchDriverLocations() {
     try {
-        const token = localStorage.getItem('mailiaAuth') ? JSON.parse(localStorage.getItem('mailiaAuth')).token : null;
+        // Get token from sessionStorage (used by api.js)
+        const token = sessionStorage.getItem('mailiaAuthToken');
         
         if (!token) {
             throw new Error('Ei todennusta');
         }
         
+        // Determine API URL based on environment
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const apiBaseUrl = isProduction ? '/api' : 'http://localhost:3000/api';
+        
         // Call backend API that proxies Mapon
-        const response = await fetch(`${API_URL}/mapon/locations`, {
+        const response = await fetch(`${apiBaseUrl}/mapon/locations`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,

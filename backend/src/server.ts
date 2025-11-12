@@ -45,10 +45,15 @@ app.set('trust proxy', 1);
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
     cors: {
-        origin: process.env.CLIENT_URL || 'http://localhost:5500',
+        origin: process.env.CLIENT_URL || '*', // Allow all origins in dev, specific in prod via env
         methods: ['GET', 'POST'],
         credentials: true
-    }
+    },
+    transports: ['websocket', 'polling'], // Explicitly set transports
+    pingTimeout: 60000, // 60 seconds
+    pingInterval: 25000, // 25 seconds
+    upgradeTimeout: 30000, // 30 seconds
+    allowEIO3: true // Allow older engine.io clients
 });
 
 const PORT = process.env.PORT || 3000;
@@ -79,7 +84,7 @@ app.use(helmet({
     contentSecurityPolicy: false, // Allow inline scripts for frontend
 }));
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5500',
+    origin: process.env.CLIENT_URL || '*', // Allow all origins in dev, specific in prod via env
     credentials: true
 }));
 app.use(compression());

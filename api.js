@@ -340,12 +340,22 @@ class MailiaAPI {
 
         console.log('Initializing WebSocket connection to:', WS_URL);
         
+        // Configure transports based on environment
+        const transports = IS_PRODUCTION 
+            ? ['websocket', 'polling'] // Try websocket first, fallback to polling
+            : ['websocket', 'polling'];
+        
         this.socket = io(WS_URL, {
             auth: { token: this.token },
             reconnection: true,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
-            reconnectionAttempts: Infinity
+            reconnectionAttempts: 5, // Limit attempts to avoid infinite loops
+            timeout: 10000, // 10 second connection timeout
+            transports: transports,
+            upgrade: true, // Allow transport upgrades
+            rememberUpgrade: true, // Remember successful transport upgrade
+            path: '/socket.io/' // Explicit path
         });
 
         this.socket.on('connect', () => {
@@ -363,6 +373,10 @@ class MailiaAPI {
 
         this.socket.on('connect_error', (error) => {
             console.error('WebSocket connection error:', error);
+            // Don't spam the console if backend is unavailable
+            if (error.message.includes('xhr poll error')) {
+                console.warn('Backend server may be unavailable. App will work in offline mode.');
+            }
         });
 
         this.socket.on('reconnect', (attemptNumber) => {
@@ -378,7 +392,7 @@ class MailiaAPI {
         });
 
         this.socket.on('reconnect_failed', () => {
-            console.error('❌ WebSocket reconnection failed');
+            console.error('❌ WebSocket reconnection failed - app will work in offline mode');
         });
 
         this.socket.on('delivery:updated', (data) => {

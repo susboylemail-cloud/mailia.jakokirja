@@ -2630,7 +2630,18 @@ body.dark-mode .subscriber-name {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
+}
+
+.tracker-view {
+    width: 100%;
+}
+
+.gps-tracking-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
     margin-top: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow);
 }
 
 .circuit-item {

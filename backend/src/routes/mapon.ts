@@ -68,7 +68,9 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
             const lat = parseFloat(unit.latitude) || 0;
             const lon = parseFloat(unit.longitude) || 0;
             const speed = parseFloat(unit.speed) || 0;
-            const dt_tracker = unit.dt_tracker || unit.dt_server || 0;
+            
+            // Try multiple timestamp fields
+            const dt_tracker = unit.dt_tracker || unit.dt_server || unit.dt_actual || unit.gprs_time || 0;
             
             return {
                 id: unit.unit_id,
@@ -84,11 +86,15 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
                 ignition: unit.ignition === 1,
                 satellites: unit.satellites || 0,
                 address: unit.location_name || '',
-                // Debug info
+                // Debug info - include more fields to diagnose
                 rawData: {
                     dt_tracker: unit.dt_tracker,
                     dt_server: unit.dt_server,
-                    hasCoords: !!(lat && lon)
+                    dt_actual: unit.dt_actual,
+                    gprs_time: unit.gprs_time,
+                    hasCoords: !!(lat && lon),
+                    speed: unit.speed,
+                    ignition: unit.ignition
                 }
             };
         });
@@ -158,36 +164,32 @@ function extractCircuitFromName(name: string): string {
  * Helper: Determine unit status based on Mapon data
  */
 function determineStatus(unit: any): 'moving' | 'stopped' | 'offline' {
+    // Try multiple timestamp fields
     const now = Date.now() / 1000; // Current time in seconds
-    const lastUpdate = unit.dt_tracker || unit.dt_server || 0;
+    const lastUpdate = unit.dt_tracker || unit.dt_server || unit.dt_actual || unit.gprs_time || 0;
     
     // If no timestamp at all, check if we have coordinates
     if (!lastUpdate) {
-        // If we have lat/lon, assume stopped
+        // If we have lat/lon, assume stopped (recent enough data)
         if (unit.latitude && unit.longitude) {
-            return 'stopped';
+            const speed = parseFloat(unit.speed) || 0;
+            return speed > 5 ? 'moving' : 'stopped';
         }
         return 'offline';
     }
     
     const timeDiff = now - lastUpdate;
 
-    // If no update in 1 hour, consider offline (more lenient than 5 minutes)
-    if (timeDiff > 3600) {
+    // If no update in 24 hours, consider offline (very lenient)
+    if (timeDiff > 86400) {
         return 'offline';
     }
 
     const speed = parseFloat(unit.speed) || 0;
-    const ignition = unit.ignition === 1;
 
     // Moving if speed > 5 km/h
     if (speed > 5) {
         return 'moving';
-    }
-    
-    // Stopped if ignition is on but not moving
-    if (ignition) {
-        return 'stopped';
     }
 
     // Default to stopped if we have recent data

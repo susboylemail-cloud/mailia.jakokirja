@@ -8618,39 +8618,21 @@ let gpsMarkers = {};
  * Initialize GPS tracking for admin users
  */
 function initializeGPSTracking() {
-    const gpsSection = document.getElementById('gpsTrackingSection');
     const toggleBtn = document.getElementById('toggleGpsTracking');
-    const dropdownToggle = document.getElementById('gpsToggleDropdown');
-    const dropdownContent = document.getElementById('gpsDropdownContent');
-    const gpsMapContainer = document.getElementById('gpsMap');
     const trackerViewSwitch = document.getElementById('trackerViewSwitch');
     const trackerViewBtn = document.getElementById('trackerViewBtn');
     const trackerViewMenu = document.getElementById('trackerViewMenu');
+    const circuitStatusView = document.getElementById('circuitStatusView');
+    const liveTrackingView = document.getElementById('liveTrackingView');
     
-    if (!gpsSection || !toggleBtn) return;
+    if (!toggleBtn) return;
     
-    // Show GPS section for admin/manager
+    // Show view selector for admin/manager
     const role = getEffectiveUserRole();
     if (role === 'admin' || role === 'manager') {
-        gpsSection.style.display = 'block';
         if (trackerViewSwitch) trackerViewSwitch.style.display = 'block';
     }
     
-    // Toggle dropdown expansion
-    if (dropdownToggle && dropdownContent) {
-        dropdownToggle.addEventListener('click', () => {
-            const isExpanded = dropdownContent.style.display === 'block';
-            
-            if (isExpanded) {
-                dropdownContent.style.display = 'none';
-                dropdownToggle.classList.remove('active');
-            } else {
-                dropdownContent.style.display = 'block';
-                dropdownToggle.classList.add('active');
-            }
-        });
-    }
-
     // View switch dropdown (menu)
     if (trackerViewBtn && trackerViewMenu) {
         const setViewLabel = (view) => {
@@ -8686,20 +8668,15 @@ function initializeGPSTracking() {
             setViewLabel(view);
 
             if (view === 'status') {
-                // Collapse GPS section and stop tracking
-                if (dropdownContent) dropdownContent.style.display = 'none';
-                if (dropdownToggle) dropdownToggle.classList.remove('active');
+                // Show circuit status view, hide live tracking
+                if (circuitStatusView) circuitStatusView.style.display = 'block';
+                if (liveTrackingView) liveTrackingView.style.display = 'none';
                 stopGPSTracking();
-                // Ensure circuit tracker is visible and scroll to it
-                const tracker = document.getElementById('circuitTracker');
-                if (tracker) tracker.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else if (view === 'live') {
-                // Expand GPS section and start tracking
-                if (dropdownContent) dropdownContent.style.display = 'block';
-                if (dropdownToggle) dropdownToggle.classList.add('active');
+                // Show live tracking view, hide circuit status
+                if (circuitStatusView) circuitStatusView.style.display = 'none';
+                if (liveTrackingView) liveTrackingView.style.display = 'block';
                 await startGPSTracking();
-                const section = document.getElementById('gpsTrackingSection');
-                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
     }
@@ -8722,20 +8699,10 @@ async function startGPSTracking() {
     const toggleText = document.getElementById('gpsToggleText');
     const statusText = document.getElementById('gpsStatus');
     const mapContainer = document.getElementById('gpsMap');
-    const dropdownToggle = document.getElementById('gpsToggleDropdown');
-    const dropdownContent = document.getElementById('gpsDropdownContent');
     
     if (!toggleBtn || !toggleText || !statusText) return;
     
     try {
-        // First ensure dropdown is expanded
-        if (dropdownToggle && dropdownContent && dropdownContent.style.display !== 'block') {
-            dropdownContent.style.display = 'block';
-            dropdownToggle.classList.add('active');
-            // Wait for dropdown animation
-            await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        
         // Update UI
         toggleBtn.classList.add('active');
         toggleText.textContent = 'Pysäytä seuranta';
@@ -8743,8 +8710,8 @@ async function startGPSTracking() {
         statusText.classList.add('active');
         mapContainer.style.display = 'block';
         
-        // Wait a moment for map container to be fully visible
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for map container to be fully visible
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         // Initialize map if not already done
         if (!gpsMap) {
@@ -8776,8 +8743,6 @@ function stopGPSTracking() {
     const toggleBtn = document.getElementById('toggleGpsTracking');
     const toggleText = document.getElementById('gpsToggleText');
     const statusText = document.getElementById('gpsStatus');
-    const dropdownToggle = document.getElementById('gpsToggleDropdown');
-    const dropdownContent = document.getElementById('gpsDropdownContent');
     
     if (!toggleBtn || !toggleText || !statusText) return;
     
@@ -8792,12 +8757,6 @@ function stopGPSTracking() {
     toggleText.textContent = 'Aloita seuranta';
     statusText.textContent = 'Pysäytetty';
     statusText.classList.remove('active');
-    
-    // Auto-collapse dropdown when stopped
-    if (dropdownToggle && dropdownContent) {
-        dropdownContent.style.display = 'none';
-        dropdownToggle.classList.remove('active');
-    }
     
     showNotificationEnhanced('GPS seuranta pysäytetty', 'info');
 }

@@ -347,26 +347,13 @@
             </div>
             
             <!-- Circuit Status Overview (Default View) -->
-            <div id="circuitTracker" class="circuit-tracker"></div>
+            <div id="circuitStatusView" class="tracker-view">
+                <div id="circuitTracker" class="circuit-tracker"></div>
+            </div>
             
-            <!-- GPS Live Tracking Section (Admin Only - Collapsible) -->
-            <div class="gps-tracking-section admin-only" id="gpsTrackingSection" style="display: none;">
-                <button class="gps-section-toggle" id="gpsToggleDropdown">
-                    <div class="gps-toggle-header">
-                        <h3>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                            Live GPS Tracking
-                        </h3>
-                        <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </div>
-                </button>
-                
-                <div class="gps-dropdown-content" id="gpsDropdownContent" style="display: none;">
+            <!-- GPS Live Tracking View (Admin Only) -->
+            <div id="liveTrackingView" class="tracker-view" style="display: none;">
+                <div class="gps-tracking-container">
                     <div class="gps-header">
                         <div class="gps-controls">
                             <button id="toggleGpsTracking" class="gps-toggle-btn">

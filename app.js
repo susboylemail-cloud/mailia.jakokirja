@@ -8625,12 +8625,28 @@ function initializeGPSTracking() {
     const circuitStatusView = document.getElementById('circuitStatusView');
     const liveTrackingView = document.getElementById('liveTrackingView');
     
-    if (!toggleBtn) return;
+    console.log('Initializing GPS tracking...', {
+        toggleBtn: !!toggleBtn,
+        trackerViewSwitch: !!trackerViewSwitch,
+        trackerViewBtn: !!trackerViewBtn,
+        trackerViewMenu: !!trackerViewMenu,
+        circuitStatusView: !!circuitStatusView,
+        liveTrackingView: !!liveTrackingView
+    });
+    
+    if (!toggleBtn) {
+        console.warn('Toggle button not found, GPS tracking not initialized');
+        return;
+    }
     
     // Show view selector for admin/manager
     const role = getEffectiveUserRole();
+    console.log('User role:', role);
     if (role === 'admin' || role === 'manager') {
-        if (trackerViewSwitch) trackerViewSwitch.style.display = 'block';
+        if (trackerViewSwitch) {
+            trackerViewSwitch.style.display = 'block';
+            console.log('View switch displayed for admin/manager');
+        }
     }
     
     // View switch dropdown (menu)
@@ -8644,51 +8660,70 @@ function initializeGPSTracking() {
         trackerViewBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const open = trackerViewMenu.style.display === 'block';
+            console.log('Menu button clicked, currently open:', open);
             trackerViewMenu.style.display = open ? 'none' : 'block';
             trackerViewBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
         });
 
         // Close on outside click
-        document.addEventListener('click', () => {
+        document.addEventListener('click', (e) => {
             if (trackerViewMenu.style.display === 'block') {
-                trackerViewMenu.style.display = 'none';
-                trackerViewBtn.setAttribute('aria-expanded', 'false');
+                // Don't close if clicking inside the menu
+                if (!trackerViewMenu.contains(e.target) && !trackerViewBtn.contains(e.target)) {
+                    console.log('Closing menu due to outside click');
+                    trackerViewMenu.style.display = 'none';
+                    trackerViewBtn.setAttribute('aria-expanded', 'false');
+                }
             }
         });
 
         // Handle selection
         trackerViewMenu.addEventListener('click', async (e) => {
             const btn = e.target.closest('.menu-item');
-            if (!btn) return;
+            if (!btn) {
+                console.log('Click not on menu item');
+                return;
+            }
             e.stopPropagation();
 
             const view = btn.getAttribute('data-view');
+            console.log('Menu item clicked:', view);
+            
             trackerViewMenu.style.display = 'none';
             trackerViewBtn.setAttribute('aria-expanded', 'false');
             setViewLabel(view);
 
             if (view === 'status') {
+                console.log('Switching to circuit status view');
                 // Show circuit status view, hide live tracking
                 if (circuitStatusView) circuitStatusView.style.display = 'block';
                 if (liveTrackingView) liveTrackingView.style.display = 'none';
                 stopGPSTracking();
             } else if (view === 'live') {
+                console.log('Switching to live GPS tracking view');
                 // Show live tracking view, hide circuit status
                 if (circuitStatusView) circuitStatusView.style.display = 'none';
                 if (liveTrackingView) liveTrackingView.style.display = 'block';
                 await startGPSTracking();
             }
         });
+        
+        console.log('View switch menu initialized');
+    } else {
+        console.warn('View switch elements not found');
     }
     
     // Toggle GPS tracking
     toggleBtn.addEventListener('click', () => {
+        console.log('GPS tracking toggle clicked');
         if (gpsTrackingInterval) {
             stopGPSTracking();
         } else {
             startGPSTracking();
         }
     });
+    
+    console.log('GPS tracking initialization complete');
 }
 
 /**

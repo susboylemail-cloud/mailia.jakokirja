@@ -408,10 +408,17 @@ body {
     filter: blur(2px) grayscale(30%); /* Soft blur for aesthetic */
 }
 
-/* Hide video on mobile/small screens to save bandwidth and reduce distraction */
+/* Scale video appropriately on mobile/small screens */
 @media (max-width: 768px) {
     .login-video-background {
-        display: none;
+        /* Scale to ensure proper coverage on mobile */
+        min-width: 100vw;
+        min-height: 100vh;
+        width: 100vw;
+        height: auto;
+        object-fit: cover;
+        opacity: 0.1; /* Lighter on mobile */
+        filter: blur(3px) grayscale(40%); /* Slightly more blur on mobile */
     }
 }
 

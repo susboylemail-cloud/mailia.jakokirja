@@ -6071,11 +6071,22 @@ async function handleAddSubscriber() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/subscriptions/subscriber`, {
+        // Use sessionStorage for auth token (matches api.js implementation)
+        const token = sessionStorage.getItem('mailiaAuthToken');
+        
+        if (!token) {
+            throw new Error('No authentication token available');
+        }
+        
+        // Use proper API URL with environment detection
+        const IS_PRODUCTION = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const API_BASE_URL = IS_PRODUCTION ? '/api' : 'http://localhost:3000/api';
+        
+        const response = await fetch(`${API_BASE_URL}/subscriptions/subscriber`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('mailiaToken')}`
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
                 circuitId,
@@ -6090,8 +6101,10 @@ async function handleAddSubscriber() {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Tilaajan lisäys epäonnistui');
+            const error = await response.json().catch(() => ({}));
+            const errorMsg = error.error || error.message || `HTTP ${response.status}`;
+            console.error('Add subscriber failed:', response.status, errorMsg, error);
+            throw new Error(errorMsg);
         }
 
         const result = await response.json();
@@ -6106,8 +6119,8 @@ async function handleAddSubscriber() {
         closeAddSubscriberModal();
 
         // Broadcast update via WebSocket
-        if (socket && socket.connected) {
-            socket.emit('subscriber_updated', {
+        if (window.mailiaAPI && window.mailiaAPI.socket && window.mailiaAPI.socket.connected) {
+            window.mailiaAPI.socket.emit('subscriber_updated', {
                 circuitId,
                 action: result.action
             });

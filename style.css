@@ -2967,6 +2967,31 @@ body.dark-mode .message-badge.offline {
     font-style: italic;
 }
 
+/* Message photo display */
+.message-photo-container {
+    margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--warm-gray);
+}
+
+.message-photo {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.message-photo:hover {
+    transform: scale(1.02);
+}
+
+.message-photo-container a {
+    display: block;
+    text-decoration: none;
+}
+
 /* Custom Confirmation Dialog */
 .custom-dialog {
     position: fixed;

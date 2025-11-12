@@ -5035,6 +5035,38 @@ async function renderRouteMessages() {
         messageBody.appendChild(messageText);
         messageBody.appendChild(messageUser);
 
+        // Add photo if available
+        if (message.photo_url) {
+            const photoContainer = document.createElement('div');
+            photoContainer.className = 'message-photo-container';
+            
+            // Construct proper photo URL based on environment
+            const IS_PRODUCTION = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            const baseUrl = IS_PRODUCTION ? '' : 'http://localhost:3000';
+            const photoUrl = message.photo_url.startsWith('http') ? message.photo_url : `${baseUrl}${message.photo_url}`;
+            
+            const photoLink = document.createElement('a');
+            photoLink.href = photoUrl;
+            photoLink.target = '_blank';
+            photoLink.rel = 'noopener noreferrer';
+            
+            const photoImg = document.createElement('img');
+            photoImg.src = photoUrl;
+            photoImg.alt = 'Liitetty kuva';
+            photoImg.className = 'message-photo';
+            photoImg.loading = 'lazy';
+            
+            // Handle image load error
+            photoImg.onerror = () => {
+                photoImg.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3EKuva ei saatavilla%3C/text%3E%3C/svg%3E';
+                photoImg.alt = 'Kuva ei saatavilla';
+            };
+            
+            photoLink.appendChild(photoImg);
+            photoContainer.appendChild(photoLink);
+            messageBody.appendChild(photoContainer);
+        }
+
         messageCard.appendChild(messageHeader);
         messageCard.appendChild(messageBody);
 
@@ -5042,8 +5074,8 @@ async function renderRouteMessages() {
         if (!message.is_read && !message.is_offline) {
             messageCard.style.cursor = 'pointer';
             messageCard.addEventListener('click', async (e) => {
-                // Don't interfere with button/link clicks
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+                // Don't interfere with button/link/image clicks
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'IMG') {
                     return;
                 }
                 

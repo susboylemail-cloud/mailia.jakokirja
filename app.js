@@ -1982,7 +1982,15 @@ function initializeLogout() {
 }
 
 // Tab Navigation
+let tabsInitialized = false;
+
 function initializeTabs() {
+    if (tabsInitialized) {
+        console.log('Tabs already initialized, skipping...');
+        return;
+    }
+    tabsInitialized = true;
+    
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
     
@@ -2060,8 +2068,17 @@ function initializeTabs() {
     });
 }
 
+// Track if refresh buttons have been initialized to prevent duplicate listeners
+let refreshButtonsInitialized = false;
+
 // Initialize refresh buttons for Seuranta and Messages tabs
 function initializeRefreshButtons() {
+    if (refreshButtonsInitialized) {
+        console.log('Refresh buttons already initialized, skipping...');
+        return;
+    }
+    refreshButtonsInitialized = true;
+    
     // Tracker refresh button - hard refresh while keeping user logged in
     const refreshTrackerBtn = document.getElementById('refreshTrackerBtn');
     if (refreshTrackerBtn) {
@@ -2214,7 +2231,16 @@ function initializeRefreshButtons() {
 }
 
 // Midnight reset for messages
+let midnightResetInitialized = false;
+let midnightCheckInterval = null;
+
 function initializeMidnightReset() {
+    if (midnightResetInitialized) {
+        console.log('Midnight reset already initialized, skipping...');
+        return;
+    }
+    midnightResetInitialized = true;
+    
     const checkMidnight = () => {
         const now = new Date();
         const lastCheck = localStorage.getItem('mailiaLastMidnightCheck');
@@ -2240,7 +2266,7 @@ function initializeMidnightReset() {
     checkMidnight();
     
     // Check every minute
-    setInterval(checkMidnight, 60000);
+    midnightCheckInterval = setInterval(checkMidnight, 60000);
 }
 
 // Data Loading and Parsing
@@ -5426,7 +5452,16 @@ function exportToExcel(data, filename) {
     }
 }
 
+let dashboardInitialized = false;
+let dashboardRefreshInterval = null;
+
 function initializeDashboard() {
+    if (dashboardInitialized) {
+        console.log('Dashboard already initialized, skipping...');
+        return;
+    }
+    dashboardInitialized = true;
+    
     console.log('Initializing dashboard...');
     
     // Set default dates to current month
@@ -5453,7 +5488,7 @@ function initializeDashboard() {
     loadPeriodDeliveryCount();
     
     // Set up auto-refresh for daily count every 5 minutes
-    setInterval(loadTodayDeliveryCount, 5 * 60 * 1000);
+    dashboardRefreshInterval = setInterval(loadTodayDeliveryCount, 5 * 60 * 1000);
     
     // Add event listeners with error checking
     const refreshDailyBtn = document.getElementById('refreshDailyCountBtn');

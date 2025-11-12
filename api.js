@@ -21,12 +21,32 @@ class MailiaAPI {
             this.isOnline = true;
             console.log('Network: Online');
             this.syncOfflineQueue();
+            // Reconnect WebSocket if we have a token
+            if (this.token && (!this.socket || !this.socket.connected)) {
+                console.log('Network back online, reconnecting WebSocket...');
+                this.connectWebSocket();
+            }
         });
         
         window.addEventListener('offline', () => {
             this.isOnline = false;
             console.log('Network: Offline');
         });
+
+        // Reconnect WebSocket when page becomes visible (tab switching)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && this.token) {
+                if (!this.socket || !this.socket.connected) {
+                    console.log('Page became visible, checking WebSocket connection...');
+                    this.connectWebSocket();
+                }
+            }
+        });
+
+        // Reconnect WebSocket on page load if authenticated
+        if (this.token) {
+            console.log('MailiaAPI initialized with token, will connect WebSocket when ready');
+        }
     }
 
     // ============= Authentication =============
@@ -281,15 +301,28 @@ class MailiaAPI {
     // ============= WebSocket Real-time Sync =============
     
     connectWebSocket() {
-        if (!this.token || this.socket?.connected) {
+        if (!this.token) {
+            console.warn('Cannot connect WebSocket: No authentication token');
+            return;
+        }
+        
+        if (this.socket?.connected) {
+            console.log('WebSocket already connected');
             return;
         }
 
-        // Load Socket.IO from CDN
+        // Load Socket.IO from CDN if not already loaded
         if (!window.io) {
+            console.log('Loading Socket.IO library...');
             const script = document.createElement('script');
             script.src = 'https://cdn.socket.io/4.6.1/socket.io.min.js';
-            script.onload = () => this.initializeWebSocket();
+            script.onload = () => {
+                console.log('Socket.IO library loaded, initializing WebSocket...');
+                this.initializeWebSocket();
+            };
+            script.onerror = () => {
+                console.error('Failed to load Socket.IO library');
+            };
             document.head.appendChild(script);
         } else {
             this.initializeWebSocket();
@@ -297,16 +330,53 @@ class MailiaAPI {
     }
 
     initializeWebSocket() {
+        if (this.socket) {
+            console.log('Disconnecting existing WebSocket before reconnecting...');
+            this.socket.disconnect();
+            this.socket = null;
+        }
+
+        console.log('Initializing WebSocket connection to:', WS_URL);
+        
         this.socket = io(WS_URL, {
-            auth: { token: this.token }
+            auth: { token: this.token },
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: Infinity
         });
 
         this.socket.on('connect', () => {
-            console.log('WebSocket connected');
+            console.log('✅ WebSocket connected successfully');
         });
 
-        this.socket.on('disconnect', () => {
-            console.log('WebSocket disconnected');
+        this.socket.on('disconnect', (reason) => {
+            console.log('❌ WebSocket disconnected:', reason);
+            if (reason === 'io server disconnect') {
+                // Server disconnected - try to reconnect
+                console.log('Server disconnected, attempting to reconnect...');
+                setTimeout(() => this.socket.connect(), 1000);
+            }
+        });
+
+        this.socket.on('connect_error', (error) => {
+            console.error('WebSocket connection error:', error);
+        });
+
+        this.socket.on('reconnect', (attemptNumber) => {
+            console.log('✅ WebSocket reconnected after', attemptNumber, 'attempts');
+        });
+
+        this.socket.on('reconnect_attempt', (attemptNumber) => {
+            console.log('🔄 WebSocket reconnection attempt', attemptNumber);
+        });
+
+        this.socket.on('reconnect_error', (error) => {
+            console.error('WebSocket reconnection error:', error);
+        });
+
+        this.socket.on('reconnect_failed', () => {
+            console.error('❌ WebSocket reconnection failed');
         });
 
         this.socket.on('delivery:updated', (data) => {

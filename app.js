@@ -8665,10 +8665,20 @@ async function startGPSTracking() {
     const toggleText = document.getElementById('gpsToggleText');
     const statusText = document.getElementById('gpsStatus');
     const mapContainer = document.getElementById('gpsMap');
+    const dropdownToggle = document.getElementById('gpsToggleDropdown');
+    const dropdownContent = document.getElementById('gpsDropdownContent');
     
     if (!toggleBtn || !toggleText || !statusText) return;
     
     try {
+        // First ensure dropdown is expanded
+        if (dropdownToggle && dropdownContent && dropdownContent.style.display !== 'block') {
+            dropdownContent.style.display = 'block';
+            dropdownToggle.classList.add('active');
+            // Wait for dropdown animation
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
         // Update UI
         toggleBtn.classList.add('active');
         toggleText.textContent = 'Pysäytä seuranta';
@@ -8676,9 +8686,15 @@ async function startGPSTracking() {
         statusText.classList.add('active');
         mapContainer.style.display = 'block';
         
+        // Wait a moment for map container to be fully visible
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Initialize map if not already done
         if (!gpsMap) {
             await initializeGPSMap();
+        } else {
+            // If map exists, invalidate size to fix display issues
+            gpsMap.invalidateSize();
         }
         
         // Fetch initial data
@@ -8703,6 +8719,8 @@ function stopGPSTracking() {
     const toggleBtn = document.getElementById('toggleGpsTracking');
     const toggleText = document.getElementById('gpsToggleText');
     const statusText = document.getElementById('gpsStatus');
+    const dropdownToggle = document.getElementById('gpsToggleDropdown');
+    const dropdownContent = document.getElementById('gpsDropdownContent');
     
     if (!toggleBtn || !toggleText || !statusText) return;
     
@@ -8717,6 +8735,12 @@ function stopGPSTracking() {
     toggleText.textContent = 'Aloita seuranta';
     statusText.textContent = 'Pysäytetty';
     statusText.classList.remove('active');
+    
+    // Auto-collapse dropdown when stopped
+    if (dropdownToggle && dropdownContent) {
+        dropdownContent.style.display = 'none';
+        dropdownToggle.classList.remove('active');
+    }
     
     showNotificationEnhanced('GPS seuranta pysäytetty', 'info');
 }
@@ -8803,16 +8827,29 @@ async function fetchDriverLocations() {
         });
         
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API error response:', errorText);
             throw new Error(`API error: ${response.status}`);
         }
         
         const data = await response.json();
+        
+        console.log('Mapon API response:', data);
         
         if (!data.success || !data.locations) {
             throw new Error('Virheellinen vastaus palvelimelta');
         }
         
         const driverData = data.locations;
+        
+        console.log(`Fetched ${driverData.length} drivers:`, driverData.map(d => ({
+            name: d.name,
+            status: d.status,
+            lat: d.lat,
+            lon: d.lon,
+            lastUpdate: d.lastUpdate,
+            rawData: d.rawData
+        })));
         
         // Update map markers
         updateGPSMarkers(driverData);

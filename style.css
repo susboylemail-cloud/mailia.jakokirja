@@ -170,6 +170,60 @@ body.dark-mode {
     --yellow-accent: #F9A825;       /* UV */
 }
 
+body.high-contrast {
+    /* High Contrast Theme - WCAG AAA Compliant */
+    --bg-color: #000000;            /* Pure black background */
+    --text-color: #FFFFFF;          /* Pure white text */
+    --card-bg: #1A1A1A;             /* Very dark gray cards */
+    --border-color: #FFFF00;        /* Yellow borders for visibility */
+    --building-bg: #0A0A0A;         /* Almost black for headers */
+    --shadow: rgba(255, 255, 255, 0.15);
+    --warm-gray: #222222;
+    --medium-gray: #CCCCCC;
+    --navy: #00BFFF;                /* Bright cyan for links */
+    --primary-blue: #00BFFF;
+    
+    /* High contrast product colors */
+    --accent-blue: #00FFFF;         /* ES - Bright cyan */
+    --primary-green: #00FF00;       /* HS - Bright lime green */
+    --orange-accent: #FF6600;       /* STF - Bright orange */
+    --yellow-accent: #FFFF00;       /* UV - Bright yellow */
+}
+
+body.high-contrast button,
+body.high-contrast .btn {
+    border: 2px solid #FFFFFF;
+}
+
+body.high-contrast .product-badge {
+    border: 2px solid currentColor;
+    font-weight: 700;
+}
+
+body.sepia {
+    /* Sepia Theme - Warm, eye-friendly reading mode */
+    --bg-color: #F4ECD8;            /* Warm cream background */
+    --text-color: #3E2723;          /* Dark brown text */
+    --card-bg: #FFF8E1;             /* Light cream cards */
+    --border-color: #D7CCC8;        /* Light brown borders */
+    --building-bg: #EFEBE9;         /* Slightly darker cream */
+    --shadow: rgba(62, 39, 35, 0.12);
+    --warm-gray: #BCAAA4;
+    --medium-gray: #8D6E63;
+    --navy: #5D4037;                /* Dark brown for actions */
+    --primary-blue: #6D4C41;        /* Warm brown for buttons */
+    
+    /* Sepia product colors - warm tones */
+    --accent-blue: #4DB6AC;         /* ES - Warm teal */
+    --primary-green: #81C784;       /* HS - Soft green */
+    --orange-accent: #FF8A65;       /* STF - Soft coral */
+    --yellow-accent: #FFB74D;       /* UV - Soft orange */
+}
+
+body.sepia .product-badge {
+    opacity: 0.9;
+}
+
 /* Toast Notifications */
 .toast-container {
     position: fixed;
@@ -1670,6 +1724,45 @@ body.dark-mode header {
 
 .settings-dropdown.show {
     display: block;
+}
+
+.settings-section {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--medium-gray);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.theme-selector {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.theme-selector:hover {
+    border-color: var(--primary-blue);
+}
+
+.theme-selector:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
 .settings-dropdown label {

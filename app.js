@@ -2217,28 +2217,85 @@ async function showMainApp() {
 // Dark Mode
 function initializeDarkMode() {
     // Default to dark mode if no preference is set
-    const darkMode = localStorage.getItem('darkMode');
-    const isDark = darkMode === null ? true : darkMode === 'true';
+    // Theme system - supports light, dark, high-contrast, and sepia
+    const savedTheme = localStorage.getItem('theme');
+    const defaultTheme = 'dark';
+    const currentTheme = savedTheme || defaultTheme;
     
-    // Set or remove dark mode class based on preference
-    if (isDark) {
-        document.body.classList.add('dark-mode');
-    } else {
-        document.body.classList.remove('dark-mode');
-    }
+    // Apply theme to body
+    applyTheme(currentTheme);
     
     // Save the default if not set
-    if (darkMode === null) {
-        localStorage.setItem('darkMode', 'true');
+    if (!savedTheme) {
+        localStorage.setItem('theme', defaultTheme);
     }
 
-    // Only setup toggle if user is authenticated
+    // Only setup theme selector if user is authenticated
+    const themeSelector = document.getElementById('themeSelector');
+    if (themeSelector && isAuthenticated) {
+        // Set initial value
+        themeSelector.value = currentTheme;
+        
+        // Listen for changes
+        themeSelector.addEventListener('change', (e) => {
+            const newTheme = e.target.value;
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+            triggerHaptic('light');
+        });
+    }
+    
+    // Legacy dark mode toggle - now controls theme selector
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle && isAuthenticated) {
         darkModeToggle.addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', isDark);
+            const isDark = document.body.classList.contains('dark-mode') ||
+                          document.body.classList.contains('high-contrast') ||
+                          document.body.classList.contains('sepia');
+            const newTheme = isDark ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+            if (themeSelector) themeSelector.value = newTheme;
+            triggerHaptic('light');
         });
+    }
+}
+
+/**
+ * Apply theme to body element
+ * @param {string} theme - Theme name: 'light', 'dark', 'high-contrast', or 'sepia'
+ */
+function applyTheme(theme) {
+    // Remove all theme classes
+    document.body.classList.remove('dark-mode', 'high-contrast', 'sepia');
+    
+    // Apply new theme class
+    switch(theme) {
+        case 'dark':
+            document.body.classList.add('dark-mode');
+            break;
+        case 'high-contrast':
+            document.body.classList.add('high-contrast');
+            break;
+        case 'sepia':
+            document.body.classList.add('sepia');
+            break;
+        case 'light':
+        default:
+            // Light mode = no class
+            break;
+    }
+    
+    // Update meta theme-color for mobile browsers
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+        const themeColors = {
+            'light': '#FAFAFA',
+            'dark': '#1A1D21',
+            'high-contrast': '#000000',
+            'sepia': '#F4ECD8'
+        };
+        metaThemeColor.setAttribute('content', themeColors[theme] || themeColors.dark);
     }
 }
 

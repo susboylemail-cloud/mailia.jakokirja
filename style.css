@@ -5274,6 +5274,231 @@ body.dark-mode .skeleton {
     background-size: 200% 100%;
 }
 
+/* ========================================
+   SUCCESS ANIMATIONS
+   ======================================== */
+
+/* Confetti animation for route completion */
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+@keyframes confetti-wiggle {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10000;
+    overflow: hidden;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: confetti-fall 3s linear forwards;
+}
+
+/* Success pulse animation */
+@keyframes success-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+/* Checkmark animation */
+@keyframes checkmark-draw {
+    0% {
+        stroke-dashoffset: 100;
+    }
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes checkmark-circle {
+    0% {
+        stroke-dashoffset: 166;
+    }
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes checkmark-scale {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Success checkmark overlay */
+.success-checkmark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10001;
+    animation: checkmark-scale 0.6s ease;
+}
+
+.success-checkmark svg {
+    width: 100px;
+    height: 100px;
+    filter: drop-shadow(0 4px 12px rgba(40, 167, 69, 0.4));
+}
+
+.success-checkmark .checkmark-circle {
+    stroke: var(--primary-green);
+    stroke-width: 3;
+    fill: none;
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: checkmark-circle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.success-checkmark .checkmark-check {
+    stroke: var(--primary-green);
+    stroke-width: 3;
+    fill: none;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: checkmark-draw 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+}
+
+/* Button success state */
+.btn-success-flash {
+    animation: success-pulse 0.6s ease;
+}
+
+/* Shimmer success effect */
+@keyframes shimmer-success {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.success-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.success-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(40, 167, 69, 0.3),
+        transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer-success 1s ease;
+    pointer-events: none;
+}
+
+/* Bounce animation for completed items */
+@keyframes bounce-in {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.bounce-in {
+    animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Slide and fade for route completion */
+@keyframes slide-fade-up {
+    0% {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.slide-fade-up {
+    animation: slide-fade-up 0.5s ease;
+}
+
+/* Celebration background flash */
+@keyframes celebration-flash {
+    0%, 100% {
+        background-color: var(--bg-color);
+    }
+    50% {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+}
+
+.celebration-flash {
+    animation: celebration-flash 0.8s ease;
+}
+
+/* Success ripple effect */
+@keyframes success-ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.success-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--primary-green);
+    animation: success-ripple 0.8s ease-out;
+}
+
 
 
 

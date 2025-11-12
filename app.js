@@ -383,6 +383,133 @@ function hideSkeletonLoader(container) {
     });
 }
 
+// ========================================
+// SUCCESS ANIMATIONS
+// ========================================
+
+/**
+ * Show confetti animation
+ * @param {number} duration - Duration in milliseconds
+ * @param {number} particleCount - Number of confetti particles
+ */
+function showConfetti(duration = 3000, particleCount = 50) {
+    const container = document.createElement('div');
+    container.className = 'confetti-container';
+    document.body.appendChild(container);
+    
+    const colors = ['#28a745', '#4A90E2', '#FFD700', '#FF6B35', '#5DADE2', '#58D68D'];
+    
+    for (let i = 0; i < particleCount; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 0.5 + 's';
+        confetti.style.animationDuration = (Math.random() * 1 + 2) + 's';
+        container.appendChild(confetti);
+    }
+    
+    setTimeout(() => {
+        container.remove();
+    }, duration);
+}
+
+/**
+ * Show success checkmark overlay
+ * @param {number} duration - Duration in milliseconds
+ */
+function showSuccessCheckmark(duration = 1500) {
+    const checkmark = document.createElement('div');
+    checkmark.className = 'success-checkmark';
+    checkmark.innerHTML = `
+        <svg viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+    `;
+    document.body.appendChild(checkmark);
+    
+    setTimeout(() => {
+        checkmark.style.opacity = '0';
+        checkmark.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        checkmark.style.transition = 'all 0.3s ease';
+        setTimeout(() => checkmark.remove(), 300);
+    }, duration);
+}
+
+/**
+ * Add success pulse to button
+ * @param {HTMLElement} button - Button element
+ */
+function addSuccessPulse(button) {
+    if (!button) return;
+    
+    button.classList.add('btn-success-flash');
+    setTimeout(() => {
+        button.classList.remove('btn-success-flash');
+    }, 600);
+}
+
+/**
+ * Add shimmer effect to element
+ * @param {HTMLElement} element - Element to shimmer
+ */
+function addSuccessShimmer(element) {
+    if (!element) return;
+    
+    element.classList.add('success-shimmer');
+    setTimeout(() => {
+        element.classList.remove('success-shimmer');
+    }, 1000);
+}
+
+/**
+ * Create success ripple effect at click position
+ * @param {Event} event - Click event
+ * @param {string} color - Ripple color
+ */
+function createSuccessRipple(event, color = 'var(--primary-green)') {
+    const button = event.currentTarget;
+    const ripple = document.createElement('span');
+    const rect = button.getBoundingClientRect();
+    
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+    
+    ripple.className = 'success-ripple';
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    ripple.style.background = color;
+    
+    button.style.position = 'relative';
+    button.style.overflow = 'hidden';
+    button.appendChild(ripple);
+    
+    setTimeout(() => ripple.remove(), 800);
+}
+
+/**
+ * Full celebration animation for route completion
+ */
+function celebrateRouteCompletion() {
+    // Show confetti
+    showConfetti(3000, 60);
+    
+    // Show checkmark
+    showSuccessCheckmark(1500);
+    
+    // Flash background
+    document.body.classList.add('celebration-flash');
+    setTimeout(() => {
+        document.body.classList.remove('celebration-flash');
+    }, 800);
+    
+    // Haptic feedback
+    triggerHaptic('success');
+}
+
 // ============= Offline Mode Integration =============
 let offlineDB = null;
 let syncManager = null;
@@ -3963,6 +4090,11 @@ function renderSubscriberList(circuitId, subscribers) {
             const card = createSubscriberCard(circuitId, sub, buildingIndex, subIndex, 
                 buildingIndex === buildings.length - 1 && subIndex === buildingSubscribers.length - 1,
                 buildings, buildingIndex, subIndex, hasMultipleDeliveries, isNewStaircase);
+            
+            // Add staggered bounce-in animation
+            card.classList.add('bounce-in');
+            card.style.animationDelay = `${(buildingIndex * buildingSubscribers.length + subIndex) * 0.03}s`;
+            
             buildingGroup.appendChild(card);
             
             previousStaircase = currentStaircase;
@@ -4042,8 +4174,16 @@ function createSubscriberCard(circuitId, subscriber, buildingIndex, subIndex, is
         if ('vibrate' in navigator && e.target.checked) {
             navigator.vibrate(50); // Short vibration on check
         }
-        // Subtle scale animation for card on toggle
+        
+        // Get parent card for animations
         const parentCard = e.target.closest('.subscriber-card');
+        
+        // Add success shimmer when checking
+        if (e.target.checked && parentCard) {
+            addSuccessShimmer(parentCard);
+        }
+        
+        // Subtle scale animation for card on toggle
         if (parentCard) {
             parentCard.style.transition = 'transform .35s cubic-bezier(0.4,0,0.2,1)';
             parentCard.style.transform = 'scale(0.97)';
@@ -4556,11 +4696,17 @@ function initializeEventListeners() {
         applyFilters();
     });
     
-    document.getElementById('startRouteBtn').addEventListener('click', () => {
+    document.getElementById('startRouteBtn').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        addSuccessPulse(btn);
+        createSuccessRipple(e, 'var(--primary-blue)');
         startRoute(currentCircuit);
     });
     
-    document.getElementById('completeRouteBtn').addEventListener('click', () => {
+    document.getElementById('completeRouteBtn').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        addSuccessPulse(btn);
+        createSuccessRipple(e, 'var(--primary-green)');
         completeRoute(currentCircuit);
     });
     
@@ -5227,9 +5373,6 @@ async function completeRoute(circuitId) {
     const now = new Date();
     const key = `route_end_${circuitId}`;
     
-    // Haptic feedback for route completion
-    triggerHaptic('success');
-    
     // Complete route in backend
     const routeId = localStorage.getItem(`route_id_${circuitId}`);
     if (routeId && window.mailiaAPI) {
@@ -5250,11 +5393,13 @@ async function completeRoute(circuitId) {
         }
     }
     
-    // Show success animation immediately - centered on viewport
+    // Show celebration animation
+    celebrateRouteCompletion();
+    
+    // Show success animation loader
     const loader = document.getElementById('routeCompleteLoader');
     if (loader) {
         loader.style.display = 'flex';
-        // Ensure it's on top and centered regardless of scroll position
         loader.style.position = 'fixed';
         loader.style.top = '0';
         loader.style.left = '0';

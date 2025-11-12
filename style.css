@@ -5029,53 +5029,45 @@ input[type="checkbox"]:checked {
 /* ========================================
    PULL-TO-REFRESH
    ======================================== */
-.pull-to-refresh {
-    position: absolute;
-    top: -80px;
-    left: 0;
-    right: 0;
-    height: 80px;
+.pull-to-refresh-indicator {
+    position: fixed;
+    top: 60px; /* Below header */
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
-    transition: transform 0.3s ease;
+    gap: 12px;
+    padding: 12px 24px;
+    background: var(--card-bg);
+    border-radius: 24px;
+    box-shadow: 0 4px 12px var(--shadow);
+    z-index: 999;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
     pointer-events: none;
 }
 
-.pull-to-refresh.pulling {
-    transform: translateY(80px);
-}
-
-.pull-to-refresh.refreshing {
-    transform: translateY(80px);
-}
-
-.pull-to-refresh-icon {
-    width: 32px;
-    height: 32px;
-    color: var(--primary-blue);
-    transition: transform 0.3s ease;
-}
-
-.pull-to-refresh.pulling .pull-to-refresh-icon {
+.pull-to-refresh-indicator.ready .refresh-icon {
     transform: rotate(180deg);
+    color: var(--primary-green);
 }
 
-.pull-to-refresh.refreshing .pull-to-refresh-icon {
+.pull-to-refresh-indicator.refreshing .refresh-icon {
     animation: refreshSpin 1s linear infinite;
+    color: var(--primary-blue);
+}
+
+.refresh-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--primary-blue);
+    transition: transform 0.3s ease, color 0.3s ease;
 }
 
 @keyframes refreshSpin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
-}
-
-.pull-to-refresh-text {
-    margin-left: 12px;
-    font-size: 0.9rem;
-    color: var(--text-color);
-    opacity: 0.7;
 }
 
 /* Pull-to-refresh container needs relative positioning */

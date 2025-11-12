@@ -4593,31 +4593,20 @@ function initializePullToRefresh() {
     
     const subscriberList = document.getElementById('subscriberList');
     const deliveryTab = document.getElementById('deliveryTab');
+    const pullIndicator = document.getElementById('pullToRefreshIndicator');
     
-    if (!subscriberList || !deliveryTab) return;
-    
-    // Create pull-to-refresh indicator
-    const pullIndicator = document.createElement('div');
-    pullIndicator.className = 'pull-to-refresh';
-    pullIndicator.innerHTML = `
-        <svg class="pull-to-refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-        <span class="pull-to-refresh-text">Vedä päivittääksesi</span>
-    `;
-    deliveryTab.insertBefore(pullIndicator, subscriberList);
+    if (!subscriberList || !deliveryTab || !pullIndicator) return;
     
     function handleTouchStart(e) {
-        // Only activate if scrolled to top
-        if (subscriberList.scrollTop === 0 && currentCircuit) {
+        // Only activate if scrolled to top and has a circuit loaded
+        if (window.scrollY === 0 && currentCircuit) {
             startY = e.touches[0].clientY;
             pulling = false;
         }
     }
     
     function handleTouchMove(e) {
-        if (!startY || subscriberList.scrollTop > 0) return;
+        if (!startY || window.scrollY > 0) return;
         
         currentY = e.touches[0].clientY;
         const diff = currentY - startY;
@@ -4630,11 +4619,9 @@ function initializePullToRefresh() {
             pullIndicator.style.opacity = scale;
             
             if (diff >= threshold) {
-                pullIndicator.classList.add('pulling');
-                pullIndicator.querySelector('.pull-to-refresh-text').textContent = 'Vapauta päivittääksesi';
+                pullIndicator.classList.add('ready');
             } else {
-                pullIndicator.classList.remove('pulling');
-                pullIndicator.querySelector('.pull-to-refresh-text').textContent = 'Vedä päivittääksesi';
+                pullIndicator.classList.remove('ready');
             }
         }
     }
@@ -4649,9 +4636,8 @@ function initializePullToRefresh() {
         
         if (diff >= threshold) {
             // Trigger refresh
-            pullIndicator.classList.remove('pulling');
+            pullIndicator.classList.remove('ready');
             pullIndicator.classList.add('refreshing');
-            pullIndicator.querySelector('.pull-to-refresh-text').textContent = 'Päivitetään...';
             triggerHaptic('light');
             
             try {
@@ -4659,19 +4645,22 @@ function initializePullToRefresh() {
                 showNotificationEnhanced('Piiri päivitetty', 'success');
                 triggerHaptic('success');
             } catch (error) {
+                console.error('Pull-to-refresh failed:', error);
                 showNotificationEnhanced('Päivitys epäonnistui', 'error');
                 triggerHaptic('error');
             }
             
+            // Reset indicator
             setTimeout(() => {
                 pullIndicator.classList.remove('refreshing');
                 pullIndicator.style.transform = '';
                 pullIndicator.style.opacity = '';
             }, 500);
         } else {
+            // Reset without refresh
             pullIndicator.style.transform = '';
             pullIndicator.style.opacity = '';
-            pullIndicator.classList.remove('pulling');
+            pullIndicator.classList.remove('ready');
         }
         
         startY = 0;
@@ -4679,9 +4668,10 @@ function initializePullToRefresh() {
         pulling = false;
     }
     
-    subscriberList.addEventListener('touchstart', handleTouchStart, { passive: false });
-    subscriberList.addEventListener('touchmove', handleTouchMove, { passive: false });
-    subscriberList.addEventListener('touchend', handleTouchEnd);
+    // Listen on the whole delivery tab for better UX
+    deliveryTab.addEventListener('touchstart', handleTouchStart, { passive: false });
+    deliveryTab.addEventListener('touchmove', handleTouchMove, { passive: false });
+    deliveryTab.addEventListener('touchend', handleTouchEnd);
 }
 
 // ========================================

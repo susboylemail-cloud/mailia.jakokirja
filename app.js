@@ -2138,16 +2138,31 @@ function initializeRefreshButtons() {
     // Clear all messages button
     const clearAllMessagesBtn = document.getElementById('clearAllMessagesBtn');
     if (clearAllMessagesBtn) {
+        console.log('Initializing clear all messages button');
         clearAllMessagesBtn.addEventListener('click', async () => {
+            console.log('Clear all messages button clicked');
+            
+            // Prevent multiple clicks
+            if (clearAllMessagesBtn.disabled) {
+                console.log('Button already disabled, ignoring click');
+                return;
+            }
+            
             try {
+                setLoading(clearAllMessagesBtn, true);
+                
                 const messages = await window.mailiaAPI.getTodayMessages();
                 const storedLocalMessages = loadRouteMessages();
                 const totalMessages = messages.length + storedLocalMessages.length;
 
                 if (totalMessages === 0) {
                     showNotification('Ei viestejä tyhjennettävänä', 'info');
+                    setLoading(clearAllMessagesBtn, false);
                     return;
                 }
+
+                // Re-enable button before showing modal
+                setLoading(clearAllMessagesBtn, false);
 
                 // Use custom modal instead of confirm
                 createModal({
@@ -2164,7 +2179,8 @@ function initializeRefreshButtons() {
                             label: 'Tyhjennä',
                             variant: 'primary',
                             handler: async ({ close }) => {
-                                setLoading(clearAllMessagesBtn, true);
+                                console.log('Clearing messages...');
+                                const confirmBtn = document.querySelector('#clearAllMessagesBtn');
                                 
                                 try {
                                     // Delete all backend messages
@@ -2201,8 +2217,6 @@ function initializeRefreshButtons() {
                                 } catch (error) {
                                     console.error('Error clearing messages:', error);
                                     showNotification('Viestien tyhjennys epäonnistui', 'error');
-                                } finally {
-                                    setLoading(clearAllMessagesBtn, false);
                                 }
                             }
                         }
@@ -2211,8 +2225,11 @@ function initializeRefreshButtons() {
             } catch (error) {
                 console.error('Error loading messages for clear:', error);
                 showNotification('Virhe ladattaessa viestejä', 'error');
+                setLoading(clearAllMessagesBtn, false);
             }
         });
+    } else {
+        console.error('clearAllMessagesBtn not found in DOM');
     }
 
     // Auto-refresh tracker every 30 seconds if tab is active

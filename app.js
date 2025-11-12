@@ -6553,14 +6553,33 @@ if (typeof window.loadCircuit === 'function') {
 // CIRCUIT MAP VIEW WITH GEOCODING (Leaflet + OpenStreetMap)
 // ========================================
 
+// Viewport zoom control helpers
+function enableZoom() {
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+    }
+}
+
+function disableZoom() {
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
+}
+
 // Unified public API for showing a circuit map with geocoded addresses
 async function showCircuitMap(circuitId) {
     try {
+        // Enable zoom for map interaction
+        enableZoom();
+        
         // Load circuit data
         const circuitData = await loadCircuitData(circuitId);
         
         if (!circuitData || circuitData.length === 0) {
             showNotification('Ei osoitteita tälle piirille', 'error');
+            disableZoom();
             return;
         }
 
@@ -6600,6 +6619,7 @@ async function showCircuitMap(circuitId) {
 
         if (filteredData.length === 0) {
             showNotification('Ei näytettäviä osoitteita tänään', 'info');
+            disableZoom();
             return;
         }
 
@@ -6658,6 +6678,8 @@ async function showCircuitMap(circuitId) {
             document.removeEventListener('keydown', onKeyDown);
             mapOverlay.removeEventListener('click', onOverlayClick);
             mapOverlay.remove();
+            // Disable zoom when map is closed
+            disableZoom();
         }
 
         document.getElementById('closeCircuitMapBtn').addEventListener('click', closeOverlay);
@@ -6669,6 +6691,8 @@ async function showCircuitMap(circuitId) {
     } catch (error) {
         console.error('Error showing circuit map:', error);
         showNotification('Kartan lataus epäonnistui', 'error');
+        // Disable zoom if map fails to load
+        disableZoom();
     }
 }
 

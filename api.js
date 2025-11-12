@@ -10,9 +10,10 @@ const WS_URL = IS_PRODUCTION ? window.location.origin : 'http://localhost:3000';
 
 class MailiaAPI {
     constructor() {
-        this.token = localStorage.getItem('mailiaAuthToken');
-        this.refreshToken = localStorage.getItem('mailiaRefreshToken');
-        this.user = JSON.parse(localStorage.getItem('mailiaUser') || 'null');
+        // Use sessionStorage instead of localStorage for automatic logout on browser close
+        this.token = sessionStorage.getItem('mailiaAuthToken');
+        this.refreshToken = sessionStorage.getItem('mailiaRefreshToken');
+        this.user = JSON.parse(sessionStorage.getItem('mailiaUser') || 'null');
         this.socket = null;
         this.isOnline = navigator.onLine;
         
@@ -72,11 +73,11 @@ class MailiaAPI {
             
             console.log('Token set to:', this.token); // Debug: verify token is set
 
-            // Store in localStorage
-            localStorage.setItem('mailiaAuthToken', this.token);
-            localStorage.setItem('mailiaRefreshToken', this.refreshToken);
-            localStorage.setItem('mailiaUser', JSON.stringify(this.user));
-            localStorage.setItem('mailiaUserRole', this.user.role); // Store role separately for UI checks
+            // Store in sessionStorage (clears on browser close for auto-logout)
+            sessionStorage.setItem('mailiaAuthToken', this.token);
+            sessionStorage.setItem('mailiaRefreshToken', this.refreshToken);
+            sessionStorage.setItem('mailiaUser', JSON.stringify(this.user));
+            sessionStorage.setItem('mailiaUserRole', this.user.role); // Store role separately for UI checks
 
             // Connect WebSocket
             this.connectWebSocket();
@@ -96,13 +97,14 @@ class MailiaAPI {
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
-            // Clear local storage
+            // Clear session storage
             this.token = null;
             this.refreshToken = null;
             this.user = null;
-            localStorage.removeItem('mailiaAuthToken');
-            localStorage.removeItem('mailiaRefreshToken');
-            localStorage.removeItem('mailiaUser');
+            sessionStorage.removeItem('mailiaAuthToken');
+            sessionStorage.removeItem('mailiaRefreshToken');
+            sessionStorage.removeItem('mailiaUser');
+            sessionStorage.removeItem('mailiaUserRole');
             
             // Disconnect WebSocket
             if (this.socket) {
@@ -184,7 +186,7 @@ class MailiaAPI {
 
             const data = await response.json();
             this.token = data.accessToken || data.token; // Backend sends 'accessToken'
-            localStorage.setItem('mailiaAuthToken', this.token);
+            sessionStorage.setItem('mailiaAuthToken', this.token);
             return true;
         } catch (error) {
             console.error('Token refresh error:', error);

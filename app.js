@@ -415,7 +415,7 @@ function handleOfflineStatus() {
 // Small helper: get current role from memory or storage
 function getEffectiveUserRole() {
     try {
-        return userRole || localStorage.getItem('mailiaUserRole') || null;
+        return userRole || sessionStorage.getItem('mailiaUserRole') || null;
     } catch (_) {
         return userRole || null;
     }
@@ -471,7 +471,7 @@ async function handleLogin() {
         const currentUser = window.mailiaAPI.getCurrentUser();
         if (currentUser && currentUser.role) {
             userRole = currentUser.role; // set global
-            try { localStorage.setItem('mailiaUserRole', currentUser.role); } catch(_) {}
+            try { sessionStorage.setItem('mailiaUserRole', currentUser.role); } catch(_) {}
             console.log('[handleLogin] stored role:', currentUser.role);
         }
 
@@ -1424,8 +1424,8 @@ async function handleLogout() {
         currentCircuit = null;
         allData = {};
         
-        // Clear user role from localStorage
-        localStorage.removeItem('mailiaUserRole');
+        // Clear user role from sessionStorage
+        sessionStorage.removeItem('mailiaUserRole');
         
         // Show login screen
         showLoginScreen();
@@ -1949,8 +1949,8 @@ async function showMainApp() {
         console.log('Logged in as:', user.username, 'Role:', user.role);
         userRole = user.role;
         isAuthenticated = true;
-        // Save user role to localStorage for access in other functions
-        localStorage.setItem('mailiaUserRole', user.role);
+        // Save user role to sessionStorage for access in other functions
+        sessionStorage.setItem('mailiaUserRole', user.role);
     }
 
     if (window.mailiaAPI) {

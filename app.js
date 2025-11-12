@@ -8805,6 +8805,11 @@ function stopGPSTracking() {
     const toggleBtn = document.getElementById('toggleGpsTracking');
     const toggleText = document.getElementById('gpsToggleText');
     const statusText = document.getElementById('gpsStatus');
+    const circuitStatusView = document.getElementById('circuitStatusView');
+    const liveTrackingView = document.getElementById('liveTrackingView');
+    const trackerViewBtn = document.getElementById('trackerViewBtn');
+    
+    console.log('Stopping GPS tracking...');
     
     if (!toggleBtn || !toggleText || !statusText) return;
     
@@ -8819,6 +8824,18 @@ function stopGPSTracking() {
     toggleText.textContent = 'Aloita seuranta';
     statusText.textContent = 'Pysäytetty';
     statusText.classList.remove('active');
+    
+    // Switch back to circuit status view
+    if (circuitStatusView && liveTrackingView) {
+        console.log('Switching from live tracking to circuit status view');
+        circuitStatusView.style.display = 'block';
+        liveTrackingView.style.display = 'none';
+        
+        // Update dropdown label
+        if (trackerViewBtn) {
+            trackerViewBtn.textContent = 'Seuranta: Jakelustatus ▾';
+        }
+    }
     
     showNotificationEnhanced('GPS seuranta pysäytetty', 'info');
 }

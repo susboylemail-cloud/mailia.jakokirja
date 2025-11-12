@@ -4279,8 +4279,18 @@ async function sendMessageWithPhoto(routeId, message, photoFile) {
     formData.append('message_content', messageText);
     formData.append('photo', photoFile);
     
-    const token = localStorage.getItem('mailiaToken');
-    const response = await fetch(`/api/messages/${routeId}`, {
+    // Use sessionStorage for auth token (matches api.js implementation)
+    const token = sessionStorage.getItem('mailiaAuthToken');
+    
+    if (!token) {
+        throw new Error('No authentication token available');
+    }
+    
+    // Use proper API URL with environment detection
+    const IS_PRODUCTION = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    const API_BASE_URL = IS_PRODUCTION ? '/api' : 'http://localhost:3000/api';
+    
+    const response = await fetch(`${API_BASE_URL}/messages/${routeId}`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`
@@ -4289,7 +4299,10 @@ async function sendMessageWithPhoto(routeId, message, photoFile) {
     });
     
     if (!response.ok) {
-        throw new Error('Failed to send message with photo');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.error || errorData.message || `HTTP ${response.status}`;
+        console.error('Photo upload failed:', response.status, errorMsg, errorData);
+        throw new Error(`Failed to send message with photo: ${errorMsg}`);
     }
     
     return response.json();

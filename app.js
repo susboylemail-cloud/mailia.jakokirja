@@ -6956,12 +6956,63 @@ function addRouteOptimizationButton(map, locations, mapContainer, infoPanel, exc
     mapContainer.appendChild(buttonContainer);
 }
 
+// Reorder subscriber cards to match optimized route
+function reorderSubscriberCards(optimizedRoute) {
+    if (!currentCircuit || !allData[currentCircuit]) {
+        console.warn('No circuit data available for reordering');
+        return;
+    }
+    
+    // Get current circuit data
+    const circuitData = allData[currentCircuit];
+    
+    // Create a map of address -> subscriber data for quick lookup
+    const addressMap = new Map();
+    circuitData.forEach(sub => {
+        addressMap.set(sub.address, sub);
+    });
+    
+    // Build new ordered array based on optimized route
+    const reorderedData = [];
+    optimizedRoute.forEach((location, index) => {
+        const subscriber = addressMap.get(location.address);
+        if (subscriber) {
+            // Update orderIndex to match new position
+            reorderedData.push({
+                ...subscriber,
+                orderIndex: index
+            });
+        }
+    });
+    
+    // Add any subscribers that weren't in the optimized route (e.g., filtered out)
+    circuitData.forEach(sub => {
+        if (!reorderedData.find(s => s.address === sub.address)) {
+            reorderedData.push({
+                ...sub,
+                orderIndex: reorderedData.length
+            });
+        }
+    });
+    
+    // Update global data
+    allData[currentCircuit] = reorderedData;
+    
+    // Re-render the subscriber list with new order
+    renderSubscriberList(currentCircuit, reorderedData);
+    
+    showNotification('Kortit järjestetty optimoidun reitin mukaan', 'success');
+}
+
 // Visualize optimized route on map
 function visualizeOptimizedRoute(map, originalLocations, infoPanel, excludedInfo) {
     showNotification('Optimoidaan reittiä...', 'info');
     
     // Run optimization
     const optimizedRoute = optimizeCarDeliveryRoute(originalLocations);
+    
+    // Reorder subscriber cards to match optimized route
+    reorderSubscriberCards(optimizedRoute);
     
     // Clear existing markers
     map.eachLayer(layer => {

@@ -3660,7 +3660,7 @@ async function loadCircuit(circuitId) {
         }
         
         // Hide subscriber list initially - it will be shown when route starts
-        const subscriberList = document.getElementById('subscriberList');
+        // subscriberList already declared above, reuse it
         if (!subscriberList) {
             console.error('subscriberList element not found');
             return;

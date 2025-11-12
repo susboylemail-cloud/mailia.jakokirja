@@ -8620,6 +8620,8 @@ let gpsMarkers = {};
 function initializeGPSTracking() {
     const gpsSection = document.getElementById('gpsTrackingSection');
     const toggleBtn = document.getElementById('toggleGpsTracking');
+    const dropdownToggle = document.getElementById('gpsToggleDropdown');
+    const dropdownContent = document.getElementById('gpsDropdownContent');
     const gpsMapContainer = document.getElementById('gpsMap');
     
     if (!gpsSection || !toggleBtn) return;
@@ -8628,6 +8630,21 @@ function initializeGPSTracking() {
     const role = getEffectiveUserRole();
     if (role === 'admin' || role === 'manager') {
         gpsSection.style.display = 'block';
+    }
+    
+    // Toggle dropdown expansion
+    if (dropdownToggle && dropdownContent) {
+        dropdownToggle.addEventListener('click', () => {
+            const isExpanded = dropdownContent.style.display === 'block';
+            
+            if (isExpanded) {
+                dropdownContent.style.display = 'none';
+                dropdownToggle.classList.remove('active');
+            } else {
+                dropdownContent.style.display = 'block';
+                dropdownToggle.classList.add('active');
+            }
+        });
     }
     
     // Toggle GPS tracking

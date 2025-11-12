@@ -382,6 +382,37 @@ body {
     overflow: hidden;
 }
 
+/* Video Background for Login Screen */
+.login-video-background {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: cover;
+    opacity: 0.15; /* Subtle backdrop - doesn't interfere with UI */
+    z-index: 0;
+    pointer-events: none; /* Ensure video doesn't block clicks */
+    filter: blur(2px) grayscale(30%); /* Soft blur for aesthetic */
+}
+
+/* Hide video on mobile/small screens to save bandwidth and reduce distraction */
+@media (max-width: 768px) {
+    .login-video-background {
+        display: none;
+    }
+}
+
+/* Reduce opacity further on tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .login-video-background {
+        opacity: 0.1;
+    }
+}
+
 /* Pulsating background glow - subtle animation */
 .login-screen::before {
     content: '';
@@ -446,7 +477,7 @@ body {
     border-radius: 50%;
     animation: glowPulse 2s ease-in-out infinite, hueShift 8s ease-in-out infinite;
     pointer-events: none;
-    z-index: 0;
+    z-index: 1; /* Above video background */
     will-change: transform, opacity, background;
 }
 
@@ -522,7 +553,7 @@ body {
 .phone-container {
     position: relative;
     perspective: 1000px;
-    z-index: 1;
+    z-index: 2; /* Above glow and video */
     /* Removed floating animation */
     filter: drop-shadow(0 0 60px rgba(74, 144, 226, 0.4)) 
             drop-shadow(0 0 30px rgba(74, 144, 226, 0.3));

@@ -4991,6 +4991,204 @@ input[type="checkbox"]:checked {
     position: relative;
 }
 
+/* ========================================
+   SKELETON LOADING SCREENS
+   ======================================== */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--building-bg) 0%,
+        var(--warm-gray) 50%,
+        var(--building-bg) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.skeleton-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.skeleton-title {
+    height: 20px;
+    width: 60%;
+    margin-bottom: 8px;
+}
+
+.skeleton-subtitle {
+    height: 16px;
+    width: 40%;
+}
+
+.skeleton-text {
+    height: 14px;
+    margin-bottom: 8px;
+}
+
+.skeleton-text.short {
+    width: 80%;
+}
+
+.skeleton-text.long {
+    width: 95%;
+}
+
+.skeleton-button {
+    height: 40px;
+    width: 120px;
+    border-radius: 8px;
+}
+
+.skeleton-badge {
+    height: 24px;
+    width: 60px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+/* Skeleton Circuit Card */
+.skeleton-circuit-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.skeleton-circuit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.skeleton-circuit-title {
+    height: 24px;
+    width: 40%;
+}
+
+.skeleton-circuit-status {
+    height: 32px;
+    width: 100px;
+    border-radius: 16px;
+}
+
+.skeleton-progress-bar {
+    height: 8px;
+    width: 100%;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.skeleton-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.skeleton-stat {
+    height: 16px;
+    flex: 1;
+}
+
+/* Skeleton Subscriber Card */
+.skeleton-subscriber-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.skeleton-checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.skeleton-subscriber-content {
+    flex: 1;
+}
+
+.skeleton-address {
+    height: 18px;
+    width: 70%;
+    margin-bottom: 8px;
+}
+
+.skeleton-products {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.skeleton-product-badge {
+    height: 20px;
+    width: 50px;
+    border-radius: 10px;
+}
+
+/* Skeleton Table Row */
+.skeleton-table-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 16px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.skeleton-table-cell {
+    height: 16px;
+}
+
+/* Container for skeleton screens */
+.skeleton-container {
+    padding: 16px;
+}
+
+/* Hide skeleton when content loads */
+.skeleton-container.loaded {
+    display: none;
+}
+
+/* Dark mode skeleton adjustments */
+body.dark-mode .skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    background-size: 200% 100%;
+}
+
 
 
 

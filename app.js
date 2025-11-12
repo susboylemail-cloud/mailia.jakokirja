@@ -281,6 +281,108 @@ function triggerHaptic(intensity = 'light') {
     }
 }
 
+// ============= Skeleton Loading Screens =============
+function createSkeletonCircuitCard() {
+    return `
+        <div class="skeleton-circuit-card">
+            <div class="skeleton-circuit-header">
+                <div class="skeleton skeleton-circuit-title"></div>
+                <div class="skeleton skeleton-circuit-status"></div>
+            </div>
+            <div class="skeleton skeleton-progress-bar"></div>
+            <div class="skeleton-stats">
+                <div class="skeleton skeleton-stat"></div>
+                <div class="skeleton skeleton-stat"></div>
+                <div class="skeleton skeleton-stat"></div>
+            </div>
+        </div>
+    `;
+}
+
+function createSkeletonSubscriberCard() {
+    return `
+        <div class="skeleton-subscriber-card">
+            <div class="skeleton skeleton-checkbox"></div>
+            <div class="skeleton-subscriber-content">
+                <div class="skeleton skeleton-address"></div>
+                <div class="skeleton-products">
+                    <div class="skeleton skeleton-product-badge"></div>
+                    <div class="skeleton skeleton-product-badge"></div>
+                    <div class="skeleton skeleton-product-badge"></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function createSkeletonMessageCard() {
+    return `
+        <div class="skeleton-card">
+            <div class="skeleton-header">
+                <div class="skeleton skeleton-avatar"></div>
+                <div style="flex: 1;">
+                    <div class="skeleton skeleton-title"></div>
+                    <div class="skeleton skeleton-subtitle"></div>
+                </div>
+            </div>
+            <div class="skeleton skeleton-text long"></div>
+            <div class="skeleton skeleton-text short"></div>
+        </div>
+    `;
+}
+
+function createSkeletonTableRow() {
+    return `
+        <div class="skeleton-table-row">
+            <div class="skeleton skeleton-table-cell"></div>
+            <div class="skeleton skeleton-table-cell"></div>
+            <div class="skeleton skeleton-table-cell"></div>
+            <div class="skeleton skeleton-table-cell"></div>
+        </div>
+    `;
+}
+
+function showSkeletonLoader(container, type = 'card', count = 3) {
+    if (!container) return;
+    
+    const skeletonContainer = document.createElement('div');
+    skeletonContainer.className = 'skeleton-container';
+    skeletonContainer.setAttribute('data-skeleton', 'true');
+    
+    let skeletonHTML = '';
+    for (let i = 0; i < count; i++) {
+        switch (type) {
+            case 'circuit':
+                skeletonHTML += createSkeletonCircuitCard();
+                break;
+            case 'subscriber':
+                skeletonHTML += createSkeletonSubscriberCard();
+                break;
+            case 'message':
+                skeletonHTML += createSkeletonMessageCard();
+                break;
+            case 'table':
+                skeletonHTML += createSkeletonTableRow();
+                break;
+            default:
+                skeletonHTML += createSkeletonCard();
+        }
+    }
+    
+    skeletonContainer.innerHTML = skeletonHTML;
+    container.appendChild(skeletonContainer);
+}
+
+function hideSkeletonLoader(container) {
+    if (!container) return;
+    
+    const skeletons = container.querySelectorAll('[data-skeleton="true"]');
+    skeletons.forEach(skeleton => {
+        skeleton.classList.add('loaded');
+        setTimeout(() => skeleton.remove(), 300);
+    });
+}
+
 // ============= Offline Mode Integration =============
 let offlineDB = null;
 let syncManager = null;
@@ -3273,8 +3375,20 @@ async function loadCircuit(circuitId) {
     localStorage.setItem('currentCircuit', circuitId);
     
     try {
+        // Show skeleton loading for subscriber list
+        const subscriberList = document.getElementById('subscriberList');
+        if (subscriberList) {
+            subscriberList.innerHTML = '';
+            showSkeletonLoader(subscriberList, 'subscriber', 5);
+        }
+        
         // Load circuit data on demand
         let subscribers = await loadCircuitData(circuitId);
+        
+        // Hide skeleton loader
+        if (subscriberList) {
+            hideSkeletonLoader(subscriberList);
+        }
         
         // Apply saved route order if available
         subscribers = applySavedRouteOrder(circuitId, subscribers);
@@ -5232,6 +5346,10 @@ async function renderRouteMessages() {
     if (!messagesContainer) {
         return;
     }
+    
+    // Show skeleton loading
+    messagesContainer.innerHTML = '';
+    showSkeletonLoader(messagesContainer, 'message', 4);
 
     const appendMessageCard = (message) => {
         const messageCard = document.createElement('div');
@@ -5368,6 +5486,12 @@ async function renderRouteMessages() {
     try {
         // Fetch messages from backend API
         const messages = await window.mailiaAPI.getTodayMessages();
+        
+        // Hide skeleton loader
+        hideSkeletonLoader(messagesContainer);
+        
+        // Clear container for real content
+        messagesContainer.innerHTML = '';
 
         // Merge in any locally stored offline reports that haven't synced yet
         const storedLocalMessages = loadRouteMessages();

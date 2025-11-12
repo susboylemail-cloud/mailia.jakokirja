@@ -3230,6 +3230,11 @@ async function loadCircuit(circuitId) {
     try { maybeFlagAdminOverlapIcon(subscribers); } catch(e){ console.warn('duplicate check failed', e); }
         updateRouteButtons(circuitId);
         
+        // OPTIMIZATION: Pre-load Leaflet library in background for faster map loading
+        if (typeof L === 'undefined') {
+            loadLeafletLibrary().catch(err => console.warn('Failed to preload Leaflet:', err));
+        }
+        
         // Hide subscriber list initially - it will be shown when route starts
         const subscriberList = document.getElementById('subscriberList');
         if (!subscriberList) {
@@ -6486,10 +6491,9 @@ async function showCircuitMap(circuitId) {
     }
 }
 
-// Initialize circuit map with geocoded addresses
+// Initialize circuit map with geocoded addresses (OPTIMIZED)
 async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapContainer, infoPanel, excludedInfo) {
     try {
-        // Use Nominatim for geocoding with caching
         const locations = [];
         let geocodedCount = 0;
         let cachedCount = 0;
@@ -6499,83 +6503,104 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
         // Initialize geocoding cache
         const cache = await initGeocodingCache();
 
-        // Group by street to reduce API calls
-        const streetGroups = {};
-        circuitData.forEach(subscriber => {
-            const street = subscriber.address.split(' ')[0]; // Extract street name
-            if (!streetGroups[street]) streetGroups[street] = [];
-            streetGroups[street].push(subscriber);
+        // OPTIMIZATION 1: Separate cached and uncached addresses
+        const cachedItems = [];
+        const uncachedItems = [];
+        
+        // Check cache for all addresses first (parallel reads)
+        const cacheChecks = await Promise.all(circuitData.map(async (subscriber) => {
+            const fullAddress = `${subscriber.address}, Imatra, Finland`;
+            const cached = await getGeocodingCache(cache, fullAddress);
+            return { subscriber, fullAddress, cached };
+        }));
+        
+        // Separate into cached and uncached
+        cacheChecks.forEach(({ subscriber, fullAddress, cached }) => {
+            if (cached) {
+                locations.push({
+                    lat: cached.lat,
+                    lon: cached.lon,
+                    address: subscriber.address,
+                    name: subscriber.name,
+                    products: subscriber.products
+                });
+                cachedCount++;
+                geocodedCount++;
+                cachedItems.push(fullAddress);
+            } else {
+                uncachedItems.push({ subscriber, fullAddress });
+            }
         });
 
-        // Process in batches of 3 requests at a time (respectful to Nominatim)
-        const batchSize = 3;
-        const streets = Object.keys(streetGroups);
+        // Update progress with cached results
+        if (cachedCount > 0) {
+            infoPanel.innerHTML = `
+                <p style="margin: 0;">Ladataan... <strong>${geocodedCount}/${circuitData.length} osoitetta</strong></p>
+                <p style="margin: 0; font-size: 0.85rem; color: #4caf50;">${cachedCount} välimuistista ✓</p>
+                <p style="margin: 0; font-size: 0.9rem; color: #aaa;">OpenStreetMap + Leaflet</p>
+            `;
+        }
+
+        // OPTIMIZATION 2: Process uncached items in larger batches (faster when no API delay needed)
+        const batchSize = 5; // Increased from 3
+        const delayBetweenBatches = 300; // Reduced from 400ms
         
-        for (let i = 0; i < circuitData.length; i += batchSize) {
-            const batch = circuitData.slice(i, i + batchSize);
+        for (let i = 0; i < uncachedItems.length; i += batchSize) {
+            const batch = uncachedItems.slice(i, i + batchSize);
             
-            await Promise.all(batch.map(async (subscriber) => {
-                const fullAddress = `${subscriber.address}, Imatra, Finland`;
-                
+            await Promise.all(batch.map(async ({ subscriber, fullAddress }) => {
                 try {
-                    // Check cache first
-                    const cached = await getGeocodingCache(cache, fullAddress);
+                    // Use Nominatim geocoding service
+                    const encodedAddress = encodeURIComponent(fullAddress);
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`, {
+                        headers: {
+                            'User-Agent': 'Mailia Delivery App'
+                        }
+                    });
                     
-                    if (cached) {
+                    if (!response.ok) {
+                        throw new Error('Geocoding failed');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data && data.length > 0) {
+                        const coords = {
+                            lat: parseFloat(data[0].lat),
+                            lon: parseFloat(data[0].lon)
+                        };
+                        
+                        // Save to cache (don't await - fire and forget for speed)
+                        saveGeocodingCache(cache, fullAddress, coords).catch(err => 
+                            console.warn('Cache save failed:', err)
+                        );
+                        
                         locations.push({
-                            lat: cached.lat,
-                            lon: cached.lon,
+                            lat: coords.lat,
+                            lon: coords.lon,
                             address: subscriber.address,
                             name: subscriber.name,
                             products: subscriber.products
                         });
                         geocodedCount++;
-                        cachedCount++;
-                    } else {
-                        // Use Nominatim geocoding service
-                        const encodedAddress = encodeURIComponent(fullAddress);
-                        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`);
-                        
-                        if (!response.ok) {
-                            throw new Error('Geocoding failed');
-                        }
-                        
-                        const data = await response.json();
-                        
-                        if (data && data.length > 0) {
-                            const coords = {
-                                lat: parseFloat(data[0].lat),
-                                lon: parseFloat(data[0].lon)
-                            };
-                            
-                            // Save to cache
-                            await saveGeocodingCache(cache, fullAddress, coords);
-                            
-                            locations.push({
-                                lat: coords.lat,
-                                lon: coords.lon,
-                                address: subscriber.address,
-                                name: subscriber.name,
-                                products: subscriber.products
-                            });
-                            geocodedCount++;
-                        }
                     }
                 } catch (error) {
                     console.warn(`Could not geocode ${fullAddress}:`, error);
                 }
             }));
 
-            // Update progress
-            infoPanel.innerHTML = `
-                <p style="margin: 0;">Ladataan... <strong>${geocodedCount}/${circuitData.length} osoitetta</strong></p>
-                <p style="margin: 0; font-size: 0.85rem; color: #aaa;">${cachedCount > 0 ? `(${cachedCount} välimuistista)` : ''}</p>
-                <p style="margin: 0; font-size: 0.9rem; color: #aaa;">OpenStreetMap + Leaflet</p>
-            `;
+            // OPTIMIZATION 3: Batch DOM updates (update every 5 items, not every item)
+            if ((i % (batchSize * 2) === 0) || (i + batchSize >= uncachedItems.length)) {
+                infoPanel.innerHTML = `
+                    <p style="margin: 0;">Ladataan... <strong>${geocodedCount}/${circuitData.length} osoitetta</strong></p>
+                    <p style="margin: 0; font-size: 0.85rem; color: #4caf50;">${cachedCount} välimuistista</p>
+                    <p style="margin: 0; font-size: 0.9rem; color: #aaa;">OpenStreetMap + Leaflet</p>
+                `;
+            }
             
             // Respectful delay between batches (only for non-cached items)
-            if (i + batchSize < circuitData.length) {
-                await new Promise(resolve => setTimeout(resolve, 400));
+            if (i + batchSize < uncachedItems.length) {
+                await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
             }
         }
 
@@ -6588,6 +6613,11 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
             return;
         }
 
+        // OPTIMIZATION 4: Pre-load Leaflet while geocoding (if not already loaded)
+        if (typeof L === 'undefined') {
+            await loadLeafletLibrary();
+        }
+
         // Calculate center point
         const avgLat = locations.reduce((sum, loc) => sum + loc.lat, 0) / locations.length;
         const avgLon = locations.reduce((sum, loc) => sum + loc.lon, 0) / locations.length;
@@ -6597,11 +6627,6 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
         mapElement.id = 'leafletMap';
         mapElement.style.cssText = 'width: 100%; height: 100%;';
         mapContainer.appendChild(mapElement);
-
-        // Load Leaflet dynamically if not already loaded
-        if (typeof L === 'undefined') {
-            await loadLeafletLibrary();
-        }
 
         // Initialize Leaflet map with simplified attribution (no 'Leaflet' link)
         const map = L.map('leafletMap', { attributionControl: true }).setView([avgLat, avgLon], 14);
@@ -6615,29 +6640,40 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Add markers for each location
-        locations.forEach((location, index) => {
-            const marker = L.marker([location.lat, location.lon]).addTo(map);
+        // OPTIMIZATION 5: Add markers in batches to prevent UI freeze
+        const markerBatchSize = 20;
+        for (let i = 0; i < locations.length; i += markerBatchSize) {
+            const batch = locations.slice(i, i + markerBatchSize);
             
-            const productsHtml = location.products.map(p => `<span class="map-product-badge">${p}</span>`).join('');
+            batch.forEach((location, batchIndex) => {
+                const index = i + batchIndex;
+                const marker = L.marker([location.lat, location.lon]).addTo(map);
+                
+                const productsHtml = location.products.map(p => `<span class="map-product-badge">${p}</span>`).join('');
 
-            marker.bindPopup(`
-                <div class="map-popup">
-                    <strong class="map-popup-title">${index + 1}. ${location.address}</strong><br>
-                    ${location.name ? `<em>${location.name}</em><br>` : ''}
-                    <div class="map-product-badges">${productsHtml}</div>
-                </div>
-            `);
-            
-            // Add number label
-            const icon = L.divIcon({
-                className: 'number-marker',
-                html: `<div>${index + 1}</div>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
+                marker.bindPopup(`
+                    <div class="map-popup">
+                        <strong class="map-popup-title">${index + 1}. ${location.address}</strong><br>
+                        ${location.name ? `<em>${location.name}</em><br>` : ''}
+                        <div class="map-product-badges">${productsHtml}</div>
+                    </div>
+                `);
+                
+                // Add number label
+                const icon = L.divIcon({
+                    className: 'number-marker',
+                    html: `<div>${index + 1}</div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+                marker.setIcon(icon);
             });
-            marker.setIcon(icon);
-        });
+            
+            // Yield to browser to prevent freezing
+            if (i + markerBatchSize < locations.length) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+        }
 
         // Update info panel
         infoPanel.innerHTML = `
@@ -6648,27 +6684,46 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
         showNotification(`${locations.length} osoitetta näytetään kartalla`, 'success');
 
     } catch (error) {
-        console.error('Error initializing Mapon map:', error);
+        console.error('Error initializing map:', error);
         throw error;
     }
 }
 
-// Load Leaflet library dynamically
+// Load Leaflet library dynamically (with caching)
+let leafletLoading = null; // Prevent multiple simultaneous loads
 async function loadLeafletLibrary() {
-    return new Promise((resolve, reject) => {
+    // Return existing promise if already loading
+    if (leafletLoading) return leafletLoading;
+    
+    // Return immediately if already loaded
+    if (typeof L !== 'undefined') return Promise.resolve();
+    
+    leafletLoading = new Promise((resolve, reject) => {
         // Load CSS
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+        link.crossOrigin = '';
         document.head.appendChild(link);
 
         // Load JS
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        script.onload = resolve;
-        script.onerror = reject;
+        script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+        script.crossOrigin = '';
+        script.onload = () => {
+            leafletLoading = null; // Reset for future loads
+            resolve();
+        };
+        script.onerror = () => {
+            leafletLoading = null;
+            reject(new Error('Failed to load Leaflet'));
+        };
         document.head.appendChild(script);
     });
+    
+    return leafletLoading;
 }
 
 // Geocoding cache functions for faster map loading

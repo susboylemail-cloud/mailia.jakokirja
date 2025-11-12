@@ -282,10 +282,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         // Verify the token is still valid by trying to fetch user data
         try {
             await window.mailiaAPI.makeRequest('/auth/me');
-            window.mailiaAPI.connectWebSocket();
-            // Token is valid, show main app
-            showMainApp();
-            initializeApp();
+            // Token is valid, show main app (this handles all initialization)
+            await showMainApp();
         } catch (error) {
             // Token is invalid, clear it and show login
             console.log('Session expired, please login again');
@@ -345,35 +343,6 @@ async function handleLogin() {
     }
 }
 
-function initializeApp() {
-    // Initialize all app functionality after successful login
-    if (window.mailiaAPI) {
-        window.mailiaAPI.connectWebSocket();
-    }
-    initializeWebSocketListeners();
-    initializeTabs();
-    initializeRefreshButtons();
-    initializeLogout();
-    initializeSwipeGestures();
-    initializeCircuitTracker();
-    loadFavorites();
-    initializeMidnightReset();
-    
-    // Initialize geolocation for weather
-    getLocationWeather();
-    
-    // Initialize dashboard if user is admin or manager
-    const role = getEffectiveUserRole();
-    console.log('[initializeApp] effective role:', role);
-    if (role === 'admin' || role === 'manager') {
-        initializeDashboard();
-        // Reveal admin duplicates button
-        const btn = document.getElementById('adminDuplicatesBtn');
-        if (btn) btn.hidden = false;
-        // Check overlaps and toggle alert if needed
-        refreshAdminOverlapIndicator();
-    }
-}
 function initAdminDuplicatesUI() {
     const btn = document.getElementById('adminDuplicatesBtn');
     if (!btn) return;
@@ -1872,16 +1841,32 @@ async function showMainApp() {
     
     // Initialize the main application
     initializeTabs();
+    initializeRefreshButtons();
+    initializeMidnightReset();
     await loadData();
     await populateCircuitSelector(); // Wait for circuits to load from backend
     initializeCircuitTracker();
     initializeEventListeners();
+    loadFavorites();
     checkMidnightReset();
     scheduleMidnightReset();
+    
+    // Initialize geolocation for weather
+    getLocationWeather();
     
     // Set initial view based on user role
     const role = getEffectiveUserRole();
     const circuitSelectorContainer = document.querySelector('.circuit-selector-container');
+    
+    // Initialize dashboard if user is admin or manager
+    if (role === 'admin' || role === 'manager') {
+        initializeDashboard();
+        // Reveal admin duplicates button
+        const btn = document.getElementById('adminDuplicatesBtn');
+        if (btn) btn.hidden = false;
+        // Check overlaps and toggle alert if needed
+        refreshAdminOverlapIndicator();
+    }
     
     // Show/hide admin-only tabs based on role
     const adminTabs = document.querySelectorAll('.tab-button.admin-only');

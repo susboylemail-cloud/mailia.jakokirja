@@ -1424,8 +1424,9 @@ async function handleLogout() {
         currentCircuit = null;
         allData = {};
         
-        // Clear user role from sessionStorage
+        // Clear user role and current circuit from storage
         sessionStorage.removeItem('mailiaUserRole');
+        localStorage.removeItem('currentCircuit');
         
         // Show login screen
         showLoginScreen();
@@ -1991,6 +1992,27 @@ async function showMainApp() {
     initializeMidnightReset();
     await loadData();
     await populateCircuitSelector(); // Wait for circuits to load from backend
+    
+    // Restore previously selected circuit after page refresh
+    const savedCircuit = localStorage.getItem('currentCircuit');
+    if (savedCircuit) {
+        console.log('Restoring circuit after page refresh:', savedCircuit);
+        try {
+            // Update the circuit selector display
+            const display = document.getElementById('circuitSelectDisplay');
+            const displayText = display?.querySelector('.circuit-display-text');
+            if (displayText) {
+                displayText.textContent = circuitNames[savedCircuit] || savedCircuit;
+            }
+            // Load the circuit data
+            await loadCircuit(savedCircuit);
+        } catch (error) {
+            console.error('Failed to restore circuit:', error);
+            // Clear invalid circuit from storage
+            localStorage.removeItem('currentCircuit');
+        }
+    }
+    
     initializeCircuitTracker();
     initializeEventListeners();
     loadFavorites();
@@ -3211,6 +3233,9 @@ async function loadCircuitDataFromCSV(circuitId) {
 
 async function loadCircuit(circuitId) {
     currentCircuit = circuitId;
+    
+    // Save selected circuit to localStorage for persistence across page refreshes
+    localStorage.setItem('currentCircuit', circuitId);
     
     try {
         // Load circuit data on demand

@@ -6778,7 +6778,13 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
         mapContainer.appendChild(mapElement);
 
         // Initialize Leaflet map with simplified attribution (no 'Leaflet' link)
-        const map = L.map('leafletMap', { attributionControl: true }).setView([avgLat, avgLon], 14);
+        const map = L.map('leafletMap', {
+            attributionControl: true,
+            preferCanvas: true,
+            updateWhenIdle: true,
+            zoomSnap: 0.25,
+            zoomDelta: 0.5
+        }).setView([avgLat, avgLon], 14);
         if (map.attributionControl && typeof map.attributionControl.setPrefix === 'function') {
             map.attributionControl.setPrefix('');
         }
@@ -6786,6 +6792,13 @@ async function initializeCircuitMapWithGeocoding(circuitId, circuitData, mapCont
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
+            maxNativeZoom: 19,
+            subdomains: ['a', 'b', 'c'],
+            reuseTiles: true,
+            updateWhenIdle: true,
+            keepBuffer: 3,
+            detectRetina: true,
+            crossOrigin: true,
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 

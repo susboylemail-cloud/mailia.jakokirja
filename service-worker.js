@@ -1,16 +1,18 @@
 // Mailia Service Worker - Offline Support & Caching
-const CACHE_VERSION = 'mailia-v81';
+const CACHE_VERSION = 'mailia-v82';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
+const TILE_CACHE = `${CACHE_VERSION}-osm-tiles`;
+const MAX_OSM_TILE_ENTRIES = 256; // Respectful limit for client-side caching
 
 // Assets to cache immediately on install
 const STATIC_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=80',
-    '/api.js?v=80',
-    '/app.js?v=80',
+    '/style.css?v=82',
+    '/api.js?v=82',
+    '/app.js?v=82',
     '/manifest.json?v=79',
     '/icons/icon-192.png',
     '/icons/icon-512.png'
@@ -55,6 +57,12 @@ self.addEventListener('fetch', (event) => {
 
     // Skip non-GET requests and chrome-extension requests
     if (request.method !== 'GET' || url.protocol === 'chrome-extension:') {
+        return;
+    }
+
+    // Cache OpenStreetMap tiles with stale-while-revalidate strategy
+    if (url.hostname.endsWith('tile.openstreetmap.org')) {
+        event.respondWith(tileStaleWhileRevalidateStrategy(event));
         return;
     }
 
@@ -132,6 +140,51 @@ async function networkFirstStrategy(request, cacheName) {
                 })
             }
         );
+    }
+}
+
+// Stale-while-revalidate for OpenStreetMap tiles
+async function tileStaleWhileRevalidateStrategy(event) {
+    const { request } = event;
+    const cache = await caches.open(TILE_CACHE);
+    const cachedResponse = await cache.match(request);
+
+    const fetchPromise = fetch(request)
+        .then(async (networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+                await cache.put(request, networkResponse.clone());
+                trimTileCache(cache);
+            }
+            return networkResponse;
+        })
+        .catch((error) => {
+            console.warn('[SW] Tile fetch failed:', error);
+            return null;
+        });
+
+    // Return cached tile immediately if available, otherwise wait for network
+    if (cachedResponse) {
+        // Kick off update in background
+        event.waitUntil(fetchPromise);
+        return cachedResponse;
+    }
+
+    const networkResponse = await fetchPromise;
+    if (networkResponse) {
+        return networkResponse;
+    }
+
+    // If both cache and network fail, respond with generic fallback
+    return new Response(null, { status: 504, statusText: 'Tile Unavailable' });
+}
+
+async function trimTileCache(cache) {
+    const keys = await cache.keys();
+    if (keys.length <= MAX_OSM_TILE_ENTRIES) return;
+
+    const deleteCount = keys.length - MAX_OSM_TILE_ENTRIES;
+    for (let i = 0; i < deleteCount; i++) {
+        await cache.delete(keys[i]);
     }
 }
 

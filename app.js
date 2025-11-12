@@ -6870,7 +6870,17 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
               Math.sin(dLon/2) * Math.sin(dLon/2);
     
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
+    const straightLineDistance = R * c;
+    
+    // Apply road network multiplier for realistic driving distance
+    // Urban areas typically require 1.3-1.4x straight-line distance due to:
+    // - Road network layout (city blocks, curves)
+    // - One-way streets and traffic rules
+    // - Detours around buildings/obstacles
+    // Using 1.35 for Imatra urban area
+    const ROAD_MULTIPLIER = 1.35;
+    
+    return straightLineDistance * ROAD_MULTIPLIER;
 }
 
 // Extract street name from full address

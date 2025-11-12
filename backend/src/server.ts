@@ -18,6 +18,7 @@ import adminDuplicateRoutes from './routes/adminDuplicates';
 import syncRoutes from './routes/sync';
 import messageRoutes from './routes/messages';
 import dashboardRoutes from './routes/dashboard';
+import maponRoutes from './routes/mapon';
 import { initializeWebSocket } from './services/websocket';
 import { startSFTPSync } from './services/sftpSync';
 import pool from './config/database';
@@ -128,6 +129,7 @@ app.use('/api/admin', generalLimiter, adminDuplicateRoutes);
 app.use('/api/sync', generalLimiter, syncRoutes);
 app.use('/api/messages', generalLimiter, messageRoutes);
 app.use('/api/dashboard', generalLimiter, dashboardRoutes);
+app.use('/api/mapon', generalLimiter, maponRoutes);
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {

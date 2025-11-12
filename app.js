@@ -8710,8 +8710,32 @@ function loadLeaflet() {
  */
 async function fetchDriverLocations() {
     try {
-        // Mock data for now - replace with actual Mapon API call
-        const driverData = await getMockDriverLocations();
+        const token = localStorage.getItem('mailiaAuth') ? JSON.parse(localStorage.getItem('mailiaAuth')).token : null;
+        
+        if (!token) {
+            throw new Error('Ei todennusta');
+        }
+        
+        // Call backend API that proxies Mapon
+        const response = await fetch(`${API_URL}/mapon/locations`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.locations) {
+            throw new Error('Virheellinen vastaus palvelimelta');
+        }
+        
+        const driverData = data.locations;
         
         // Update map markers
         updateGPSMarkers(driverData);
@@ -8721,40 +8745,23 @@ async function fetchDriverLocations() {
         
     } catch (error) {
         console.error('Failed to fetch driver locations:', error);
-        showGPSError('Ei voitu hakea sijainteja');
+        showGPSError('Ei voitu hakea sijainteja: ' + error.message);
     }
 }
 
 /**
- * Mock driver locations (replace with actual Mapon API integration)
+ * Show GPS error message to user
  */
-async function getMockDriverLocations() {
-    // This should be replaced with actual Mapon API call
-    // For now, return mock data
-    return [
-        {
-            id: 1,
-            name: 'Jakelija 1',
-            circuit: 'KP3',
-            lat: 61.1750,
-            lon: 28.7600,
-            speed: 25,
-            heading: 180,
-            status: 'moving',
-            lastUpdate: new Date()
-        },
-        {
-            id: 2,
-            name: 'Jakelija 2',
-            circuit: 'KP10',
-            lat: 61.1690,
-            lon: 28.7550,
-            speed: 0,
-            heading: 0,
-            status: 'stopped',
-            lastUpdate: new Date(Date.now() - 120000) // 2 minutes ago
-        }
-    ];
+function showGPSError(message) {
+    const driverList = document.getElementById('gpsDriverList');
+    if (driverList) {
+        driverList.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                <p>${message}</p>
+                <p style="font-size: 12px; margin-top: 10px;">Tarkista verkkoyhteys ja yritä uudelleen.</p>
+            </div>
+        `;
+    }
 }
 
 /**

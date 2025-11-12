@@ -2062,6 +2062,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize dark mode (works on login screen too)
     initializeDarkMode();
+    initializeLanguage();
     
     // Initialize phone status bar with real-time updates
     initializePhoneStatusBar();
@@ -2237,6 +2238,7 @@ async function showMainApp() {
     
     // Initialize dark mode toggle now that main app is visible
     initializeDarkMode();
+    initializeLanguage();
     
     // Initialize logout button
     initializeLogout();
@@ -2423,6 +2425,64 @@ function applyTheme(theme) {
             'sepia': '#F4ECD8'
         };
         metaThemeColor.setAttribute('content', themeColors[theme] || themeColors.dark);
+    }
+}
+
+// ========================================
+// LANGUAGE SYSTEM
+// ========================================
+
+/**
+ * Initialize language system and selector
+ */
+function initializeLanguage() {
+    const savedLanguage = localStorage.getItem('language');
+    const defaultLanguage = 'fi';
+    const currentLanguage = savedLanguage || defaultLanguage;
+    
+    // Apply initial language
+    if (typeof applyTranslations === 'function') {
+        applyTranslations(currentLanguage);
+    }
+    
+    // Save default if not set
+    if (!savedLanguage) {
+        localStorage.setItem('language', defaultLanguage);
+    }
+    
+    // Setup language selector
+    const languageSelector = document.getElementById('languageSelector');
+    if (languageSelector) {
+        // Set initial value
+        languageSelector.value = currentLanguage;
+        
+        // Listen for changes
+        languageSelector.addEventListener('change', (e) => {
+            const newLanguage = e.target.value;
+            localStorage.setItem('language', newLanguage);
+            
+            // Apply translations
+            if (typeof applyTranslations === 'function') {
+                applyTranslations(newLanguage);
+            }
+            
+            // Update HTML lang attribute
+            document.documentElement.lang = newLanguage;
+            
+            // Show notification
+            const messages = {
+                'fi': 'Kieli vaihdettu suomeksi',
+                'ru': 'Язык изменён на русский',
+                'en': 'Language changed to English'
+            };
+            showNotificationEnhanced(messages[newLanguage] || messages.fi, 'success');
+            triggerHaptic('light');
+            
+            // Refresh current view to apply translations
+            if (currentCircuit) {
+                loadCircuit(currentCircuit);
+            }
+        });
     }
 }
 

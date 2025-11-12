@@ -109,12 +109,12 @@
                             <form id="loginForm" class="login-form">
                                 <div class="input-group">
                                     <label for="username" class="input-label">
-                                        <input type="text" id="username" name="username" required autocomplete="username" placeholder="Käyttäjätunnus" class="phone-input">
+                                        <input type="text" id="username" name="username" required autocomplete="username" data-i18n="login.username" placeholder="Käyttäjätunnus" class="phone-input">
                                     </label>
                                 </div>
                                 <div class="input-group">
                                     <label for="password" class="input-label password-container">
-                                        <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Salasana" class="phone-input">
+                                        <input type="password" id="password" name="password" required autocomplete="current-password" data-i18n="login.password" placeholder="Salasana" class="phone-input">
                                         <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">
                                             <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -130,7 +130,7 @@
                                     </label>
                                 </div>
                                 <div id="loginError" class="login-error" style="display: none;"></div>
-                                <button type="submit" class="phone-login-button">Kirjaudu sisään</button>
+                                <button type="submit" class="phone-login-button" data-i18n="login.button">Kirjaudu sisään</button>
                             </form>
                         </div>
                     </div>
@@ -189,25 +189,33 @@
                     </button>
                     <div id="settingsDropdown" class="settings-dropdown">
                         <div class="settings-section">
-                            <label class="settings-label">Teema</label>
+                            <label class="settings-label" data-i18n="settings.theme">Teema</label>
                             <select id="themeSelector" class="theme-selector">
-                                <option value="light">Vaalea</option>
-                                <option value="dark" selected>Tumma</option>
-                                <option value="high-contrast">Korkea kontrasti</option>
-                                <option value="sepia">Seepia</option>
+                                <option value="light" data-i18n="theme.light">Vaalea</option>
+                                <option value="dark" selected data-i18n="theme.dark">Tumma</option>
+                                <option value="high-contrast" data-i18n="theme.highContrast">Korkea kontrasti</option>
+                                <option value="sepia" data-i18n="theme.sepia">Seepia</option>
+                            </select>
+                        </div>
+                        <div class="settings-section">
+                            <label class="settings-label" data-i18n="settings.language">Kieli</label>
+                            <select id="languageSelector" class="theme-selector">
+                                <option value="fi" data-i18n="language.finnish">Suomi</option>
+                                <option value="ru" data-i18n="language.russian">Русский</option>
+                                <option value="en" data-i18n="language.english">English</option>
                             </select>
                         </div>
                         <label>
                             <input type="checkbox" id="showCheckboxesToggle">
-                            Kuittausruudut käytössä
+                            <span data-i18n="settings.checkboxes">Kuittausruudut käytössä</span>
                         </label>
                         <label>
                             <input type="checkbox" id="hideStfFilter">
-                            Piilota STF
+                            <span data-i18n="settings.hideStf">Piilota STF</span>
                         </label>
                         <label>
                             <input type="checkbox" id="hideDeliveredFilter">
-                            Piilota kuitatut tilaukset
+                            <span data-i18n="settings.hideDelivered">Piilota kuitatut tilaukset</span>
                         </label>
                         <button id="addSubscriberBtn" class="admin-only settings-action-btn" style="display: none;">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -216,7 +224,7 @@
                                 <line x1="20" y1="8" x2="20" y2="14"></line>
                                 <line x1="23" y1="11" x2="17" y2="11"></line>
                             </svg>
-                            Lisää tilaaja
+                            <span data-i18n="settings.addSubscriber">Lisää tilaaja</span>
                         </button>
                     </div>
                 </div>
@@ -232,22 +240,22 @@
     </header>
 
     <div class="tab-container">
-        <button class="tab-button admin-only" data-tab="delivery" style="display: none;">Jakelu</button>
-        <button class="tab-button admin-only" data-tab="tracker" style="display: none;">Seuranta</button>
-        <button class="tab-button admin-only" data-tab="messages" style="display: none;">Piirien viestit</button>
+        <button class="tab-button admin-only" data-tab="delivery" data-i18n="nav.delivery" style="display: none;">Jakelu</button>
+        <button class="tab-button admin-only" data-tab="tracker" data-i18n="nav.tracker" style="display: none;">Seuranta</button>
+        <button class="tab-button admin-only" data-tab="messages" data-i18n="nav.messages" style="display: none;">Piirien viestit</button>
         <!-- Dashboard/Reports tab hidden but kept in code for future use -->
-        <!-- <button class="tab-button admin-only" data-tab="dashboard" style="display: none;">Raportit</button> -->
+        <!-- <button class="tab-button admin-only" data-tab="dashboard" data-i18n="nav.reports" style="display: none;">Raportit</button> -->
     </div>
 
     <!-- Circuit selector - always visible -->
     <div class="circuit-selector-container">
         <div class="custom-circuit-select" id="customCircuitSelect">
             <div class="circuit-select-display" id="circuitSelectDisplay">
-                <span class="circuit-display-text">Valitse piiri</span>
+                <span class="circuit-display-text" data-i18n="circuit.select">Valitse piiri</span>
                 <span class="dropdown-arrow">▼</span>
             </div>
             <div class="circuit-select-dropdown" id="circuitSelectDropdown" style="display: none;">
-                <input type="text" class="circuit-search" id="circuitSearch" placeholder="Valitse piiri">
+                <input type="text" class="circuit-search" id="circuitSearch" data-i18n="circuit.search" placeholder="Valitse piiri">
                 <div class="circuit-options" id="circuitOptions"></div>
             </div>
         </div>
@@ -267,18 +275,18 @@
             <div id="deliveryContent" class="delivery-content" style="display: none;">
                 <!-- Cover Sheet -->
                 <div class="cover-sheet">
-                    <h2>Piirin lehtimäärät</h2>
+                    <h2 data-i18n="delivery.counts">Piirin lehtimäärät</h2>
                     <div class="date-display" id="dateDisplay"></div>
                     <div class="product-counts" id="productCounts"></div>
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button id="startRouteBtn" class="route-button">Aloita reitti</button>
+                        <button id="startRouteBtn" class="route-button" data-i18n="route.start">Aloita reitti</button>
                         <button id="quickOptimizeBtn" class="route-button" style="background: #17a2b8; display: none;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
                                 <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
                                 <circle cx="7" cy="17" r="2"/>
                                 <circle cx="17" cy="17" r="2"/>
                             </svg>
-                            Optimoi järjestys
+                            <span data-i18n="route.optimize">Optimoi järjestys</span>
                         </button>
                     </div>
                     <div id="routeStartTime" class="route-time" style="display: none;"></div>
@@ -289,7 +297,7 @@
 
                 <!-- Route Complete Button -->
                 <div class="route-complete-container" style="display: none;">
-                    <button id="completeRouteBtn" class="route-button complete">Reitti valmis</button>
+                    <button id="completeRouteBtn" class="route-button complete" data-i18n="route.completeFull">Reitti valmis</button>
                     <div id="routeEndTime" class="route-time"></div>
                 </div>
                 
@@ -494,6 +502,7 @@
     <script src="sync-manager.js?v=82" defer></script>
     <script src="conflict-ui.js?v=82" defer></script>
     
+    <script src="translations.js?v=82" defer></script>
     <script src="api.js?v=82" defer></script>
     <script src="app.js?v=82" defer></script>
     
@@ -510,13 +519,13 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
-                <span>Aloita reitti</span>
+                <span data-i18n="route.start">Aloita reitti</span>
             </button>
             <button class="fab-action" id="fabCompleteRoute" data-action="complete">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                <span>Merkitse valmiiksi</span>
+                <span data-i18n="route.complete">Merkitse valmiiksi</span>
             </button>
             <button class="fab-action" id="fabReport" data-action="report">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -524,7 +533,7 @@
                     <line x1="12" y1="9" x2="12" y2="13"></line>
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
-                <span>Raportoi ongelma</span>
+                <span data-i18n="message.report">Raportoi ongelma</span>
             </button>
         </div>
     </div>

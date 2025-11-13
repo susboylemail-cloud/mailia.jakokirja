@@ -5903,7 +5903,7 @@ async function renderRouteMessages() {
             showEmptyState(messagesContainer, {
                 icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>',
                 title: 'Ei viestejä',
-                message: 'Tänään ei ole vielä raportoitu toimitusongelmi a. Viestit näkyvät täällä kun niitä lähetetään.'
+                message: 'Tänään ei ole vielä raportoitu toimitusongelmia. Viestit näkyvät täällä kun niitä lähetetään.'
             });
             return;
         }

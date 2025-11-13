@@ -87,8 +87,21 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
         
         // Transform Mapon data to our format
         const locations = units.map((unit: any) => {
-            const lat = parseFloat(unit.latitude) || 0;
-            const lon = parseFloat(unit.longitude) || 0;
+            // Mapon API might return lat/lon or lon/lat - check the actual values
+            // For Finland: lat should be ~61, lon should be ~28
+            let lat = parseFloat(unit.latitude) || 0;
+            let lon = parseFloat(unit.longitude) || 0;
+            
+            // Detect if coordinates are swapped (Finland check: lat ~60-70, lon ~20-32)
+            if (lat !== 0 && lon !== 0) {
+                // If lat is in longitude range and lon is in latitude range, swap them
+                if (Math.abs(lat) < 50 && Math.abs(lon) > 50) {
+                    console.log(`Swapping coordinates for unit ${unit.unit_id}: was (${lat}, ${lon})`);
+                    [lat, lon] = [lon, lat];
+                    console.log(`Now: (${lat}, ${lon})`);
+                }
+            }
+            
             const speed = parseFloat(unit.speed) || 0;
             
             // Try multiple timestamp fields

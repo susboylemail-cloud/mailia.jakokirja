@@ -24,7 +24,29 @@ router.get('/units', authenticate, async (req: AuthRequest, res: Response) => {
 
         if (response.data && response.data.data) {
             const units = response.data.data.units || [];
-            res.json({ success: true, units });
+            
+            // Log first unit to see the structure
+            if (units.length > 0) {
+                console.log('Sample unit from Mapon API:', JSON.stringify(units[0], null, 2));
+            }
+            
+            // Transform units to include license plate
+            const transformedUnits = units.map((unit: any) => {
+                // Extract license plate from 'number' field (e.g., "XPH-945")
+                const licensePlate = unit.number || unit.label || `Unit ${unit.unit_id}`;
+                
+                return {
+                    unit_id: unit.unit_id,
+                    label: licensePlate, // Use license plate as the label
+                    number: unit.number, // Keep original number field
+                    licensePlate: unit.number, // Explicitly add licensePlate field
+                    // Include other potentially useful fields
+                    name: unit.label || unit.number,
+                    active: unit.active
+                };
+            });
+            
+            res.json({ success: true, units: transformedUnits });
         } else {
             res.status(500).json({ success: false, error: 'Invalid response from Mapon API' });
         }
@@ -72,9 +94,13 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
             // Try multiple timestamp fields
             const dt_tracker = unit.dt_tracker || unit.dt_server || unit.dt_actual || unit.gprs_time || 0;
             
+            // Extract license plate from 'number' field (e.g., "XPH-945")
+            const licensePlate = unit.number || unit.label || `Unit ${unit.unit_id}`;
+            
             return {
                 id: unit.unit_id,
-                name: unit.label || unit.number || `Unit ${unit.unit_id}`,
+                name: licensePlate, // Use license plate as display name
+                licensePlate: unit.number, // Explicitly include license plate
                 circuit: extractCircuitFromName(unit.label || unit.number || ''),
                 lat,
                 lon,
@@ -94,7 +120,9 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
                     gprs_time: unit.gprs_time,
                     hasCoords: !!(lat && lon),
                     speed: unit.speed,
-                    ignition: unit.ignition
+                    ignition: unit.ignition,
+                    number: unit.number,
+                    label: unit.label
                 }
             };
         });

@@ -8876,7 +8876,7 @@ async function startGPSTracking() {
         toggleText.textContent = 'Pysäytä seuranta';
         statusText.textContent = 'Aktiivinen';
         statusText.classList.add('active');
-        mapContainer.style.display = 'block';
+        mapContainer.classList.add('active');
         
         // Wait for map container to be fully visible
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -8911,6 +8911,7 @@ function stopGPSTracking() {
     const toggleBtn = document.getElementById('toggleGpsTracking');
     const toggleText = document.getElementById('gpsToggleText');
     const statusText = document.getElementById('gpsStatus');
+    const mapContainer = document.getElementById('gpsMap');
     const circuitStatusView = document.getElementById('circuitStatusView');
     const liveTrackingView = document.getElementById('liveTrackingView');
     const trackerViewBtn = document.getElementById('trackerViewBtn');
@@ -8930,6 +8931,11 @@ function stopGPSTracking() {
     toggleText.textContent = 'Aloita seuranta';
     statusText.textContent = 'Pysäytetty';
     statusText.classList.remove('active');
+    
+    // Hide map
+    if (mapContainer) {
+        mapContainer.classList.remove('active');
+    }
     
     // Switch back to circuit status view
     if (circuitStatusView && liveTrackingView) {
@@ -8962,7 +8968,7 @@ async function initializeGPSMap() {
     // Remove loading indicator
     mapContainer.innerHTML = '';
     
-    // Wait a moment for container to be visible
+    // Wait a moment for container to be sized properly (should already be visible via .active class)
     await new Promise(resolve => setTimeout(resolve, 100));
     
     // Initialize map centered on Imatra, Finland

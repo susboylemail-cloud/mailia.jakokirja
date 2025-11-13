@@ -5716,6 +5716,11 @@ body.dark-mode .skeleton {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     position: relative;
+    display: none; /* Hidden by default */
+}
+
+.gps-map.active {
+    display: block; /* Show when active */
 }
 
 .map-loading {

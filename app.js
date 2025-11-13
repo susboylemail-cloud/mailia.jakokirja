@@ -2717,18 +2717,29 @@ function initializeRefreshButtons() {
     const refreshTrackerBtn = document.getElementById('refreshTrackerBtn');
     if (refreshTrackerBtn) {
         refreshTrackerBtn.addEventListener('click', async () => {
-            console.log('Hard refreshing tracker (clearing cache)...');
+            console.log('Refreshing tracker...');
             refreshTrackerBtn.classList.add('refreshing');
             refreshTrackerBtn.disabled = true;
             
             try {
-                // Clear the circuit data cache to force re-fetch from backend
-                Object.keys(allData).forEach(key => delete allData[key]);
+                // Check if we're in GPS tracking view
+                const liveTrackingView = document.getElementById('liveTrackingView');
+                const isGPSView = liveTrackingView && liveTrackingView.style.display !== 'none';
                 
-                // Force re-render of tracker with fresh data
-                isRenderingTracker = false; // Reset the render lock
-                await renderCircuitTracker();
-                showNotification('Seuranta päivitetty', 'success');
+                if (isGPSView) {
+                    // Refresh GPS tracking data
+                    console.log('Refreshing GPS tracking data...');
+                    await fetchDriverLocations();
+                    showNotification('GPS-tiedot päivitetty', 'success');
+                } else {
+                    // Clear the circuit data cache to force re-fetch from backend
+                    Object.keys(allData).forEach(key => delete allData[key]);
+                    
+                    // Force re-render of tracker with fresh data
+                    isRenderingTracker = false; // Reset the render lock
+                    await renderCircuitTracker();
+                    showNotification('Seuranta päivitetty', 'success');
+                }
             } catch (error) {
                 console.error('Error refreshing tracker:', error);
                 showNotification('Päivitys epäonnistui', 'error');
@@ -8938,8 +8949,8 @@ async function startGPSTracking() {
         // Fetch initial data
         await fetchDriverLocations();
         
-        // Start polling every 30 seconds
-        gpsTrackingInterval = setInterval(fetchDriverLocations, 30000);
+        // Auto-refresh removed - use manual refresh button instead
+        // Users can click the "Päivitä" button to refresh GPS data
         
         showNotificationEnhanced('GPS seuranta aloitettu', 'success');
         triggerHaptic('light');
@@ -9374,7 +9385,7 @@ function renderDriverListWithCircuits(drivers) {
             : 'Ei piiriä';
         
         return `
-        <div class="gps-driver-card ${driver.status === 'moving' ? 'active' : ''}">
+        <div class="gps-driver-card ${driver.status === 'moving' ? 'active' : ''}" data-driver-id="${driver.id}" data-driver-name="${driver.name}" data-driver-lat="${driver.lat}" data-driver-lon="${driver.lon}" style="cursor: pointer;">
             <div class="gps-driver-header">
                 <div class="gps-driver-name">${driver.name}</div>
                 <div class="gps-driver-status ${driver.status}">
@@ -9411,6 +9422,27 @@ function renderDriverListWithCircuits(drivers) {
         </div>
     `;
     }).join('');
+    
+    // Add click handlers to track specific vehicles
+    const driverCards = listContainer.querySelectorAll('.gps-driver-card');
+    driverCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const driverId = card.getAttribute('data-driver-id');
+            const driverName = card.getAttribute('data-driver-name');
+            const lat = parseFloat(card.getAttribute('data-driver-lat'));
+            const lon = parseFloat(card.getAttribute('data-driver-lon'));
+            
+            if (lat && lon && lat !== 0 && lon !== 0) {
+                // Center map on this driver
+                if (gpsMap) {
+                    gpsMap.setView([lat, lon], 15);
+                    showNotificationEnhanced(`Seurataan: ${driverName}`, 'info');
+                }
+            } else {
+                showNotificationEnhanced(`${driverName} - Ei sijaintitietoja`, 'warning');
+            }
+        });
+    });
 }
 
 

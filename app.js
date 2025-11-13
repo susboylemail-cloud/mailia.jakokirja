@@ -1210,7 +1210,7 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
                 }
                 await window.mailiaAPI.resetRoute(routeId, 'completed');
                 localStorage.setItem(`route_end_${circuitId}`, new Date().toISOString());
-                showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+                // Removed duplicate notification - completeRoute() handles this
                 if (currentCircuit === circuitId) {
                     hideSubscriberListWithAnimation();
                     updateRouteButtons(circuitId);
@@ -1238,7 +1238,7 @@ function showCircuitManagementMenu(circuitId, routeData, status) {
                 try {
                     await window.mailiaAPI.resetRoute(routeData.id, 'completed');
                     localStorage.setItem(`route_end_${circuitId}`, new Date().toISOString());
-                    showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+                    // Removed duplicate notification - completeRoute() handles this
                     if (currentCircuit === circuitId) {
                         hideSubscriberListWithAnimation();
                         updateRouteButtons(circuitId);
@@ -1313,7 +1313,7 @@ function showRouteStatusModal(circuitId, routeData) {
             }
             localStorage.setItem(`route_end_${circuitId}`, now);
             
-            showNotification(`Reitti ${circuitId} merkitty valmiiksi`, 'success');
+            // Removed duplicate notification - completeRoute() handles this
             renderCircuitTracker();
             
             // Update route buttons if this is the current circuit
@@ -5133,7 +5133,10 @@ function updateFABVisibility() {
     const isMobile = window.innerWidth <= 768;
     const hasCircuit = !!currentCircuit;
     
-    if (isMobile && isDeliveryTabActive && hasCircuit) {
+    // Hide FAB on mobile - it's desktop-only
+    if (isMobile) {
+        fab.classList.add('hidden');
+    } else if (isDeliveryTabActive && hasCircuit) {
         fab.classList.remove('hidden');
     } else {
         fab.classList.add('hidden');

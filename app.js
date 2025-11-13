@@ -9037,7 +9037,9 @@ async function fetchDriverLocations() {
         const driverData = data.locations;
         
         console.log(`Fetched ${driverData.length} drivers:`, driverData.map(d => ({
+            id: d.id,
             name: d.name,
+            plateNumber: d.plateNumber,
             status: d.status,
             lat: d.lat,
             lon: d.lon,

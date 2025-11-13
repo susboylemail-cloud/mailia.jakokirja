@@ -51,6 +51,7 @@ router.get('/units', authenticate, async (req: AuthRequest, res: Response) => {
  */
 router.get('/locations', authenticate, async (req: AuthRequest, res: Response) => {
     try {
+        console.log('[Mapon] Fetching locations from Mapon API...');
         const response = await axios.get(`${MAPON_API_BASE}/unit/list.json`, {
             params: {
                 key: MAPON_API_KEY,
@@ -60,14 +61,18 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
         });
 
         if (!response.data || !response.data.data) {
+            console.error('[Mapon] Invalid response structure:', response.data);
             return res.status(500).json({ success: false, error: 'Invalid response from Mapon API' });
         }
 
         const units = response.data.data.units || [];
+        console.log(`[Mapon] Received ${units.length} units from API`);
         
         // Log first unit to see structure (debug)
         if (units.length > 0) {
-            console.log('Sample Mapon unit data:', JSON.stringify(units[0], null, 2));
+            console.log('[Mapon] Sample unit data:', JSON.stringify(units[0], null, 2));
+        } else {
+            console.warn('[Mapon] No units returned from API');
         }
         
         // Transform Mapon data to our format
@@ -114,9 +119,10 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
             };
         });
 
+        console.log(`[Mapon] Transformed ${locations.length} locations successfully`);
         res.json({ success: true, locations, count: locations.length });
     } catch (error: any) {
-        console.error('Mapon locations API error:', error.response?.data || error.message);
+        console.error('[Mapon] locations API error:', error.response?.data || error.message);
         res.status(500).json({ 
             success: false, 
             error: 'Failed to fetch locations from Mapon',

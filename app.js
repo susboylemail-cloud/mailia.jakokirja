@@ -9104,14 +9104,29 @@ function showGPSError(message) {
  * Update GPS markers on map
  */
 function updateGPSMarkers(drivers) {
-    if (!gpsMap) return;
+    if (!gpsMap) {
+        console.warn('GPS map not initialized');
+        return;
+    }
     
     // Clear old markers
     Object.values(gpsMarkers).forEach(marker => marker.remove());
     gpsMarkers = {};
     
-    // Add new markers
-    drivers.forEach(driver => {
+    // Filter drivers with valid coordinates (not 0,0 and within reasonable bounds)
+    const validDrivers = drivers.filter(d => {
+        const hasValidCoords = d.lat !== 0 && d.lon !== 0 && 
+                              Math.abs(d.lat) <= 90 && Math.abs(d.lon) <= 180;
+        if (!hasValidCoords) {
+            console.log(`Skipping driver ${d.name} - invalid coords: ${d.lat}, ${d.lon}`);
+        }
+        return hasValidCoords;
+    });
+    
+    console.log(`Updating map with ${validDrivers.length} valid drivers out of ${drivers.length} total`);
+    
+    // Add new markers for valid drivers
+    validDrivers.forEach(driver => {
         const icon = L.divIcon({
             className: 'gps-marker',
             html: `
@@ -9140,25 +9155,28 @@ function updateGPSMarkers(drivers) {
         gpsMarkers[driver.id] = marker;
     });
     
-    // Fit map to show all markers
-    if (drivers.length > 0) {
-        const bounds = L.latLngBounds(drivers.map(d => [d.lat, d.lon]));
+    // Fit map to show all markers, or keep default view if no valid markers
+    if (validDrivers.length > 0) {
+        const bounds = L.latLngBounds(validDrivers.map(d => [d.lat, d.lon]));
         gpsMap.fitBounds(bounds, { padding: [50, 50] });
+    } else {
+        console.log('No valid driver coordinates to display on map');
     }
 }
 
 /**
- * Render driver list
+ * Show GPS error message
  */
 function showGPSError(message) {
-    const listContainer = document.getElementById('gpsDriverList');
-    if (!listContainer) return;
-    
-    listContainer.innerHTML = `
-        <div class="gps-error">
-            <strong>Virhe:</strong> ${message}
-        </div>
-    `;
+    const driverList = document.getElementById('gpsDriverList');
+    if (driverList) {
+        driverList.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                <p>${message}</p>
+                <p style="font-size: 12px; margin-top: 10px;">Tarkista verkkoyhteys ja yritä uudelleen.</p>
+            </div>
+        `;
+    }
 }
 
 /**

@@ -723,21 +723,23 @@ window.addEventListener('DOMContentLoaded', async () => {
             // Verify the token is still valid by trying to fetch user data
             try {
                 await window.mailiaAPI.makeRequest('/auth/me');
+                console.log('[App] Session valid, initializing main app...');
                 // Token is valid, show main app (this handles all initialization)
                 await showMainApp();
             } catch (error) {
                 // Token is invalid, clear it and show login
-                console.log('Session expired, please login again');
+                console.error('[App] Session validation failed:', error);
                 await window.mailiaAPI.logout();
                 showLoginScreen();
             }
         } else {
             // Show login screen
+            console.log('[App] No session found, showing login screen');
             showLoginScreen();
         }
     } catch (error) {
         // If anything fails during initialization, show login screen
-        console.error('Initialization error:', error);
+        console.error('[App] Initialization error:', error);
         showLoginScreen();
     }
 });
@@ -2253,14 +2255,28 @@ function updateCheckboxVisibility() {
 
 async function showMainApp() {
     try {
+        console.log('[showMainApp] Starting initialization...');
+        
+        // Ensure main app container exists
+        const mainApp = document.getElementById('mainApp');
+        const loginScreen = document.getElementById('loginScreen');
+        
+        if (!mainApp || !loginScreen) {
+            throw new Error('Required DOM elements not found');
+        }
+        
         // Update UI with user info
         const user = window.mailiaAPI.getCurrentUser();
         if (user) {
-            console.log('Logged in as:', user.username, 'Role:', user.role);
+            console.log('[showMainApp] Logged in as:', user.username, 'Role:', user.role);
             userRole = user.role;
             isAuthenticated = true;
             // Save user role to sessionStorage for access in other functions
             sessionStorage.setItem('mailiaUserRole', user.role);
+        } else {
+            console.warn('[showMainApp] No user found, redirecting to login');
+            showLoginScreen();
+            return;
         }
 
         if (window.mailiaAPI) {
@@ -2268,127 +2284,138 @@ async function showMainApp() {
         }
         initializeWebSocketListeners();
     
-    // Start the phone rise up transition animation
-    const loginScreen = document.getElementById('loginScreen');
-    const mainApp = document.getElementById('mainApp');
-    
-    // Add rise up transition class
-    loginScreen.classList.add('zoom-transition');
-    
-    // Show main app and start slide-up animation from bottom
-    setTimeout(() => {
-        mainApp.style.display = 'block';
-        mainApp.classList.add('zoom-in');
-    }, 300);
-    
-    // Hide login screen completely after animation
-    setTimeout(() => {
-        loginScreen.style.display = 'none';
-    }, 1500);
-    
-    // Initialize dark mode toggle now that main app is visible
-    initializeDarkMode();
-    initializeLanguage();
-    
-    // Initialize logout button
-    initializeLogout();
-    
-    // Initialize settings dropdown
-    initializeSettings();
-    
-    // Initialize the main application
-    initializeTabs();
-    initializeRefreshButtons();
-    initializeMidnightReset();
-    await loadData();
-    await populateCircuitSelector(); // Wait for circuits to load from backend
-    
-    // Restore previously selected circuit after page refresh
-    const savedCircuit = localStorage.getItem('currentCircuit');
-    if (savedCircuit) {
-        console.log('Restoring circuit after page refresh:', savedCircuit);
-        try {
-            // Update the circuit selector display
-            const display = document.getElementById('circuitSelectDisplay');
-            const displayText = display?.querySelector('.circuit-display-text');
-            if (displayText) {
-                displayText.textContent = circuitNames[savedCircuit] || savedCircuit;
+        // Start the phone rise up transition animation
+        // Add rise up transition class
+        loginScreen.classList.add('zoom-transition');
+        
+        // Show main app and start slide-up animation from bottom
+        setTimeout(() => {
+            mainApp.style.display = 'block';
+            mainApp.classList.add('zoom-in');
+        }, 300);
+        
+        // Hide login screen completely after animation
+        setTimeout(() => {
+            loginScreen.style.display = 'none';
+        }, 1500);
+        
+        console.log('[showMainApp] Initializing UI components...');
+        
+        // Initialize dark mode toggle now that main app is visible
+        initializeDarkMode();
+        initializeLanguage();
+        
+        // Initialize logout button
+        initializeLogout();
+        
+        // Initialize settings dropdown
+        initializeSettings();
+        
+        // Initialize the main application
+        initializeTabs();
+        initializeRefreshButtons();
+        initializeMidnightReset();
+        await loadData();
+        await populateCircuitSelector(); // Wait for circuits to load from backend
+        
+        // Restore previously selected circuit after page refresh
+        const savedCircuit = localStorage.getItem('currentCircuit');
+        if (savedCircuit) {
+            console.log('[showMainApp] Restoring circuit:', savedCircuit);
+            try {
+                // Update the circuit selector display
+                const display = document.getElementById('circuitSelectDisplay');
+                const displayText = display?.querySelector('.circuit-display-text');
+                if (displayText) {
+                    displayText.textContent = circuitNames[savedCircuit] || savedCircuit;
+                }
+                // Load the circuit data
+                await loadCircuit(savedCircuit);
+            } catch (error) {
+                console.error('[showMainApp] Failed to restore circuit:', error);
+                // Clear invalid circuit from storage
+                localStorage.removeItem('currentCircuit');
             }
-            // Load the circuit data
-            await loadCircuit(savedCircuit);
-        } catch (error) {
-            console.error('Failed to restore circuit:', error);
-            // Clear invalid circuit from storage
-            localStorage.removeItem('currentCircuit');
         }
-    }
-    
-    initializeCircuitTracker();
-    initializeGPSTracking();
-    initializeEventListeners();
-    loadFavorites();
-    checkMidnightReset();
-    scheduleMidnightReset();
-    
-    // Initialize geolocation for weather
-    getLocationWeather();
-    
-    // Initialize offline mode for background sync and conflict resolution
-    await initializeOfflineMode();
-    
-    // Set initial view based on user role
-    const role = getEffectiveUserRole();
-    const circuitSelectorContainer = document.querySelector('.circuit-selector-container');
-    
-    // Initialize dashboard if user is admin or manager
-    if (role === 'admin' || role === 'manager') {
-        initializeDashboard();
-        // Reveal admin duplicates button
-        const btn = document.getElementById('adminDuplicatesBtn');
-        if (btn) btn.hidden = false;
-        // Check overlaps and toggle alert if needed
-        refreshAdminOverlapIndicator();
-    }
-    
-    // Show/hide admin-only tabs based on role
-    const adminTabs = document.querySelectorAll('.tab-button.admin-only');
-    if (role === 'admin' || role === 'manager') {
-        // Show all admin tabs
-        adminTabs.forEach(tab => {
-            tab.style.display = '';
-        });
-    } else {
-        // Hide admin tabs for regular users
-        adminTabs.forEach(tab => {
-            tab.style.display = 'none';
-        });
-    }
-    
-    if (role === 'admin' || role === 'manager') {
-        // Admin/Manager: Show tracker tab by default
-        const deliveryTab = document.getElementById('deliveryTab');
-        const trackerTab = document.getElementById('trackerTab');
-        const deliveryButton = document.querySelector('[data-tab="delivery"]');
-        const trackerButton = document.querySelector('[data-tab="tracker"]');
         
-        // Switch from delivery to tracker
-        if (deliveryTab) deliveryTab.classList.remove('active');
-        if (trackerTab) trackerTab.classList.add('active');
-        if (deliveryButton) deliveryButton.classList.remove('active');
-        if (trackerButton) trackerButton.classList.add('active');
+        console.log('[showMainApp] Initializing additional features...');
         
-        // Hide circuit selector for tracker view
-        if (circuitSelectorContainer) circuitSelectorContainer.style.display = 'none';
+        initializeCircuitTracker();
+        initializeGPSTracking();
+        initializeEventListeners();
+        loadFavorites();
+        checkMidnightReset();
+        scheduleMidnightReset();
         
-        // Render tracker
-        renderCircuitTracker();
-    } else {
-        // Regular driver: Show delivery tab (already active by default)
-        if (circuitSelectorContainer) circuitSelectorContainer.style.display = 'block';
-    }
+        // Initialize geolocation for weather
+        getLocationWeather();
+        
+        // Initialize offline mode for background sync and conflict resolution
+        await initializeOfflineMode();
+        
+        // Set initial view based on user role
+        const role = getEffectiveUserRole();
+        const circuitSelectorContainer = document.querySelector('.circuit-selector-container');
+        
+        console.log('[showMainApp] Setting up role-based UI for:', role);
+        
+        // Initialize dashboard if user is admin or manager
+        if (role === 'admin' || role === 'manager') {
+            initializeDashboard();
+            // Reveal admin duplicates button
+            const btn = document.getElementById('adminDuplicatesBtn');
+            if (btn) btn.hidden = false;
+            // Check overlaps and toggle alert if needed
+            refreshAdminOverlapIndicator();
+        }
+        
+        // Show/hide admin-only tabs based on role
+        const adminTabs = document.querySelectorAll('.tab-button.admin-only');
+        if (role === 'admin' || role === 'manager') {
+            // Show all admin tabs
+            adminTabs.forEach(tab => {
+                tab.style.display = '';
+            });
+        } else {
+            // Hide admin tabs for regular users
+            adminTabs.forEach(tab => {
+                tab.style.display = 'none';
+            });
+        }
+        
+        if (role === 'admin' || role === 'manager') {
+            // Admin/Manager: Show tracker tab by default
+            const deliveryTab = document.getElementById('deliveryTab');
+            const trackerTab = document.getElementById('trackerTab');
+            const deliveryButton = document.querySelector('[data-tab="delivery"]');
+            const trackerButton = document.querySelector('[data-tab="tracker"]');
+            
+            // Switch from delivery to tracker
+            if (deliveryTab) deliveryTab.classList.remove('active');
+            if (trackerTab) trackerTab.classList.add('active');
+            if (deliveryButton) deliveryButton.classList.remove('active');
+            if (trackerButton) trackerButton.classList.add('active');
+            
+            // Hide circuit selector for tracker view
+            if (circuitSelectorContainer) circuitSelectorContainer.style.display = 'none';
+            
+            // Render tracker
+            renderCircuitTracker();
+        } else {
+            // Regular driver: Show delivery tab (already active by default)
+            if (circuitSelectorContainer) circuitSelectorContainer.style.display = 'block';
+        }
+        
+        console.log('[showMainApp] Initialization complete!');
     } catch (error) {
-        console.error('Error in showMainApp:', error);
-        // If showMainApp fails, show login screen
+        console.error('[showMainApp] Error during initialization:', error);
+        // If showMainApp fails, ensure login screen is visible
+        const loginScreen = document.getElementById('loginScreen');
+        const mainApp = document.getElementById('mainApp');
+        if (loginScreen && mainApp) {
+            mainApp.style.display = 'none';
+            loginScreen.style.display = 'flex';
+        }
         showLoginScreen();
         throw error; // Re-throw to let caller know it failed
     }

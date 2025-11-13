@@ -24,7 +24,14 @@ router.get('/units', authenticate, async (req: AuthRequest, res: Response) => {
 
         if (response.data && response.data.data) {
             const units = response.data.data.units || [];
-            res.json({ success: true, units });
+            
+            // Transform units to include plateNumber in a consistent format
+            const transformedUnits = units.map((unit: any) => ({
+                ...unit,
+                plateNumber: unit.licence_number || unit.licenceNumber || unit.plateNumber || unit.plate_number || ''
+            }));
+            
+            res.json({ success: true, units: transformedUnits });
         } else {
             res.status(500).json({ success: false, error: 'Invalid response from Mapon API' });
         }
@@ -44,6 +51,7 @@ router.get('/units', authenticate, async (req: AuthRequest, res: Response) => {
  */
 router.get('/locations', authenticate, async (req: AuthRequest, res: Response) => {
     try {
+        console.log('[Mapon] Fetching locations from Mapon API...');
         const response = await axios.get(`${MAPON_API_BASE}/unit/list.json`, {
             params: {
                 key: MAPON_API_KEY,
@@ -53,14 +61,18 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
         });
 
         if (!response.data || !response.data.data) {
+            console.error('[Mapon] Invalid response structure:', response.data);
             return res.status(500).json({ success: false, error: 'Invalid response from Mapon API' });
         }
 
         const units = response.data.data.units || [];
+        console.log(`[Mapon] Received ${units.length} units from API`);
         
         // Log first unit to see structure (debug)
         if (units.length > 0) {
-            console.log('Sample Mapon unit data:', JSON.stringify(units[0], null, 2));
+            console.log('[Mapon] Sample unit data:', JSON.stringify(units[0], null, 2));
+        } else {
+            console.warn('[Mapon] No units returned from API');
         }
         
         // Transform Mapon data to our format
@@ -72,9 +84,13 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
             // Try multiple timestamp fields
             const dt_tracker = unit.dt_tracker || unit.dt_server || unit.dt_actual || unit.gprs_time || 0;
             
+            // Get license plate - try multiple field names used by Mapon
+            const plateNumber = unit.licence_number || unit.licenceNumber || unit.plateNumber || unit.plate_number || '';
+            
             return {
                 id: unit.unit_id,
                 name: unit.label || unit.number || `Unit ${unit.unit_id}`,
+                plateNumber: plateNumber,
                 circuit: extractCircuitFromName(unit.label || unit.number || ''),
                 lat,
                 lon,
@@ -94,14 +110,19 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
                     gprs_time: unit.gprs_time,
                     hasCoords: !!(lat && lon),
                     speed: unit.speed,
-                    ignition: unit.ignition
+                    ignition: unit.ignition,
+                    licence_number: unit.licence_number,
+                    licenceNumber: unit.licenceNumber,
+                    plateNumber: unit.plateNumber,
+                    plate_number: unit.plate_number
                 }
             };
         });
 
+        console.log(`[Mapon] Transformed ${locations.length} locations successfully`);
         res.json({ success: true, locations, count: locations.length });
     } catch (error: any) {
-        console.error('Mapon locations API error:', error.response?.data || error.message);
+        console.error('[Mapon] locations API error:', error.response?.data || error.message);
         res.status(500).json({ 
             success: false, 
             error: 'Failed to fetch locations from Mapon',

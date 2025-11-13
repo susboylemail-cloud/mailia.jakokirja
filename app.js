@@ -9037,7 +9037,9 @@ async function fetchDriverLocations() {
         const driverData = data.locations;
         
         console.log(`Fetched ${driverData.length} drivers:`, driverData.map(d => ({
+            id: d.id,
             name: d.name,
+            plateNumber: d.plateNumber,
             status: d.status,
             lat: d.lat,
             lon: d.lon,
@@ -9095,6 +9097,9 @@ function updateGPSMarkers(drivers) {
     
     // Add new markers
     drivers.forEach(driver => {
+        // Display priority: plateNumber > name for better vehicle identification
+        const displayName = driver.plateNumber || driver.name;
+        
         const icon = L.divIcon({
             className: 'gps-marker',
             html: `
@@ -9102,7 +9107,7 @@ function updateGPSMarkers(drivers) {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
                     </svg>
-                    <span class="gps-marker-label">${driver.name}</span>
+                    <span class="gps-marker-label">${displayName}</span>
                 </div>
             `,
             iconSize: [40, 40],
@@ -9112,7 +9117,7 @@ function updateGPSMarkers(drivers) {
         const marker = L.marker([driver.lat, driver.lon], { icon })
             .bindPopup(`
                 <div class="gps-popup">
-                    <strong>${driver.name}</strong><br>
+                    <strong>${displayName}</strong><br>
                     <em>${driver.circuit}</em><br>
                     Nopeus: ${driver.speed} km/h<br>
                     Päivitetty: ${formatTimeAgo(driver.lastUpdate)}
@@ -9189,11 +9194,14 @@ async function fetchVehiclesForSelection(selectElement, savedVehicle) {
             // Clear existing options except the first "Ei valittu"
             selectElement.innerHTML = '<option value="">Ei valittu</option>';
             
-            // Add vehicle options
+            // Add vehicle options - prioritize showing license plates
             data.units.forEach(unit => {
                 const option = document.createElement('option');
                 option.value = unit.unit_id;
-                option.textContent = unit.label || unit.number || `Auto ${unit.unit_id}`;
+                
+                // Display priority: plateNumber > label > number > fallback
+                const displayName = unit.plateNumber || unit.label || unit.number || `Auto ${unit.unit_id}`;
+                option.textContent = displayName;
                 
                 // Select saved vehicle if matches
                 if (savedVehicle && unit.unit_id.toString() === savedVehicle) {
@@ -9259,10 +9267,13 @@ function renderDriverListWithCircuits(drivers) {
             ? assignedCircuits.map(c => circuitNames[c] || c).join(', ')
             : 'Ei piiriä';
         
+        // Display priority: plateNumber > name for better vehicle identification
+        const displayName = driver.plateNumber || driver.name;
+        
         return `
         <div class="gps-driver-card ${driver.status === 'moving' ? 'active' : ''}">
             <div class="gps-driver-header">
-                <div class="gps-driver-name">${driver.name}</div>
+                <div class="gps-driver-name">${displayName}</div>
                 <div class="gps-driver-status ${driver.status}">
                     ${driver.status === 'moving' ? 'Liikkeessä' : driver.status === 'stopped' ? 'Pysähtynyt' : 'Offline'}
                 </div>

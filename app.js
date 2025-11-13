@@ -9216,16 +9216,33 @@ function showGPSError(message) {
  * Format time ago from date
  */
 function formatTimeAgo(date) {
+    if (!date) return 'Ei tiedossa';
+    
     // Handle if date is a string (from JSON)
     const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    // Check if date is valid and not from 1970 (Unix epoch 0)
+    if (isNaN(dateObj.getTime()) || dateObj.getFullYear() < 2000) {
+        return 'Ei tiedossa';
+    }
+    
     const seconds = Math.floor((new Date() - dateObj) / 1000);
+    
+    // If timestamp is in the future or negative, it's invalid
+    if (seconds < 0) return 'Ei tiedossa';
     
     if (seconds < 60) return 'juuri nyt';
     if (seconds < 120) return '1 minuutti sitten';
     if (seconds < 3600) return Math.floor(seconds / 60) + ' minuuttia sitten';
     if (seconds < 7200) return '1 tunti sitten';
     if (seconds < 86400) return Math.floor(seconds / 3600) + ' tuntia sitten';
-    return Math.floor(seconds / 86400) + ' päivää sitten';
+    
+    const days = Math.floor(seconds / 86400);
+    if (days === 1) return '1 päivä sitten';
+    if (days < 7) return days + ' päivää sitten';
+    
+    // If more than a week old, show as unknown (likely stale data)
+    return 'Yli viikko sitten';
 }
 
 /**

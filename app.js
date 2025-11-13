@@ -5537,6 +5537,9 @@ async function startRoute(circuitId) {
         // Clear cache to force reload
         delete allData[circuitId];
         await loadCircuit(circuitId);
+        
+        // Wait for DOM to update before showing animation
+        await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     // Show the subscriber list with cascading animation
@@ -5557,11 +5560,27 @@ async function startRoute(circuitId) {
 function showSubscriberListWithAnimation() {
     const subscriberList = document.getElementById('subscriberList');
     
+    if (!subscriberList) {
+        console.error('Subscriber list element not found');
+        return;
+    }
+    
     // Make the list visible
     subscriberList.style.display = 'block';
+    subscriberList.style.visibility = 'visible';
+    subscriberList.style.opacity = '1';
+    
+    console.log(`Showing subscriber list with animation`);
     
     // Get all subscriber cards
     const cards = subscriberList.querySelectorAll('.subscriber-card');
+    
+    console.log(`Found ${cards.length} subscriber cards to animate`);
+    
+    if (cards.length === 0) {
+        console.warn('No subscriber cards found - list may be empty');
+        return;
+    }
     
     // Add cascading animation to each card
     cards.forEach((card, index) => {

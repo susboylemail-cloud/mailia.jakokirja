@@ -80,25 +80,38 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
 
         const units = response.data.data.units || [];
         
-        // Log first unit to see structure (debug)
+        // Log ALL coordinate-related fields from first unit to diagnose the issue
         if (units.length > 0) {
-            console.log('Sample Mapon unit data:', JSON.stringify(units[0], null, 2));
+            console.log('=== MAPON API COORDINATE DEBUGGING ===');
+            console.log('Full first unit data:', JSON.stringify(units[0], null, 2));
+            console.log('Coordinate fields:');
+            console.log('  latitude:', units[0].latitude);
+            console.log('  longitude:', units[0].longitude);
+            console.log('  lat:', units[0].lat);
+            console.log('  lon:', units[0].lon);
+            console.log('  lng:', units[0].lng);
+            console.log('  gpslat:', units[0].gpslat);
+            console.log('  gpslon:', units[0].gpslon);
+            console.log('=====================================');
         }
         
         // Transform Mapon data to our format
         const locations = units.map((unit: any) => {
-            // Mapon API might return lat/lon or lon/lat - check the actual values
-            // For Finland: lat should be ~61, lon should be ~28
-            let lat = parseFloat(unit.latitude) || 0;
-            let lon = parseFloat(unit.longitude) || 0;
+            // Try different possible coordinate field names from Mapon API
+            let lat = parseFloat(unit.lat || unit.latitude || unit.gpslat || '0');
+            let lon = parseFloat(unit.lon || unit.lng || unit.longitude || unit.gpslon || '0');
             
-            // Detect if coordinates are swapped (Finland check: lat ~60-70, lon ~20-32)
+            console.log(`Unit ${unit.unit_id} (${unit.number}): Original coords = lat:${lat}, lon:${lon}`);
+            
+            // For Finland: lat should be ~60-70, lon should be ~20-32
+            // If we have valid coordinates but they seem swapped, fix them
             if (lat !== 0 && lon !== 0) {
-                // If lat is in longitude range and lon is in latitude range, swap them
-                if (Math.abs(lat) < 50 && Math.abs(lon) > 50) {
-                    console.log(`Swapping coordinates for unit ${unit.unit_id}: was (${lat}, ${lon})`);
+                // If latitude value is in typical longitude range (20-32) and 
+                // longitude value is in typical latitude range (60-70), they're swapped
+                if (lat >= 20 && lat <= 32 && lon >= 60 && lon <= 70) {
+                    console.log(`  -> SWAPPING: lat ${lat} is in lon range, lon ${lon} is in lat range`);
                     [lat, lon] = [lon, lat];
-                    console.log(`Now: (${lat}, ${lon})`);
+                    console.log(`  -> After swap: lat:${lat}, lon:${lon}`);
                 }
             }
             

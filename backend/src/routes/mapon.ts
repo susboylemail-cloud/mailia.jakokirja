@@ -24,7 +24,14 @@ router.get('/units', authenticate, async (req: AuthRequest, res: Response) => {
 
         if (response.data && response.data.data) {
             const units = response.data.data.units || [];
-            res.json({ success: true, units });
+            
+            // Transform units to include plateNumber in a consistent format
+            const transformedUnits = units.map((unit: any) => ({
+                ...unit,
+                plateNumber: unit.licence_number || unit.licenceNumber || unit.plateNumber || unit.plate_number || ''
+            }));
+            
+            res.json({ success: true, units: transformedUnits });
         } else {
             res.status(500).json({ success: false, error: 'Invalid response from Mapon API' });
         }
@@ -72,9 +79,13 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
             // Try multiple timestamp fields
             const dt_tracker = unit.dt_tracker || unit.dt_server || unit.dt_actual || unit.gprs_time || 0;
             
+            // Get license plate - try multiple field names used by Mapon
+            const plateNumber = unit.licence_number || unit.licenceNumber || unit.plateNumber || unit.plate_number || '';
+            
             return {
                 id: unit.unit_id,
                 name: unit.label || unit.number || `Unit ${unit.unit_id}`,
+                plateNumber: plateNumber,
                 circuit: extractCircuitFromName(unit.label || unit.number || ''),
                 lat,
                 lon,
@@ -94,7 +105,11 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
                     gprs_time: unit.gprs_time,
                     hasCoords: !!(lat && lon),
                     speed: unit.speed,
-                    ignition: unit.ignition
+                    ignition: unit.ignition,
+                    licence_number: unit.licence_number,
+                    licenceNumber: unit.licenceNumber,
+                    plateNumber: unit.plateNumber,
+                    plate_number: unit.plate_number
                 }
             };
         });

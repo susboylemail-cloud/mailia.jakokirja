@@ -3868,6 +3868,76 @@ function renderCoverSheet(circuitId, subscribers) {
     
     productCounts.appendChild(mapButton);
     
+    // Add vehicle selection dropdown
+    const vehicleSelector = document.createElement('div');
+    vehicleSelector.className = 'vehicle-selector';
+    vehicleSelector.style.cssText = `
+        width: 100%;
+        margin-bottom: 1rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.75rem;
+    `;
+    
+    const vehicleLabel = document.createElement('label');
+    vehicleLabel.style.cssText = `
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    `;
+    vehicleLabel.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 0.5rem;">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+            <circle cx="7" cy="17" r="2"></circle>
+            <circle cx="17" cy="17" r="2"></circle>
+        </svg>
+        Valitse auto
+    `;
+    
+    const vehicleSelect = document.createElement('select');
+    vehicleSelect.id = 'vehicleSelect';
+    vehicleSelect.style.cssText = `
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-color);
+        color: var(--text-color);
+        font-size: 0.95rem;
+        cursor: pointer;
+    `;
+    
+    // Get saved vehicle for this circuit
+    const savedVehicle = localStorage.getItem(`vehicle_${circuitId}`);
+    
+    // Add default option
+    vehicleSelect.innerHTML = '<option value="">Ei valittu</option>';
+    
+    // Vehicle select will be populated when vehicles are fetched
+    vehicleSelect.dataset.circuitId = circuitId;
+    
+    vehicleSelector.appendChild(vehicleLabel);
+    vehicleSelector.appendChild(vehicleSelect);
+    productCounts.appendChild(vehicleSelector);
+    
+    // Fetch and populate vehicle list
+    fetchVehiclesForSelection(vehicleSelect, savedVehicle);
+    
+    // Save selection on change
+    vehicleSelect.addEventListener('change', (e) => {
+        const selectedVehicle = e.target.value;
+        if (selectedVehicle) {
+            localStorage.setItem(`vehicle_${circuitId}`, selectedVehicle);
+            showNotificationEnhanced(`Auto ${e.target.selectedOptions[0].text} valittu`, 'success');
+            triggerHaptic('light');
+        } else {
+            localStorage.removeItem(`vehicle_${circuitId}`);
+        }
+    });
+    
     // Add product badges
     Object.entries(products).sort().forEach(([product, count]) => {
         const badge = document.createElement('div');
@@ -9106,6 +9176,67 @@ function formatTimeAgo(date) {
     if (seconds < 3600) return Math.floor(seconds / 60) + ' minuuttia sitten';
     if (seconds < 7200) return '1 tunti sitten';
     return Math.floor(seconds / 3600) + ' tuntia sitten';
+}
+
+/**
+ * Fetch vehicles from Mapon API and populate select dropdown
+ */
+async function fetchVehiclesForSelection(selectElement, savedVehicle) {
+    try {
+        const token = sessionStorage.getItem('mailiaAuthToken');
+        if (!token) {
+            console.warn('No auth token for vehicle fetch');
+            return;
+        }
+        
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const apiBaseUrl = isProduction ? '/api' : 'http://localhost:3000/api';
+        
+        const response = await fetch(`${apiBaseUrl}/mapon/units`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch vehicles');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.units) {
+            // Clear existing options except the first "Ei valittu"
+            selectElement.innerHTML = '<option value="">Ei valittu</option>';
+            
+            // Add vehicle options
+            data.units.forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit.unit_id;
+                option.textContent = unit.label || unit.number || `Auto ${unit.unit_id}`;
+                
+                // Select saved vehicle if matches
+                if (savedVehicle && unit.unit_id.toString() === savedVehicle) {
+                    option.selected = true;
+                }
+                
+                selectElement.appendChild(option);
+            });
+            
+            console.log(`Loaded ${data.units.length} vehicles for selection`);
+        }
+    } catch (error) {
+        console.error('Failed to fetch vehicles:', error);
+        // Keep the default "Ei valittu" option
+    }
+}
+
+/**
+ * Get selected vehicle ID for a circuit
+ */
+function getSelectedVehicleForCircuit(circuitId) {
+    return localStorage.getItem(`vehicle_${circuitId}`);
 }
 
 

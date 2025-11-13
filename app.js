@@ -2259,14 +2259,14 @@ async function showMainApp() {
             console.log('Logged in as:', user.username, 'Role:', user.role);
             userRole = user.role;
             isAuthenticated = true;
-        // Save user role to sessionStorage for access in other functions
-        sessionStorage.setItem('mailiaUserRole', user.role);
-    }
+            // Save user role to sessionStorage for access in other functions
+            sessionStorage.setItem('mailiaUserRole', user.role);
+        }
 
-    if (window.mailiaAPI) {
-        window.mailiaAPI.connectWebSocket();
-    }
-    initializeWebSocketListeners();
+        if (window.mailiaAPI) {
+            window.mailiaAPI.connectWebSocket();
+        }
+        initializeWebSocketListeners();
     
     // Start the phone rise up transition animation
     const loginScreen = document.getElementById('loginScreen');

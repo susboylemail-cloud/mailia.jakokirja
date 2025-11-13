@@ -1643,6 +1643,11 @@ body.dark-mode header {
     object-fit: contain;
 }
 
+/* Improve SVG icon visibility with thicker strokes */
+svg {
+    stroke-width: 2.5;
+}
+
 /* Quick dial and icon buttons */
 .quick-dial {
     display: flex;

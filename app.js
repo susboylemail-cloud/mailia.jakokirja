@@ -5950,6 +5950,7 @@ async function renderCircuitTracker() {
         const tracker = document.getElementById('circuitTracker');
         if (!tracker) {
             console.error('circuitTracker element not found');
+            isRenderingTracker = false;
             return;
         }
         
@@ -5988,6 +5989,7 @@ async function renderCircuitTracker() {
                 title: 'Ei piirejä',
                 message: 'Jakelupiirejä ei ole vielä määritetty. Ota yhteyttä järjestelmänvalvojaan.'
             });
+            isRenderingTracker = false;
             return;
         }
         
@@ -5997,6 +5999,11 @@ async function renderCircuitTracker() {
         }
     } catch (error) {
         console.error('Error rendering circuit tracker:', error);
+        // Display error message instead of leaving loading state
+        const tracker = document.getElementById('circuitTracker');
+        if (tracker) {
+            tracker.innerHTML = '<div class="error-state" style="padding: 20px; text-align: center; color: var(--text-secondary);">Virhe ladattaessa piirejä. Päivitä sivu.</div>';
+        }
     } finally {
         isRenderingTracker = false;
     }
@@ -9004,12 +9011,15 @@ async function fetchDriverLocations() {
         const token = sessionStorage.getItem('mailiaAuthToken');
         
         if (!token) {
+            console.error('No auth token for GPS tracking');
             throw new Error('Ei todennusta');
         }
         
         // Determine API URL based on environment
         const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         const apiBaseUrl = isProduction ? '/api' : 'http://localhost:3000/api';
+        
+        console.log(`Fetching driver locations from ${apiBaseUrl}/mapon/locations`);
         
         // Call backend API that proxies Mapon
         const response = await fetch(`${apiBaseUrl}/mapon/locations`, {
@@ -9022,15 +9032,16 @@ async function fetchDriverLocations() {
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('API error response:', errorText);
+            console.error('GPS API error response:', errorText);
             throw new Error(`API error: ${response.status}`);
         }
         
         const data = await response.json();
         
-        console.log('Mapon API response:', data);
+        console.log('GPS Mapon API response:', data);
         
         if (!data.success || !data.locations) {
+            console.error('Invalid GPS response:', data);
             throw new Error('Virheellinen vastaus palvelimelta');
         }
         
@@ -9171,6 +9182,8 @@ async function fetchVehiclesForSelection(selectElement, savedVehicle) {
         const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         const apiBaseUrl = isProduction ? '/api' : 'http://localhost:3000/api';
         
+        console.log(`Fetching vehicles from ${apiBaseUrl}/mapon/units`);
+        
         const response = await fetch(`${apiBaseUrl}/mapon/units`, {
             method: 'GET',
             headers: {
@@ -9180,10 +9193,13 @@ async function fetchVehiclesForSelection(selectElement, savedVehicle) {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to fetch vehicles');
+            const errorText = await response.text();
+            console.error('Vehicle fetch error:', response.status, errorText);
+            throw new Error(`Failed to fetch vehicles: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log('Vehicle data received:', data);
         
         if (data.success && data.units) {
             // Clear existing options except the first "Ei valittu"
@@ -9204,6 +9220,8 @@ async function fetchVehiclesForSelection(selectElement, savedVehicle) {
             });
             
             console.log(`Loaded ${data.units.length} vehicles for selection`);
+        } else {
+            console.warn('Vehicle fetch returned no units or success=false:', data);
         }
     } catch (error) {
         console.error('Failed to fetch vehicles:', error);

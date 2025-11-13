@@ -6144,8 +6144,26 @@ function getCircuitStatus(circuitId, routeData) {
 }
 
 function getCircuitStatusText(circuitId, status, routeData) {
+    // Get vehicle assignment for this circuit
+    const vehicleId = getSelectedVehicleForCircuit(circuitId);
+    let vehicleText = '';
+    
+    if (vehicleId) {
+        // Try to get vehicle name from cache (if available)
+        const vehicleSelect = document.querySelector(`select[data-circuit-id="${circuitId}"]`);
+        if (vehicleSelect) {
+            const selectedOption = vehicleSelect.querySelector(`option[value="${vehicleId}"]`);
+            if (selectedOption) {
+                vehicleText = ` • ${selectedOption.textContent}`;
+            }
+        }
+        if (!vehicleText) {
+            vehicleText = ` • Auto #${vehicleId}`;
+        }
+    }
+    
     if (status === 'not-started') {
-        return 'Ei aloitettu';
+        return vehicleText ? `Ei aloitettu${vehicleText}` : 'Ei aloitettu';
     } else if (status === 'in-progress') {
         let startTime;
         
@@ -6162,9 +6180,9 @@ function getCircuitStatusText(circuitId, status, routeData) {
         }
         
         if (startTime) {
-            return `Aloitettu: ${formatTime(startTime)}`;
+            return `Aloitettu: ${formatTime(startTime)}${vehicleText}`;
         }
-        return 'Käynnissä';
+        return vehicleText ? `Käynnissä${vehicleText}` : 'Käynnissä';
     } else {
         // Completed - show completion time
         let endTime;
@@ -6182,9 +6200,9 @@ function getCircuitStatusText(circuitId, status, routeData) {
         }
         
         if (endTime) {
-            return `Valmis: ${formatTime(endTime)}`;
+            return `Valmis: ${formatTime(endTime)}${vehicleText}`;
         }
-        return 'Valmis';
+        return vehicleText ? `Valmis${vehicleText}` : 'Valmis';
     }
 }
 
@@ -9026,10 +9044,22 @@ async function fetchDriverLocations() {
             rawData: d.rawData
         })));
         
-        // Update map markers
-        updateGPSMarkers(driverData);
+        // Get current circuit (if any) to check if we should filter
+        const currentCircuit = localStorage.getItem('currentCircuit');
+        const selectedVehicle = currentCircuit ? getSelectedVehicleForCircuit(currentCircuit) : null;
         
-        // Update driver list
+        // Filter driver data if a vehicle is selected for current circuit
+        let filteredDrivers = driverData;
+        if (selectedVehicle) {
+            filteredDrivers = driverData.filter(d => d.id.toString() === selectedVehicle);
+            console.log(`Filtering to selected vehicle ${selectedVehicle} for circuit ${currentCircuit}. Showing ${filteredDrivers.length} vehicle(s).`);
+        }
+        
+        // Update map markers
+        updateGPSMarkers(filteredDrivers);
+        
+        // Update driver list - always show all drivers with circuit assignments
+        renderDriverListWithCircuits(driverData);
         renderDriverList(driverData);
         
     } catch (error) {
@@ -9237,6 +9267,87 @@ async function fetchVehiclesForSelection(selectElement, savedVehicle) {
  */
 function getSelectedVehicleForCircuit(circuitId) {
     return localStorage.getItem(`vehicle_${circuitId}`);
+}
+
+/**
+ * Get all circuit-vehicle assignments
+ */
+function getAllVehicleAssignments() {
+    const assignments = {};
+    // Check all localStorage keys for vehicle assignments
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('vehicle_')) {
+            const circuitId = key.replace('vehicle_', '');
+            const vehicleId = localStorage.getItem(key);
+            if (vehicleId) {
+                assignments[vehicleId] = assignments[vehicleId] || [];
+                assignments[vehicleId].push(circuitId);
+            }
+        }
+    }
+    return assignments;
+}
+
+/**
+ * Render driver list with circuit assignments
+ */
+function renderDriverListWithCircuits(drivers) {
+    const listContainer = document.getElementById('gpsDriverList');
+    if (!listContainer) return;
+    
+    if (drivers.length === 0) {
+        listContainer.innerHTML = '<p style="text-align: center; color: var(--medium-gray);">Ei aktiivisia jakelijoita</p>';
+        return;
+    }
+    
+    // Get all vehicle assignments
+    const vehicleAssignments = getAllVehicleAssignments();
+    
+    listContainer.innerHTML = drivers.map(driver => {
+        const assignedCircuits = vehicleAssignments[driver.id.toString()] || [];
+        const circuitText = assignedCircuits.length > 0 
+            ? assignedCircuits.map(c => circuitNames[c] || c).join(', ')
+            : 'Ei piiriä';
+        
+        return `
+        <div class="gps-driver-card ${driver.status === 'moving' ? 'active' : ''}">
+            <div class="gps-driver-header">
+                <div class="gps-driver-name">${driver.name}</div>
+                <div class="gps-driver-status ${driver.status}">
+                    ${driver.status === 'moving' ? 'Liikkeessä' : driver.status === 'stopped' ? 'Pysähtynyt' : 'Offline'}
+                </div>
+            </div>
+            <div class="gps-driver-info">
+                <div class="gps-info-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="10" r="3"/>
+                        <path d="M12 2a8 8 0 0 0-8 8c0 4.5 8 12 8 12s8-7.5 8-12a8 8 0 0 0-8-8z"/>
+                    </svg>
+                    <span>Piiri:</span>
+                    <span class="gps-info-value" style="font-weight: ${assignedCircuits.length > 0 ? '600' : 'normal'}; color: ${assignedCircuits.length > 0 ? 'var(--primary-blue)' : 'var(--text-secondary)'};">${circuitText}</span>
+                </div>
+                <div class="gps-info-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/>
+                        <circle cx="17" cy="17" r="2"/>
+                    </svg>
+                    <span>Nopeus:</span>
+                    <span class="gps-info-value">${driver.speed} km/h</span>
+                </div>
+                <div class="gps-info-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Päivitetty:</span>
+                    <span class="gps-info-value">${formatTimeAgo(driver.lastUpdate)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    }).join('');
 }
 
 

@@ -511,9 +511,6 @@ function celebrateRouteCompletion() {
     // Show confetti
     showConfetti(3000, 60);
     
-    // Show checkmark
-    showSuccessCheckmark(1500);
-    
     // Flash background
     document.body.classList.add('celebration-flash');
     setTimeout(() => {
@@ -4941,9 +4938,6 @@ function initializeEventListeners() {
     // Initialize message swipe functionality
     initializeMessageSwipe();
     
-    // Initialize Floating Action Button
-    initializeFAB();
-    
     // Initialize Pull-to-Refresh
     initializePullToRefresh();
 }
@@ -5043,107 +5037,6 @@ function initializePullToRefresh() {
 // ========================================
 // FLOATING ACTION BUTTON (FAB)
 // ========================================
-function initializeFAB() {
-    const fab = document.getElementById('fab');
-    const fabButton = document.getElementById('fabButton');
-    const fabActions = document.getElementById('fabActions');
-    const fabStartRoute = document.getElementById('fabStartRoute');
-    const fabCompleteRoute = document.getElementById('fabCompleteRoute');
-    const fabReport = document.getElementById('fabReport');
-    
-    if (!fab || !fabButton) return;
-    
-    let isOpen = false;
-    
-    // Toggle FAB menu
-    fabButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isOpen = !isOpen;
-        
-        if (isOpen) {
-            fabButton.classList.add('active');
-            fabActions.classList.remove('hidden');
-            setTimeout(() => fabActions.classList.add('show'), 10);
-            triggerHaptic('light');
-        } else {
-            closeFAB();
-        }
-    });
-    
-    // Close FAB when clicking outside
-    document.addEventListener('click', (e) => {
-        if (isOpen && !fab.contains(e.target)) {
-            closeFAB();
-        }
-    });
-    
-    function closeFAB() {
-        isOpen = false;
-        fabButton.classList.remove('active');
-        fabActions.classList.remove('show');
-        setTimeout(() => fabActions.classList.add('hidden'), 300);
-    }
-    
-    // FAB Actions
-    if (fabStartRoute) {
-        fabStartRoute.addEventListener('click', () => {
-            triggerHaptic('medium');
-            if (currentCircuit) {
-                startRoute(currentCircuit);
-                closeFAB();
-            } else {
-                showNotificationEnhanced('Valitse ensin piiri', 'error');
-            }
-        });
-    }
-    
-    if (fabCompleteRoute) {
-        fabCompleteRoute.addEventListener('click', () => {
-            triggerHaptic('medium');
-            if (currentCircuit) {
-                completeRoute(currentCircuit);
-                closeFAB();
-            } else {
-                showNotificationEnhanced('Valitse ensin piiri', 'error');
-            }
-        });
-    }
-    
-    if (fabReport) {
-        fabReport.addEventListener('click', () => {
-            triggerHaptic('light');
-            const reportBtn = document.getElementById('reportBtn');
-            if (reportBtn) {
-                reportBtn.click();
-                closeFAB();
-            }
-        });
-    }
-    
-    // Show/hide FAB based on current tab and mobile view
-    updateFABVisibility();
-}
-
-function updateFABVisibility() {
-    const fab = document.getElementById('fab');
-    if (!fab) return;
-    
-    const deliveryTab = document.getElementById('deliveryTab');
-    const isDeliveryTabActive = deliveryTab && deliveryTab.classList.contains('active');
-    const isMobile = window.innerWidth <= 768;
-    const hasCircuit = !!currentCircuit;
-    
-    if (isMobile && isDeliveryTabActive && hasCircuit) {
-        fab.classList.remove('hidden');
-    } else {
-        fab.classList.add('hidden');
-    }
-}
-
-// Call updateFABVisibility when needed
-if (typeof window !== 'undefined') {
-    window.addEventListener('resize', updateFABVisibility);
-}
 
 // Quick route optimization without map
 async function quickOptimizeRoute() {

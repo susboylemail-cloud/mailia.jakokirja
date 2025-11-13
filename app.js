@@ -3898,7 +3898,8 @@ function renderCoverSheet(circuitId, subscribers) {
     `;
     
     const vehicleSelect = document.createElement('select');
-    vehicleSelect.id = 'vehicleSelect';
+    const sanitizedCircuitId = circuitId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    vehicleSelect.id = `vehicleSelect_${sanitizedCircuitId}`;
     vehicleSelect.style.cssText = `
         width: 100%;
         padding: 0.5rem;
@@ -9058,9 +9059,8 @@ async function fetchDriverLocations() {
         // Update map markers
         updateGPSMarkers(filteredDrivers);
         
-        // Update driver list - always show all drivers with circuit assignments
-        renderDriverListWithCircuits(driverData);
-        renderDriverList(driverData);
+    // Update driver list - always show all drivers with circuit assignments
+    renderDriverListWithCircuits(driverData);
         
     } catch (error) {
         console.error('Failed to fetch driver locations:', error);
@@ -9132,57 +9132,6 @@ function updateGPSMarkers(drivers) {
 
 /**
  * Render driver list
- */
-function renderDriverList(drivers) {
-    const listContainer = document.getElementById('gpsDriverList');
-    if (!listContainer) return;
-    
-    if (drivers.length === 0) {
-        listContainer.innerHTML = '<p style="text-align: center; color: var(--medium-gray);">Ei aktiivisia jakelijoita</p>';
-        return;
-    }
-    
-    listContainer.innerHTML = drivers.map(driver => `
-        <div class="gps-driver-card ${driver.status === 'moving' ? 'active' : ''}">
-            <div class="gps-driver-header">
-                <div class="gps-driver-name">${driver.name}</div>
-                <div class="gps-driver-status ${driver.status}">
-                    ${driver.status === 'moving' ? 'Liikkeessä' : driver.status === 'stopped' ? 'Pysähtynyt' : 'Offline'}
-                </div>
-            </div>
-            <div class="gps-driver-info">
-                <div class="gps-info-row">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="10" r="3"/>
-                        <path d="M12 2a8 8 0 0 0-8 8c0 4.5 8 12 8 12s8-7.5 8-12a8 8 0 0 0-8-8z"/>
-                    </svg>
-                    <span>Piiri:</span>
-                    <span class="gps-info-value">${driver.circuit}</span>
-                </div>
-                <div class="gps-info-row">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
-                        <circle cx="7" cy="17" r="2"/>
-                        <circle cx="17" cy="17" r="2"/>
-                    </svg>
-                    <span>Nopeus:</span>
-                    <span class="gps-info-value">${driver.speed} km/h</span>
-                </div>
-                <div class="gps-info-row">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span>Päivitetty:</span>
-                    <span class="gps-info-value">${formatTimeAgo(driver.lastUpdate)}</span>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-/**
- * Show GPS error message
  */
 function showGPSError(message) {
     const listContainer = document.getElementById('gpsDriverList');

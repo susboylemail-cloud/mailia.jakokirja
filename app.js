@@ -9085,9 +9085,12 @@ async function fetchDriverLocations() {
             status: d.status,
             lat: d.lat,
             lon: d.lon,
+            speed: d.speed,
             lastUpdate: d.lastUpdate,
             rawData: d.rawData
         })));
+        
+        console.log(`[GPS] Updating UI at ${new Date().toLocaleTimeString()}`);
         
         // Get current circuit (if any) to check if we should filter
         const currentCircuit = localStorage.getItem('currentCircuit');
@@ -9209,14 +9212,20 @@ function showGPSError(message) {
 /**
  * Format time ago helper
  */
+/**
+ * Format time ago from date
+ */
 function formatTimeAgo(date) {
-    const seconds = Math.floor((new Date() - date) / 1000);
+    // Handle if date is a string (from JSON)
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const seconds = Math.floor((new Date() - dateObj) / 1000);
     
     if (seconds < 60) return 'juuri nyt';
     if (seconds < 120) return '1 minuutti sitten';
     if (seconds < 3600) return Math.floor(seconds / 60) + ' minuuttia sitten';
     if (seconds < 7200) return '1 tunti sitten';
-    return Math.floor(seconds / 3600) + ' tuntia sitten';
+    if (seconds < 86400) return Math.floor(seconds / 3600) + ' tuntia sitten';
+    return Math.floor(seconds / 86400) + ' päivää sitten';
 }
 
 /**
@@ -9360,7 +9369,7 @@ function renderDriverListWithCircuits(drivers) {
                         <polyline points="12 6 12 12 16 14"/>
                     </svg>
                     <span>Päivitetty:</span>
-                    <span class="gps-info-value">${formatTimeAgo(driver.lastUpdate)}</span>
+                    <span class="gps-info-value">${driver.lastUpdate ? formatTimeAgo(driver.lastUpdate) : 'Ei tiedossa'}</span>
                 </div>
             </div>
         </div>

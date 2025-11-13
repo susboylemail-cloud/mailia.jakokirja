@@ -117,8 +117,14 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
             
             const speed = parseFloat(unit.speed) || 0;
             
-            // Try multiple timestamp fields
+            // Try multiple timestamp fields (Mapon uses Unix timestamps in seconds)
             const dt_tracker = unit.dt_tracker || unit.dt_server || unit.dt_actual || unit.gprs_time || 0;
+            
+            // Create proper date object, or null if no valid timestamp
+            let lastUpdate: Date | null = null;
+            if (dt_tracker && dt_tracker > 0) {
+                lastUpdate = new Date(dt_tracker * 1000); // Convert Unix timestamp to milliseconds
+            }
             
             // Extract license plate from 'number' field (e.g., "XPH-945")
             const licensePlate = unit.number || unit.label || `Unit ${unit.unit_id}`;
@@ -133,7 +139,8 @@ router.get('/locations', authenticate, async (req: AuthRequest, res: Response) =
                 speed,
                 heading: parseFloat(unit.angle) || 0,
                 status: determineStatus(unit),
-                lastUpdate: dt_tracker ? new Date(dt_tracker * 1000) : new Date(),
+                lastUpdate: lastUpdate ? lastUpdate.toISOString() : null, // Send as ISO string for JSON
+                lastUpdateTimestamp: dt_tracker, // Include raw timestamp for debugging
                 // Additional data
                 ignition: unit.ignition === 1,
                 satellites: unit.satellites || 0,

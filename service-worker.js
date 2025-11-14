@@ -10,10 +10,10 @@ const MAX_OSM_TILE_ENTRIES = 256; // Respectful limit for client-side caching
 const STATIC_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=83',
-    '/api.js?v=83',
-    '/app.js?v=83',
-    '/translations.js?v=83',
+    '/style.css?v=84',
+    '/api.js?v=84',
+    '/app.js?v=84',
+    '/translations.js?v=84',
     '/manifest.json?v=79',
     '/icons/icon-192.png',
     '/icons/icon-512.png'

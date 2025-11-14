@@ -1,13 +1,49 @@
+const APP_ASSET_VERSION = 'v84';
+let hardReloadScheduled = false;
+
+async function clearMailiaCaches() {
+    if (!('caches' in window)) {
+        return;
+    }
+    try {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+            cacheNames.map((name) => {
+                if (name && name.startsWith('mailia-')) {
+                    console.log('[App] Deleting cache during hard refresh:', name);
+                    return caches.delete(name);
+                }
+                return undefined;
+            })
+        );
+    } catch (error) {
+        console.error('[App] Failed to clear caches during hard refresh:', error);
+    }
+}
+
+function scheduleHardReload(reason = 'update-ready') {
+    if (hardReloadScheduled) {
+        return;
+    }
+    hardReloadScheduled = true;
+    console.log(`[App] Forcing hard reload (${reason})`);
+    setTimeout(() => window.location.reload(true), 200);
+}
+
 // Service Worker Cache Update Handler
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'CACHE_UPDATED') {
             console.log('[App] Cache updated to version:', event.data.version);
-            // Show a subtle notification that new version is available
             const statusEl = document.getElementById('statusUpdates');
             if (statusEl) {
                 statusEl.textContent = 'Uusi versio ladattu - päivitä sivu nähdäksesi muutokset';
             }
+            (async () => {
+                await clearMailiaCaches();
+                localStorage.setItem('appCacheVersion', APP_ASSET_VERSION);
+                scheduleHardReload('service-worker-cache-update');
+            })();
         }
     });
 }
@@ -429,29 +465,6 @@ function showConfetti(duration = 3000, particleCount = 50) {
 }
 
 /**
- * Show success checkmark overlay
- * @param {number} duration - Duration in milliseconds
- */
-function showSuccessCheckmark(duration = 1500) {
-    const checkmark = document.createElement('div');
-    checkmark.className = 'success-checkmark';
-    checkmark.innerHTML = `
-        <svg viewBox="0 0 52 52">
-            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-        </svg>
-    `;
-    document.body.appendChild(checkmark);
-    
-    setTimeout(() => {
-        checkmark.style.opacity = '0';
-        checkmark.style.transform = 'translate(-50%, -50%) scale(0.8)';
-        checkmark.style.transition = 'all 0.3s ease';
-        setTimeout(() => checkmark.remove(), 300);
-    }, duration);
-}
-
-/**
  * Add success pulse to button
  * @param {HTMLElement} button - Button element
  */
@@ -510,8 +523,6 @@ function createSuccessRipple(event, color = 'var(--primary-green)') {
 function celebrateRouteCompletion() {
     // Show confetti
     showConfetti(3000, 60);
-    
-    // Removed duplicate checkmark - routeCompleteLoader handles the checkmark display
     
     // Flash background
     document.body.classList.add('celebration-flash');
@@ -686,33 +697,13 @@ function getEffectiveUserRole() {
 // ============= Backend Integration =============
 // Check if user is already logged in
 window.addEventListener('DOMContentLoaded', async () => {
-    // Force clear old cache versions on initial load
-    const expectedVersion = 'v84';
     const currentVersion = localStorage.getItem('appCacheVersion');
-    
-    if (currentVersion !== expectedVersion) {
-        console.log(`[App] Version mismatch (${currentVersion} → ${expectedVersion}), clearing caches...`);
-        
-        // Clear service worker caches
-        if ('caches' in window) {
-            const cacheNames = await caches.keys();
-            await Promise.all(
-                cacheNames.map(name => {
-                    if (name.startsWith('mailia-')) {
-                        console.log('[App] Deleting cache:', name);
-                        return caches.delete(name);
-                    }
-                })
-            );
-        }
-        
-        // Update version marker
-        localStorage.setItem('appCacheVersion', expectedVersion);
-        
-        // Force reload to get fresh assets
+    if (currentVersion !== APP_ASSET_VERSION) {
+        console.log(`[App] Version mismatch (${currentVersion} → ${APP_ASSET_VERSION}), clearing caches...`);
+        await clearMailiaCaches();
+        localStorage.setItem('appCacheVersion', APP_ASSET_VERSION);
         if (currentVersion !== null) {
-            console.log('[App] Reloading with fresh cache...');
-            window.location.reload(true);
+            scheduleHardReload('version-mismatch');
             return;
         }
     }
@@ -5639,47 +5630,11 @@ async function completeRoute(circuitId) {
     // Show celebration animation
     celebrateRouteCompletion();
     
-    // Show success animation loader
-    const loader = document.getElementById('routeCompleteLoader');
-    if (loader) {
-        loader.style.display = 'flex';
-        loader.style.position = 'fixed';
-        loader.style.top = '0';
-        loader.style.left = '0';
-        loader.style.width = '100%';
-        loader.style.height = '100%';
-    }
-    
     // Save completion time
     localStorage.setItem(key, now.toISOString());
     
     // Hide subscriber cards with cascading animation
     hideSubscriberListWithAnimation();
-    
-    // Calculate total animation time for hiding cards
-    const subscriberList = document.getElementById('subscriberList');
-    const cards = subscriberList.querySelectorAll('.subscriber-card');
-    const totalAnimationTime = cards.length * 40 + 400; // Match hideSubscriberListWithAnimation timing
-    
-    // Keep success animation visible for 1.5 seconds total, then fade out
-    const displayDuration = Math.max(1500, totalAnimationTime);
-    
-    setTimeout(() => {
-        if (loader) {
-            loader.style.opacity = '0';
-            loader.style.transition = 'opacity 0.4s ease-out';
-            setTimeout(() => {
-                loader.style.display = 'none';
-                loader.style.opacity = '';
-                loader.style.transition = '';
-                loader.style.position = '';
-                loader.style.top = '';
-                loader.style.left = '';
-                loader.style.width = '';
-                loader.style.height = '';
-            }, 400);
-        }
-    }, displayDuration);
     
     updateRouteButtons(circuitId);
     // Hide progress bar when route is finished and refresh circuit cards

@@ -5051,7 +5051,7 @@ input[type="checkbox"]:checked {
     top: 60px; /* Below header */
     left: 50%;
     transform: translateX(-50%) translateY(-100px);
-    display: flex;
+    display: none; /* Hidden by default */
     align-items: center;
     justify-content: center;
     gap: 12px;

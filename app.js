@@ -511,8 +511,7 @@ function celebrateRouteCompletion() {
     // Show confetti
     showConfetti(3000, 60);
     
-    // Show checkmark
-    showSuccessCheckmark(1500);
+    // Removed duplicate checkmark - routeCompleteLoader handles the checkmark display
     
     // Flash background
     document.body.classList.add('celebration-flash');
@@ -1691,9 +1690,8 @@ function showLoginScreen() {
     }
     
     if (loginScreen && mainApp) {
-        loginScreen.style.display = 'flex';
-        loginScreen.style.visibility = 'visible';
-        loginScreen.style.opacity = '1';
+        // Force display with !important-like approach
+        loginScreen.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
         mainApp.style.display = 'none';
         
         // Reset login button state
@@ -4980,6 +4978,7 @@ function initializePullToRefresh() {
         if (diff > 0 && diff < threshold * 2) {
             e.preventDefault();
             pulling = true;
+            pullIndicator.style.display = 'flex'; // Show indicator
             const scale = Math.min(diff / threshold, 1);
             pullIndicator.style.transform = `translateY(${diff}px)`;
             pullIndicator.style.opacity = scale;
@@ -5021,11 +5020,13 @@ function initializePullToRefresh() {
                 pullIndicator.classList.remove('refreshing');
                 pullIndicator.style.transform = '';
                 pullIndicator.style.opacity = '';
+                pullIndicator.style.display = 'none'; // Hide indicator
             }, 500);
         } else {
             // Reset without refresh
             pullIndicator.style.transform = '';
             pullIndicator.style.opacity = '';
+            pullIndicator.style.display = 'none'; // Hide indicator
             pullIndicator.classList.remove('ready');
         }
         

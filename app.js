@@ -3413,6 +3413,7 @@ function fixRepeatedAddress(address) {
 // Circuit Selector
 let circuitSearchMemory = '';
 let favoriteCircuits = [];
+let circuitSelectorInitialized = false;
 
 async function populateCircuitSelector() {
     // Load favorites from localStorage
@@ -3554,34 +3555,39 @@ async function populateCircuitSelector() {
         }
     }
     
-    // Toggle dropdown
-    display.addEventListener('click', () => {
-        const isOpen = dropdown.style.display === 'block';
-        if (isOpen) {
-            dropdown.style.display = 'none';
-            customSelect.classList.remove('open');
-        } else {
-            dropdown.style.display = 'block';
-            customSelect.classList.add('open');
+    // Only initialize event listeners once
+    if (!circuitSelectorInitialized) {
+        // Toggle dropdown
+        display.addEventListener('click', () => {
+            const isOpen = dropdown.style.display === 'block';
+            if (isOpen) {
+                dropdown.style.display = 'none';
+                customSelect.classList.remove('open');
+            } else {
+                dropdown.style.display = 'block';
+                customSelect.classList.add('open');
+                renderCircuitOptions(circuitSearchMemory);
+                search.value = circuitSearchMemory;
+                search.focus();
+            }
+        });
+        
+        // Search with memory
+        search.addEventListener('input', (e) => {
+            circuitSearchMemory = e.target.value;
             renderCircuitOptions(circuitSearchMemory);
-            search.value = circuitSearchMemory;
-            search.focus();
-        }
-    });
-    
-    // Search with memory
-    search.addEventListener('input', (e) => {
-        circuitSearchMemory = e.target.value;
-        renderCircuitOptions(circuitSearchMemory);
-    });
-    
-    // Close on click outside
-    document.addEventListener('click', (e) => {
-        if (!customSelect.contains(e.target)) {
-            dropdown.style.display = 'none';
-            customSelect.classList.remove('open');
-        }
-    });
+        });
+        
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!customSelect.contains(e.target)) {
+                dropdown.style.display = 'none';
+                customSelect.classList.remove('open');
+            }
+        });
+        
+        circuitSelectorInitialized = true;
+    }
     
     // Initial render
     renderCircuitOptions();

@@ -687,7 +687,7 @@ function getEffectiveUserRole() {
 // Check if user is already logged in
 window.addEventListener('DOMContentLoaded', async () => {
     // Force clear old cache versions on initial load
-    const expectedVersion = 'v83';
+    const expectedVersion = 'v84';
     const currentVersion = localStorage.getItem('appCacheVersion');
     
     if (currentVersion !== expectedVersion) {

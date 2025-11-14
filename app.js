@@ -27,7 +27,7 @@ function scheduleHardReload(reason = 'update-ready') {
     }
     hardReloadScheduled = true;
     console.log(`[App] Forcing hard reload (${reason})`);
-    setTimeout(() => window.location.reload(true), 200);
+    setTimeout(() => window.location.reload(), 200);
 }
 
 // Service Worker Cache Update Handler
@@ -704,7 +704,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('appCacheVersion', APP_ASSET_VERSION);
         if (currentVersion !== null) {
             scheduleHardReload('version-mismatch');
-            return;
         }
     }
     
@@ -1502,7 +1501,7 @@ let deferredPWAPrompt = null;
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js?v=79')
+        navigator.serviceWorker.register('service-worker.js?v=84')
             .then(registration => {
                 console.log('[SW] Registered successfully');
                 
@@ -1527,8 +1526,8 @@ function registerServiceWorker() {
                     showUpdateNotification(registration);
                 }
             })
-            .catch(err => console.warn('[SW] Registration failed', err));
-    }
+                .catch(err => console.warn('[SW] Registration failed', err));
+            }
 }
 
 function showUpdateNotification(registration) {

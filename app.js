@@ -703,8 +703,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         await clearMailiaCaches();
         localStorage.setItem('appCacheVersion', APP_ASSET_VERSION);
         if (currentVersion !== null) {
+            // User had old version - force reload to get fresh assets
+            console.log('[App] Triggering hard reload to load new version...');
             scheduleHardReload('version-mismatch');
+            return; // Stop initialization - reload will happen
         }
+        // First visit or no previous version - continue with normal initialization
+        console.log('[App] First load with new version, continuing initialization...');
     }
     
     try {
